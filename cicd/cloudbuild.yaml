@@ -4,7 +4,7 @@ options:
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
-    args: ['-c', 'docker pull gcr.io/$PROJECT_ID/$_SERVICE_NAME:latest || echo "no cache image"']
+    args: ['-c', 'docker pull gcr.io/$PROJECT_ID/$_JOB_NAME:latest || echo "no cache image"']
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
@@ -14,11 +14,11 @@ steps:
       - '--build-arg'
       - 'env_file=cicd/env.$BRANCH_NAME'
       - '--cache-from'
-      - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME:latest'
+      - 'gcr.io/$PROJECT_ID/$_JOB_NAME:latest'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/$_JOB_NAME:$COMMIT_SHA'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME:latest'
+      - 'gcr.io/$PROJECT_ID/$_JOB_NAME:latest'
       - '-f'
       - 'cicd/Dockerfile'
       - '.'
@@ -27,21 +27,34 @@ steps:
     args:
       - push
       - '--all-tags'
-      - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME'
+      - 'gcr.io/$PROJECT_ID/$_JOB_NAME'
     id: Push
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     id: Deploy
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - run
-      - jobs
-      - update
-      - $_SERVICE_NAME
-      - '--region=$_DEPLOY_REGION'
-      - '--image=gcr.io/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
-      - '--quiet'
+      - -c
+      - |
+        set -e
+
+        IMAGE="gcr.io/$PROJECT_ID/$_JOB_NAME:$COMMIT_SHA"
+
+        if gcloud run jobs describe $_JOB_NAME --region $_DEPLOY_REGION > /dev/null 2>&1
+        then
+          echo "Job exists → updating"
+          gcloud run jobs update $_JOB_NAME \
+            --region $_DEPLOY_REGION \
+            --image "$IMAGE" \
+            --quiet
+        else
+          echo "Job does not exist → creating"
+          gcloud run jobs create $_JOB_NAME \
+            --region $_DEPLOY_REGION \
+            --image "$IMAGE" \
+            --quiet
+        fi
 
 images:
-  - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME:latest'
-  - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/$_JOB_NAME:latest'
+  - 'gcr.io/$PROJECT_ID/$_JOB_NAME:$COMMIT_SHA'
