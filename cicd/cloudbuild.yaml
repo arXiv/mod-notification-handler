@@ -1,0 +1,47 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: ['-c', 'docker pull gcr.io/$PROJECT_ID/$_SERVICE_NAME:latest || echo "no cache image"']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'git_commit=branch:$BRANCH_NAME sha:$SHORT_SHA'
+      - '--build-arg'
+      - 'env_file=cicd/env.$BRANCH_NAME'
+      - '--cache-from'
+      - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME:latest'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME:latest'
+      - '-f'
+      - 'cicd/Dockerfile'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - '--all-tags'
+      - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME'
+    id: Push
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: Deploy
+    entrypoint: gcloud
+    args:
+      - run
+      - jobs
+      - update
+      - $_SERVICE_NAME
+      - '--region=$_DEPLOY_REGION'
+      - '--image=gcr.io/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
+      - '--quiet'
+
+images:
+  - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME:latest'
+  - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
