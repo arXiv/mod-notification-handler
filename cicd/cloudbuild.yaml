@@ -32,28 +32,15 @@ steps:
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     id: Deploy
-    entrypoint: bash
+    entrypoint: gcloud
     args:
-      - -c
-      - |
-        set -e
-
-        IMAGE="gcr.io/$PROJECT_ID/$_JOB_NAME:$COMMIT_SHA"
-
-        if gcloud run jobs describe $_JOB_NAME --region $_DEPLOY_REGION > /dev/null 2>&1
-        then
-          echo "Job exists → updating"
-          gcloud run jobs update $_JOB_NAME \
-            --region $_DEPLOY_REGION \
-            --image "$IMAGE" \
-            --quiet
-        else
-          echo "Job does not exist → creating"
-          gcloud run jobs create $_JOB_NAME \
-            --region $_DEPLOY_REGION \
-            --image "$IMAGE" \
-            --quiet
-        fi
+      - run
+      - jobs
+      - update
+      - $_JOB_NAME
+      - '--region=$_DEPLOY_REGION'
+      - '--image=gcr.io/$PROJECT_ID/$_JOB_NAME:$COMMIT_SHA'
+      - '--quiet'
 
 images:
   - 'gcr.io/$PROJECT_ID/$_JOB_NAME:latest'
