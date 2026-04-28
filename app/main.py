@@ -30,7 +30,7 @@ def main():
 
     for msg in response.received_messages:
         message = msg.message
-        timestamps.append(message.publish_time)
+        timestamps.append(str(message.publish_time))
         ack_ids.append(msg.ack_id)
 
     logger.info(f"Caught {len(ack_ids)} messages")
