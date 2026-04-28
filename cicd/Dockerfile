@@ -1,13 +1,9 @@
 FROM python:3.11-slim
 
 #supposedly needed for mysql client libraries
-RUN apt-get update && apt-get install -y \
-    gcc \
-    pkg-config \
-    default-libmysqlclient-dev \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
+RUN apt-get -q update && \
+    apt-get install -yq --no-install-recommends build-essential pkg-config default-libmysqlclient-dev
+    
 RUN pip install poetry
 
 WORKDIR /app

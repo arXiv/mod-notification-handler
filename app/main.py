@@ -1,7 +1,7 @@
 import logging
 from google.cloud import pubsub_v1
 
-PROJECT_ID = "arxiv-devlopment"
+PROJECT_ID = "arxiv-development"
 SUBSCRIPTION_ID = "mod-notification-handler"
 BATCH_SIZE = 300
 
