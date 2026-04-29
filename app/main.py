@@ -1,6 +1,7 @@
 import logging
 import time
-from typing import List
+from datetime import datetime
+from typing import List, cast
 
 from google.cloud import pubsub_v1
 from google.pubsub import ReceivedMessage, SubscriberClient
@@ -45,8 +46,8 @@ def process_messages(messages:List[ReceivedMessage])->List[str]:
     timestamps: List[str] = []
     for msg in messages:
         message = msg.message
-        time_str=message.publish_time.ToDatetime().strftime("%H:%M")
-        timestamps.append(time_str)
+        dt= cast(datetime, message.publish_time) #weird issue with timestamp typing at runtime
+        timestamps.append(dt.strftime("%H:%M"))
         ack_ids.append(msg.ack_id)
 
     #theoretical batch handling work done here
