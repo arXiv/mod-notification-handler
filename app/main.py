@@ -1,10 +1,13 @@
+"""manages the job and pubsub message handling"""
+
 import logging
 import time
-from datetime import datetime
-from typing import List, cast
+from typing import List
 
 from google.cloud import pubsub_v1
 from google.pubsub import ReceivedMessage, SubscriberClient
+
+from app.process import process_messages
 
 PROJECT_ID = "arxiv-development"
 SUBSCRIPTION_ID = "mod-notification-handler"
@@ -41,19 +44,6 @@ def get_messages(subscriber: SubscriberClient, sub_path:str) -> List[ReceivedMes
 
     return collected_msgs
 
-def process_messages(messages:List[ReceivedMessage])->List[str]:
-    ack_ids: List[str] = []
-    timestamps: List[str] = []
-    for msg in messages:
-        message = msg.message
-        dt= cast(datetime, message.publish_time) #weird issue with timestamp typing at runtime
-        timestamps.append(dt.strftime("%H:%M"))
-        ack_ids.append(msg.ack_id)
-
-    #theoretical batch handling work done here
-
-    logger.info(f"Processed {len(ack_ids)} messages. Timestamps: {', '.join(timestamps)}")
-    return ack_ids
 
 def main():
 
