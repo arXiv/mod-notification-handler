@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import List, Any, Set
+from typing import Literal, Union, Annotated
 from enum import Enum
+from pydantic import BaseModel, Field, TypeAdapter
 
 from arxiv.taxonomy.category import Category
 
@@ -11,22 +12,37 @@ class NotificationType(str, Enum):
     PROMOTE = 'Category Promotion'
     #TODO should rejections eventually send emails?
 
-#the shape of the incoming notification data
-class NotificationParams:
+#the shape the data comes in the pubsub message
+class NotificationParams(BaseModel):
     time: datetime # time action was done #TODO add to modapi
     submission_id: int
     user_id: int # id of user who created notification
-    categories: List[str] #categories who should recieve the notification
-    action: NotificationType #the type of notification this is TODO modapi will have to update to this
-    data: Any #format of data varies based on message type
-
-class SimplifiedNotification:
+    categories: list[str] #categories who should recieve the notification
     action: NotificationType
+    data: dict
+
+class CommentData(BaseModel):
+    comment: str
+
+class PropRespData(BaseModel):
+    responses: str
+    category_change: str
+
+class NewPropData(BaseModel):
+    msg: str
+
+class PromoteData(BaseModel):
+    category: str
+    promotion_type: Literal["primary", "secondary"]
+    category_change: str
+
+
+class SimplifiedNotification(BaseModel):
     time: datetime
-    data: Any #format of data varies based on message type
+    data: Union[CommentData, PromoteData, PropRespData, NewPropData]
 
 class ConsolidatedNotifications:
     submission_id: int
-    categories: Set[Category] #categories to notify about this submission
-    user_ids: Set[int] # users responsible for these notifications
-    changes: List[SimplifiedNotification] #all notifications for a particular submission
+    categories: set[Category] #categories to notify about this submission
+    user_ids: set[int] # users responsible for these notifications
+    changes: list[SimplifiedNotification] #all notifications for a particular submission
