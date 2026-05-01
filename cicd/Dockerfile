@@ -12,6 +12,6 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi --only main
 
-COPY app/ .
+COPY app/ app/
 
-CMD ["python", "main.py"]
+CMD ["python", "-m", "app.main"]
