@@ -40,7 +40,8 @@ def _convert_messages(messages:list[ReceivedMessage]) ->  tuple[dict[int, Consol
         ack_ids.append(msg.ack_id)
 
         #validation and error handling
-        payload = json.loads(msg.message.data)
+        print("RAW DATA:", msg.message.data)
+        payload = json.loads(msg.message.data.decode("utf-8"))
         try:
             full_note, simple_note = _parse_message(payload)
         except Exception as e:
