@@ -17,7 +17,9 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from arxiv.db.models import metadata
+import arxiv.db as arxiv_db
+from arxiv.db import session_factory, Session
+from arxiv.db.models import metadata, configure_db_engine
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
@@ -59,6 +61,7 @@ def build_seed_database(sql_digest: str) -> Path:
     print(f"Creating seeded test DB at: {db_path}")
 
     engine = create_engine_for_db(db_path)
+    session_factory.configure(bind=engine)
 
     # create tables
     metadata.create_all(bind=engine)
@@ -108,6 +111,14 @@ def db_session():
 
         engine = create_engine_for_db(tmp_db)
 
+        # Save original engines so we can restore after the test
+        original_classic = arxiv_db._classic_engine
+        original_latexml = arxiv_db._latexml_engine
+
+        # Point arxiv.db.Session() at the isolated test db
+        configure_db_engine(engine, None)
+        Session.remove()
+
         SessionLocal = sessionmaker(
             autocommit=False,
             autoflush=False,
@@ -121,4 +132,7 @@ def db_session():
         finally:
             session.close()
             engine.dispose()
+            # Restore original engines
+            configure_db_engine(original_classic, original_latexml)
+            Session.remove()
 

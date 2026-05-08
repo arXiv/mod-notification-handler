@@ -4,7 +4,6 @@ from typing import Optional
 from sqlalchemy import select
 
 from arxiv.taxonomy.category import Category
-from arxiv.taxonomy.definitions import ARCHIVES_ACTIVE
 from arxiv.db import Session
 from arxiv.db.models import t_arXiv_moderators
 
