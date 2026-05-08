@@ -210,3 +210,4 @@ __marimo__/
 
 #manual additons
 tests/databases
+.claude/
