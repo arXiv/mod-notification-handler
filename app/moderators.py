@@ -80,14 +80,15 @@ def who_to_email(category: Category, all_archives: dict[str, ToEmail], all_cats:
     email: set[int] = set()
     reply_to: set[int] = set()
 
+    cat_entry = all_cats.get(category.id, ToEmail())
+    archive_entry = all_archives.get(category.in_archive, ToEmail())
+
     #add specific category moderators
-    email.update(all_cats[category.id].send_to)
-    reply_to.update(all_cats[category.id].include_reply_to)
+    email.update(cat_entry.send_to)
+    reply_to.update(cat_entry.include_reply_to)
 
     #add archive mods unless they have specifically declined
-    also_email=all_archives[category.in_archive].send_to - all_cats[category.id].dont_send_to
-    email.update(also_email)
-    also_reply_to = all_archives[category.in_archive].include_reply_to - all_cats[category.id].dont_include_reply_to
-    also_reply_to.update(also_reply_to)
+    email.update(archive_entry.send_to - cat_entry.dont_send_to)
+    reply_to.update(archive_entry.include_reply_to - cat_entry.dont_include_reply_to)
 
     return email, reply_to
