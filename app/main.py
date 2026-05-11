@@ -8,6 +8,7 @@ from google.cloud import pubsub_v1
 from google.pubsub import ReceivedMessage, SubscriberClient
 
 from app.process import process_messages
+from app.moderators import get_all_moderators
 
 PROJECT_ID = "arxiv-development"
 SUBSCRIPTION_ID = "mod-notification-handler"
@@ -46,6 +47,14 @@ def get_messages(subscriber: SubscriberClient, sub_path:str) -> List[ReceivedMes
 
 
 def main():
+
+    # TODO remove later
+    try:
+        archives, cats = get_all_moderators()
+        logger.info(f"DB check OK: {len(archives)} archive entries, {len(cats)} category entries")
+    except Exception:
+        logger.exception("DB check FAILED — cannot connect to database")
+        raise
 
     #get messages
     subscriber = pubsub_v1.SubscriberClient()
