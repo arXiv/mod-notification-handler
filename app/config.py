@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    CLASSIC_DB_URL: str
+    CLASSIC_DB_URI: str
     ENV: str = 'LOCAL'
 
     model_config = SettingsConfigDict(
