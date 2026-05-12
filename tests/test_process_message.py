@@ -221,9 +221,10 @@ def test_consolidate_messages():
 
     data, ids = _convert_messages(messages) #type: ignore
 
-    assert ids == [ 'ack-1', 'ack-3', 'ack-4', 'ack-5', 'ack-7',] #ack even bad messages
-    
+    assert ids == ['ack-5'] #only parse failures returned; valid acks live on each submission
+
     sub2=data[124]
+    assert sub2.ack_ids == ['ack-4']
     assert sub2.categories== {CATEGORIES_ACTIVE['cs.LG'], CATEGORIES_ACTIVE['cs.AI']} #type: ignore
     assert sub2.user_ids== {1}
     assert len(sub2.changes) == 1
@@ -234,6 +235,7 @@ def test_consolidate_messages():
     assert sub2.changes[0].data.promotion_type == "primary"
 
     sub1=data[123]
+    assert sub1.ack_ids == ['ack-1', 'ack-3', 'ack-7']
     assert sub1.categories== {CATEGORIES_ACTIVE['cs.LG'], CATEGORIES_ACTIVE['cs.AI'], CATEGORIES_ACTIVE['hep-lat']} #type: ignore
     assert sub1.user_ids== {1, 2}
     assert len(sub1.changes) == 3
@@ -310,5 +312,19 @@ def test_send_error_does_not_abort():
     with patch("app.process.send_email", mock_send):
         ack_ids = process_messages([msg1, msg2])
 
-    assert ack_ids == ["ack-1", "ack-2"]
+    assert "ack-1" not in ack_ids  # failed send — sub 123 will redeliver
+    assert "ack-2" in ack_ids      # successful send — sub 124 acked
     assert mock_send.call_count == 2
+
+@pytest.mark.usefixtures("db_session")
+def test_all_successful_sends_all_acked():
+    msg1 = _make_pubsub_message("ack-1", GOOD_COMMENT)  # sub 123
+    msg2 = _make_pubsub_message("ack-2", GOOD_PROMOTE)  # sub 124
+    msg3 = _make_pubsub_message("ack-3", BAD_PROMOTE)   # parse failure
+
+    with patch("app.process.send_email"):
+        ack_ids = process_messages([msg1, msg2, msg3])
+
+    assert "ack-1" in ack_ids  # successful send
+    assert "ack-2" in ack_ids  # successful send
+    assert "ack-3" in ack_ids  # parse failure — acked immediately, won't retry
