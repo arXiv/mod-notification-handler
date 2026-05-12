@@ -71,6 +71,7 @@ def _convert_messages(messages:list[ReceivedMessage]) ->  tuple[dict[int, Consol
 
 def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) -> list[EmailTask]:
     if not all_notifications:
+        logger.info("No notifications to process")
         return []
 
     #collect all the categories and emails
@@ -98,11 +99,22 @@ def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) 
             sole_actor = next(iter(notifications.user_ids))
             email_ids.discard(sole_actor)
 
+        to_emails = [ids_to_email[uid] for uid in email_ids if uid in ids_to_email]
+        reply_to = [ids_to_email[uid] for uid in reply_ids if uid in ids_to_email] or None
+
+        missing = (email_ids | reply_ids) - ids_to_email.keys()
+        if missing:
+            logger.error(f"submission {sub_id}: no tapir_users row for moderator ids {missing}")
+
+        if not to_emails:
+            logger.info(f"submission {sub_id}: no recipients after exclusions, skipping")
+            continue
+
         #email data
         tasks.append(EmailTask(
             submission_id=sub_id,
-            to_emails=[ids_to_email[uid] for uid in email_ids],
-            reply_to_emails=[ids_to_email[uid] for uid in reply_ids] or None,
+            to_emails=to_emails,
+            reply_to_emails=reply_to,
             notifications=notifications,
         ))
     return tasks
@@ -112,19 +124,28 @@ def process_messages(messages:list[ReceivedMessage])->list[str]:
     """handles the overall message processing"""
 
     #turn messages into data
-    all_notifications, ack_ids=_convert_messages(messages)
+    all_notifications, ack_ids = _convert_messages(messages)
+    if not all_notifications:
+        logger.info("No valid notifications after parsing, nothing to send")
+        return ack_ids
 
     #determine who to email what
-    email_tasks=_build_email_tasks(all_notifications)
+    email_tasks = _build_email_tasks(all_notifications)
+    if not email_tasks:
+        logger.info("No emails to send")
+        return ack_ids
 
     #send emails
     for task in email_tasks:
-        send_email(
-            to_emails=task.to_emails,
-            subject=f"Notification for submission {task.submission_id}",
-            body="TBD",
-            reply_to_emails=task.reply_to_emails,
-        )
+        try:
+            send_email(
+                to_emails=task.to_emails,
+                subject=f"Notification for submission {task.submission_id}",
+                body="TBD",
+                reply_to_emails=task.reply_to_emails,
+            )
+        except Exception:
+            logger.exception(f"Failed to send email for submission {task.submission_id}")
 
     #test logging
     logger.info(f"Processed {len(ack_ids)} messages. Sent {len(email_tasks)} (hypothetical) emails.")

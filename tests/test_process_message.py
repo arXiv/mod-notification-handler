@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch, Mock
 import pytest
 from datetime import datetime, timezone
 from types import SimpleNamespace
@@ -288,3 +289,26 @@ def test_multi_actor_not_excluded():
     assert 'no-mail@example.com' in task.to_emails          # 246231 not excluded (multiple actors)
     assert 'also-dont-mail@example.com' in task.to_emails   # 681201 not excluded
     assert 'dont-mail@example.com' in task.to_emails        # uninvolved mod 1234544 gets email
+
+@pytest.mark.usefixtures("db_session")
+def test_skip_task_with_no_recipients():
+    notifications = ConsolidatedNotifications(
+        submission_id=1,
+        categories={CATEGORIES_ACTIVE['econ.EM']},
+        user_ids={99999},
+        changes=[_NOTE],
+    )
+    tasks = _build_email_tasks({1: notifications})
+    assert tasks == []
+
+@pytest.mark.usefixtures("db_session")
+def test_send_error_does_not_abort():
+    msg1 = _make_pubsub_message("ack-1", GOOD_COMMENT)   # sub 123, cs.AI + cs.LG
+    msg2 = _make_pubsub_message("ack-2", GOOD_PROMOTE)   # sub 124, cs.AI + cs.LG
+
+    mock_send = Mock(side_effect=[RuntimeError("smtp down"), None])
+    with patch("app.process.send_email", mock_send):
+        ack_ids = process_messages([msg1, msg2])
+
+    assert ack_ids == ["ack-1", "ack-2"]
+    assert mock_send.call_count == 2
