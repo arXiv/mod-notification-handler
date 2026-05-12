@@ -7,6 +7,7 @@ from google.pubsub import ReceivedMessage
 from arxiv.taxonomy.category import Category
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
 
+from app.email import send_email
 from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData
 from app.moderators import get_all_moderators, get_recipient_ids_for_categories, get_mod_emails
 
@@ -96,7 +97,7 @@ def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) 
         tasks.append(EmailTask(
             submission_id=sub_id,
             to_emails=[ids_to_email[uid] for uid in email_ids],
-            reply_to_emails=[ids_to_email[uid] for uid in reply_ids],
+            reply_to_emails=[ids_to_email[uid] for uid in reply_ids] or None,
             notifications=notifications,
         ))
     return tasks
@@ -105,26 +106,23 @@ def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) 
 def process_messages(messages:list[ReceivedMessage])->list[str]:
     """handles the overall message processing"""
 
+    #turn messages into data
     all_notifications, ack_ids=_convert_messages(messages)
 
+    #determine who to email what
     email_tasks=_build_email_tasks(all_notifications)
 
-    comment_count=0
-    prop_count=0
-    prop_resp_count=0
-    promote_count=0
-    
-    for _, data in all_notifications.items():
-        for change in data.changes:
-            if isinstance(change.data, CommentData):
-                comment_count += 1
-            elif isinstance(change.data, NewPropData):
-                prop_count += 1
-            elif isinstance(change.data, PropRespData):
-                prop_resp_count += 1
-            elif isinstance(change.data, PromoteData):
-                promote_count += 1
+    #send emails
+    for task in email_tasks:
+        send_email(
+            to_emails=task.to_emails,
+            subject=f"Notification for submission {task.submission_id}",
+            body="TBD",
+            reply_to_emails=task.reply_to_emails,
+        )
 
+    #test logging
+    logger.info(f"Processed {len(ack_ids)} messages. Sent {len(email_tasks)} (hypothetical) emails.")
 
-    logger.info(f"Processed {len(ack_ids)} messages. {comment_count} comments, {prop_count} proposals, {prop_resp_count} responses, and {promote_count} promotions across {len(all_notifications.keys())} submisions")
+    #make sure to acknowledge when done
     return ack_ids
