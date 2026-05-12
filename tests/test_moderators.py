@@ -5,7 +5,7 @@ from arxiv.db.models import t_arXiv_moderators
 
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
 
-from app.moderators import get_all_moderators, who_to_email
+from app.moderators import get_all_moderators, who_to_email, get_recipient_ids_for_categories, get_mod_emails
 
 def test_db_can_read(db_session):
     result = db_session.execute(select(t_arXiv_moderators))
@@ -76,7 +76,7 @@ def test_mod_who_wants_emails():
 # who_to_email tests
 
 @pytest.mark.usefixtures("db_session")
-def test_who_to_email_includes_category_mods():
+def test_who_to_email_category_mod():
     archives, cats = get_all_moderators()
     email, _ = who_to_email(CATEGORIES_ACTIVE['q-bio.CB'], archives, cats)
     assert 246231 in email
@@ -90,26 +90,21 @@ def test_who_to_email_includes_archive_mods():
     assert 246231 in reply_to
 
 @pytest.mark.usefixtures("db_session")
-def test_who_to_email_no_email_excluded():
+def test_who_to_email_opt_out():
     archives, cats = get_all_moderators()
     email, _ = who_to_email(CATEGORIES_ACTIVE['cs.AI'], archives, cats)
     assert 50001 not in email
-
-@pytest.mark.usefixtures("db_session")
-def test_who_to_email_no_web_email_excluded():
-    archives, cats = get_all_moderators()
-    email, _ = who_to_email(CATEGORIES_ACTIVE['cs.AI'], archives, cats)
     assert 50002 not in email
 
 @pytest.mark.usefixtures("db_session")
-def test_who_to_email_no_reply_to_in_email_not_reply_to():
+def test_who_to_email_no_reply_to():
     archives, cats = get_all_moderators()
     email, reply_to = who_to_email(CATEGORIES_ACTIVE['cs.AI'], archives, cats)
     assert 50003 in email
     assert 50003 not in reply_to
 
 @pytest.mark.usefixtures("db_session")
-def test_who_to_email_normal_mod_in_both():
+def test_who_to_email_replys():
     archives, cats = get_all_moderators()
     email, reply_to = who_to_email(CATEGORIES_ACTIVE['cs.AI'], archives, cats)
     assert 50004 in email
@@ -128,3 +123,52 @@ def test_who_to_email_no_mods_returns_empty():
     email, reply_to = who_to_email(CATEGORIES_ACTIVE['econ.EM'], archives, cats)
     assert len(email) == 0
     assert len(reply_to) == 0
+
+@pytest.mark.usefixtures("db_session")
+def test_get_recipient_ids_multi_category():
+    archives, cats = get_all_moderators()
+    categories = {CATEGORIES_ACTIVE['q-bio.CB'], CATEGORIES_ACTIVE['q-bio.NC'], CATEGORIES_ACTIVE['cs.AI'], CATEGORIES_ACTIVE['q-bio.MN']}
+    per_cat, all_user_ids = get_recipient_ids_for_categories(categories, archives, cats)
+
+    # 246231 moderates both categories and the q-bio archive
+    assert 246231 in all_user_ids
+    assert 246231 in per_cat['q-bio.CB'][0]
+    assert 246231 in per_cat['q-bio.NC'][0]
+    assert 246231 in per_cat['q-bio.MN'][0] #not a category they specifically moderate but still appears because of archive moderation
+
+    # 681201 moderates q-bio.NC
+    assert 681201 in all_user_ids
+    assert 681201 in per_cat['q-bio.NC'][0]
+
+    # 50004 moderates cs.AI and should appear
+    assert 50004 in all_user_ids
+    assert 50004 in per_cat['cs.AI'][0]
+
+@pytest.mark.usefixtures("db_session")
+def test_get_ids_reply_to_only():
+    archives, cats = get_all_moderators()
+    # 50001 in reply-to but not direct email
+    per_cat, all_user_ids = get_recipient_ids_for_categories({CATEGORIES_ACTIVE['cs.AI']}, archives, cats)
+    assert 50001 not in per_cat['cs.AI'][0]  # not in email set
+    assert 50001 in per_cat['cs.AI'][1]      # in reply-to set
+    assert 50001 in all_user_ids             # still needs email address looked up
+
+@pytest.mark.usefixtures("db_session")
+def test_get_recipient_ids_archive_optout_excluded():
+    archives, cats = get_all_moderators()
+    # 77777 mods astro-ph archive but fully opted out of astro-ph.HE
+    per_cat, all_user_ids = get_recipient_ids_for_categories({CATEGORIES_ACTIVE['astro-ph.HE']}, archives, cats)
+    assert 77777 not in per_cat['astro-ph.HE'][0]  
+    assert 77777 not in per_cat['astro-ph.HE'][1]  
+    assert 77777 not in all_user_ids              
+
+
+@pytest.mark.usefixtures("db_session")
+def test_get_user_emails_returns_map():
+    result = get_mod_emails({246231, 681201})
+    assert result[246231] == 'no-mail@example.com'
+    assert result[681201] == 'also-dont-mail@example.com'
+
+@pytest.mark.usefixtures("db_session")
+def test_get_user_emails_empty_input():
+    assert get_mod_emails(set()) == {}

@@ -6,7 +6,9 @@ from google.pubsub import ReceivedMessage
 
 from arxiv.taxonomy.category import Category
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
-from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, NotificationType, CommentData, PromoteData, NewPropData, PropRespData
+
+from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData
+from app.moderators import get_all_moderators, get_recipient_ids_for_categories, get_mod_emails
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -66,22 +68,46 @@ def _convert_messages(messages:list[ReceivedMessage]) ->  tuple[dict[int, Consol
 
     return all_notifications, ack_ids
 
+def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) -> list[EmailTask]:
+    if not all_notifications:
+        return []
+
+    #collect all the categories and emails
+    archives, cats = get_all_moderators()
+
+    all_categories: set[Category] = set()
+    for notifications in all_notifications.values():
+        all_categories.update(notifications.categories)
+
+    per_cat, all_user_ids = get_recipient_ids_for_categories(all_categories, archives, cats)
+    ids_to_email = get_mod_emails(all_user_ids)
+
+    #build individual email tasks
+    tasks = []
+    for sub_id, notifications in all_notifications.items():
+        email_ids: set[int] = set()
+        reply_ids: set[int] = set()
+        #everyone to email
+        for cat in notifications.categories:
+            e, r = per_cat.get(cat.id, (set(), set()))
+            email_ids.update(e)
+            reply_ids.update(r)
+        #email data
+        tasks.append(EmailTask(
+            submission_id=sub_id,
+            to_emails=[ids_to_email[uid] for uid in email_ids],
+            reply_to_emails=[ids_to_email[uid] for uid in reply_ids],
+            notifications=notifications,
+        ))
+    return tasks
+
+
 def process_messages(messages:list[ReceivedMessage])->list[str]:
     """handles the overall message processing"""
 
     all_notifications, ack_ids=_convert_messages(messages)
-        
-    email_data=[]
-    #go through each submission
-    for sub_id, notifications in all_notifications.items():
-        #assemble individual message for sumbission
-        #build email
-        #figure out who to email
-        pass
 
-    #send emails
-    for item in email_data:
-        pass
+    email_tasks=_build_email_tasks(all_notifications)
 
     comment_count=0
     prop_count=0

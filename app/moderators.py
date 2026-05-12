@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 from arxiv.taxonomy.category import Category
 from arxiv.db import Session
-from arxiv.db.models import t_arXiv_moderators
+from arxiv.db.models import t_arXiv_moderators, TapirUser
 
 class Moderator(BaseModel):
     user_id:int
@@ -92,3 +92,25 @@ def who_to_email(category: Category, all_archives: dict[str, ToEmail], all_cats:
     reply_to.update(archive_entry.include_reply_to - cat_entry.dont_include_reply_to)
 
     return email, reply_to
+
+def get_recipient_ids_for_categories(categories: set[Category], all_archives: dict[str, ToEmail], all_cats: dict[str, ToEmail],
+) -> tuple[dict[str, tuple[set[int], set[int]]], set[int]]:
+    """Returns {category.id: (email_ids, reply_ids)} and all unique user IDs across all categories."""
+    per_cat: dict[str, tuple[set[int], set[int]]] = {}
+    all_user_ids: set[int] = set()
+    for cat in categories:
+        e, r = who_to_email(cat, all_archives, all_cats)
+        per_cat[cat.id] = (e, r)
+        all_user_ids.update(e | r)
+    return per_cat, all_user_ids
+
+def get_mod_emails(user_ids: set[int]) -> dict[int, str]:
+    """Returns {user_id: email} for the given user_ids."""
+    if not user_ids:
+        return {}
+    with Session() as session:
+        rows = session.execute(
+            select(TapirUser.user_id, TapirUser.email)
+            .where(TapirUser.user_id.in_(user_ids))
+        )
+        return {row.user_id: row.email for row in rows}

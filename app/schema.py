@@ -48,3 +48,10 @@ class ConsolidatedNotifications:
     categories: set[Category] =field(default_factory=set) #categories to notify about this submission
     user_ids: set[int] = field(default_factory=set)  # users responsible for these notifications
     changes: list[SimplifiedNotification] = field(default_factory=list) #all notifications for a particular submission
+
+@dataclass
+class EmailTask:
+    submission_id: int
+    to_emails: list[str]
+    reply_to_emails: list[str]
+    notifications: ConsolidatedNotifications

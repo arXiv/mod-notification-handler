@@ -39,7 +39,7 @@ INSERT INTO `arXiv_moderators` VALUES (50003, 'cs', 'AI', 0, 0, 0, 1, 0);
 INSERT INTO `arXiv_moderators` VALUES (50004, 'cs', 'AI', 0, 0, 0, 0, 0);
 INSERT INTO `arXiv_moderators` VALUES (50004, 'cs', '',  0, 0, 0, 0, 0);
 
--- archive exclusion test: 77777 mods astro-ph archive but opts out of astro-ph.HE specifically
+-- archive exclusion test: 77777 mods astro-ph archive but fully opts out of astro-ph.HE (no email, no reply-to)
 INSERT INTO `tapir_users` VALUES (77777,'Archive','OptOut','',1,1,'archive-optout@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);
 INSERT INTO `arXiv_moderators` VALUES (77777, 'astro-ph', '', 0, 0, 0, 0, 0);
-INSERT INTO `arXiv_moderators` VALUES (77777, 'astro-ph', 'HE', 0, 1, 0, 0, 0);
+INSERT INTO `arXiv_moderators` VALUES (77777, 'astro-ph', 'HE', 0, 1, 0, 1, 0);
