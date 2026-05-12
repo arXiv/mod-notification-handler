@@ -28,6 +28,9 @@ def _parse_message(payload)-> tuple[NotificationParams, SimplifiedNotification]:
             data = PromoteData.model_validate(full_note.data)
         case NotificationType.PROP_RESP:
             data = PropRespData.model_validate(full_note.data)
+        case _:
+            logging.error(f"unhandled action type: {full_note.action}, skipping message")
+            raise ValueError(f"unhandled action: {full_note.action}")
 
     simple_note=SimplifiedNotification(time=full_note.time, data=data)
     return full_note, simple_note
@@ -43,21 +46,21 @@ def _convert_messages(messages:list[ReceivedMessage]) ->  tuple[dict[int, Consol
         ack_ids.append(msg.ack_id)
 
         #validation and error handling
-        payload = json.loads(msg.message.data.decode("utf-8"))
         try:
+            payload = json.loads(msg.message.data.decode("utf-8"))
             full_note, simple_note = _parse_message(payload)
         except Exception as e:
-            logging.error(f"failed to parse message: error: {e} msg:{payload}")
+            logging.error(f"failed to parse message: error: {e} msg:{msg.message.data}")
             #don't raise error acknowledge unparseable message anyways so it doesnt repeat
             continue
             
         #convert and store
-        try:
-            categories: set[Category]=set()
-            for cat in full_note.categories:
+        categories: set[Category]=set()
+        for cat in full_note.categories:
+            try:
                 categories.add(CATEGORIES_ACTIVE[cat])
-        except Exception as e:
-            logging.error(f"bad category: {cat}")
+            except KeyError:
+                logging.error(f"unknown category: {cat}, skipping")
 
         id=full_note.submission_id
         sub_notes = all_notifications.get(id, ConsolidatedNotifications(submission_id=id))
