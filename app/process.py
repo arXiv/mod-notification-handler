@@ -93,6 +93,11 @@ def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) 
             e, r = per_cat.get(cat.id, (set(), set()))
             email_ids.update(e)
             reply_ids.update(r)
+        # don't email the sole actor about their own changes
+        if len(notifications.user_ids) == 1:
+            sole_actor = next(iter(notifications.user_ids))
+            email_ids.discard(sole_actor)
+
         #email data
         tasks.append(EmailTask(
             submission_id=sub_id,

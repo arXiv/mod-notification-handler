@@ -5,8 +5,8 @@ from types import SimpleNamespace
 
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
 
-from app.process import process_messages, _parse_message, _convert_messages
-from app.schema import  CommentData, PromoteData, NewPropData, PropRespData
+from app.process import process_messages, _parse_message, _convert_messages, _build_email_tasks
+from app.schema import  CommentData, PromoteData, NewPropData, PropRespData, ConsolidatedNotifications, SimplifiedNotification
 
 GOOD_COMMENT = {
     "time": "2024-01-01T10:00:00Z",
@@ -249,3 +249,42 @@ def test_consolidate_messages():
     assert isinstance(sub1.changes[2].data, PropRespData)
     assert sub1.changes[2].data.category_change == 'no primary -> hep-lat'
     assert sub1.changes[2].data.responses=="Primary accepted: hep-lat"
+
+_NOTE = SimplifiedNotification(
+    time=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    data=CommentData(comment="test"),
+)
+_NOTE_2 = SimplifiedNotification(
+    time=datetime(2024, 1, 2, tzinfo=timezone.utc),
+    data=CommentData(comment="test reply"),
+)
+
+@pytest.mark.usefixtures("db_session")
+def test_sole_actor_excluded():
+    notifications = ConsolidatedNotifications(
+        submission_id=1,
+        categories={CATEGORIES_ACTIVE['q-bio.NC']},
+        user_ids={246231},
+        changes=[_NOTE],
+    )
+    tasks = _build_email_tasks({1: notifications})
+    assert len(tasks) == 1
+    task = tasks[0]
+    assert 'no-mail@example.com' not in task.to_emails          # sole actor excluded from email
+    assert 'also-dont-mail@example.com' in task.to_emails       # uninvolved mod still gets email
+    assert 'no-mail@example.com' in (task.reply_to_emails or []) # exclusion doesn't affect reply-to
+
+@pytest.mark.usefixtures("db_session")
+def test_multi_actor_not_excluded():
+    notifications = ConsolidatedNotifications(
+        submission_id=1,
+        categories={CATEGORIES_ACTIVE['q-bio.NC']},
+        user_ids={246231, 681201},
+        changes=[_NOTE, _NOTE_2],
+    )
+    tasks = _build_email_tasks({1: notifications})
+    assert len(tasks) == 1
+    task = tasks[0]
+    assert 'no-mail@example.com' in task.to_emails          # 246231 not excluded (multiple actors)
+    assert 'also-dont-mail@example.com' in task.to_emails   # 681201 not excluded
+    assert 'dont-mail@example.com' in task.to_emails        # uninvolved mod 1234544 gets email
