@@ -6,7 +6,10 @@ from google.pubsub import ReceivedMessage
 
 from arxiv.taxonomy.category import Category
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
-from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, NotificationType, CommentData, PromoteData, NewPropData, PropRespData
+
+from app.email import send_email
+from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData
+from app.moderators import get_all_moderators, get_recipient_ids_for_categories, get_mod_emails
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -66,39 +69,65 @@ def _convert_messages(messages:list[ReceivedMessage]) ->  tuple[dict[int, Consol
 
     return all_notifications, ack_ids
 
+def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) -> list[EmailTask]:
+    if not all_notifications:
+        return []
+
+    #collect all the categories and emails
+    archives, cats = get_all_moderators()
+
+    all_categories: set[Category] = set()
+    for notifications in all_notifications.values():
+        all_categories.update(notifications.categories)
+
+    per_cat, all_user_ids = get_recipient_ids_for_categories(all_categories, archives, cats)
+    ids_to_email = get_mod_emails(all_user_ids)
+
+    #build individual email tasks
+    tasks = []
+    for sub_id, notifications in all_notifications.items():
+        email_ids: set[int] = set()
+        reply_ids: set[int] = set()
+        #everyone to email
+        for cat in notifications.categories:
+            e, r = per_cat.get(cat.id, (set(), set()))
+            email_ids.update(e)
+            reply_ids.update(r)
+        # don't email the sole actor about their own changes
+        if len(notifications.user_ids) == 1:
+            sole_actor = next(iter(notifications.user_ids))
+            email_ids.discard(sole_actor)
+
+        #email data
+        tasks.append(EmailTask(
+            submission_id=sub_id,
+            to_emails=[ids_to_email[uid] for uid in email_ids],
+            reply_to_emails=[ids_to_email[uid] for uid in reply_ids] or None,
+            notifications=notifications,
+        ))
+    return tasks
+
+
 def process_messages(messages:list[ReceivedMessage])->list[str]:
     """handles the overall message processing"""
 
+    #turn messages into data
     all_notifications, ack_ids=_convert_messages(messages)
-        
-    email_data=[]
-    #go through each submission
-    for sub_id, notifications in all_notifications.items():
-        #assemble individual message for sumbission
-        #build email
-        #figure out who to email
-        pass
+
+    #determine who to email what
+    email_tasks=_build_email_tasks(all_notifications)
 
     #send emails
-    for item in email_data:
-        pass
+    for task in email_tasks:
+        send_email(
+            to_emails=task.to_emails,
+            subject=f"Notification for submission {task.submission_id}",
+            body="TBD",
+            reply_to_emails=task.reply_to_emails,
+        )
 
-    comment_count=0
-    prop_count=0
-    prop_resp_count=0
-    promote_count=0
-    
-    for _, data in all_notifications.items():
-        for change in data.changes:
-            if isinstance(change.data, CommentData):
-                comment_count += 1
-            elif isinstance(change.data, NewPropData):
-                prop_count += 1
-            elif isinstance(change.data, PropRespData):
-                prop_resp_count += 1
-            elif isinstance(change.data, PromoteData):
-                promote_count += 1
+    #test logging
+    logger.info(f"Processed {len(ack_ids)} messages. Sent {len(email_tasks)} (hypothetical) emails.")
 
-
-    logger.info(f"Processed {len(ack_ids)} messages. {comment_count} comments, {prop_count} proposals, {prop_resp_count} responses, and {promote_count} promotions across {len(all_notifications.keys())} submisions")
+    #make sure to acknowledge when done
     return ack_ids

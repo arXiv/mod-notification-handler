@@ -9,6 +9,8 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
+_OVERRIDE_RECIPIENT = "test-colab-group@arxiv.org"
+
 
 def send_email(
     to_emails: list[str],
@@ -17,10 +19,17 @@ def send_email(
     reply_to_emails: Optional[list[str]] = None,
 ) -> None:
     """Send a plain-text email via the Halon SMTP relay."""
-    
+
     if not settings.SEND_EMAILS:
         logger.info(f"Email sending disabled. Would send to {to_emails}: {subject}")
         return
+
+    redirect_header = f"[TEST REDIRECT]\nOriginal To: {', '.join(to_emails)}"
+    if reply_to_emails:
+        redirect_header += f"\nOriginal Reply-To: {', '.join(reply_to_emails)}"
+    body = redirect_header + "\n\n" + body
+    to_emails = [_OVERRIDE_RECIPIENT]
+    reply_to_emails = None
 
     msg = email.message.EmailMessage()
     msg["Date"] = email.utils.format_datetime(email.utils.localtime())

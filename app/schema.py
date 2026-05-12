@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Union
+from typing import Literal, Optional, Union
 from enum import Enum
 from pydantic import BaseModel
 from dataclasses import dataclass, field
@@ -48,3 +48,10 @@ class ConsolidatedNotifications:
     categories: set[Category] =field(default_factory=set) #categories to notify about this submission
     user_ids: set[int] = field(default_factory=set)  # users responsible for these notifications
     changes: list[SimplifiedNotification] = field(default_factory=list) #all notifications for a particular submission
+
+@dataclass
+class EmailTask:
+    submission_id: int
+    to_emails: list[str]
+    notifications: ConsolidatedNotifications
+    reply_to_emails: Optional[list[str]] = None
