@@ -77,3 +77,4 @@ class SubEmailData:
     status: int
     submitter_name: str
     submitter_id: int
+    submission_categories: str = ""

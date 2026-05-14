@@ -7,7 +7,9 @@ from google.pubsub import ReceivedMessage
 from arxiv.taxonomy.category import Category
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
 from app.email import send_email
-from app.email_content import get_submission_info, render_submission_block, render_change_block, render_email
+from app.email_content import get_submission_info, render_change_block
+from app.templates.submission import render_submission_block
+from app.templates.email_body import render_email
 from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData, UserContact, SubEmailData
 from app.moderators import get_all_moderators, get_recipient_ids_for_categories, get_mod_emails
 
@@ -142,7 +144,7 @@ def _send_email_tasks(
 
         #render email content — failure skips this task (no ack)
         try:
-            sub_text, sub_html = render_submission_block(sub, task.notifications.categories)
+            sub_text, sub_html = render_submission_block(sub)
             change_texts, change_htmls = [], []
             for change in task.notifications.changes:
                 contact = ids_to_contact.get(change.user_id)

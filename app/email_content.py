@@ -5,7 +5,8 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 
 from arxiv.db import Session
-from arxiv.db.models import Submission
+from arxiv.db.models import Submission, SubmissionCategory
+from arxiv.taxonomy.definitions import CATEGORY_ALIASES
 
 from app.schema import SubEmailData, SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData
 
@@ -22,11 +23,31 @@ from app.templates.prop_resp import render_prop_resp_block
 logger = logging.getLogger(__name__)
 
 
+_ALIAS_BY_CANONICAL = {v: k for k, v in CATEGORY_ALIASES.items()}
+
+
+def _build_category_string(cats: list[tuple[str, int]]) -> str:
+    """Format [(category, is_primary), ...] into 'cs.LG (primary), cs.AI'."""
+    primary = "no primary"
+    secondaries: set[str] = set()
+    for cat_id, is_primary in cats:
+        if is_primary:
+            primary = cat_id
+        else:
+            secondaries.add(cat_id)
+        #catch aliases
+        if cat_id in _ALIAS_BY_CANONICAL:
+            secondaries.add(_ALIAS_BY_CANONICAL[cat_id])
+    parts = primary + sorted(secondaries)
+    return " ".join(parts)
+
+
 def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
     """Fetch submission fields needed for email rendering. Returns only found rows."""
     if not submission_ids:
         return {}
     with Session() as session:
+        #get general submission data
         rows = session.execute(
             select(
                 Submission.submission_id,
@@ -37,6 +58,17 @@ def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
                 Submission.submitter_id,
             ).where(Submission.submission_id.in_(submission_ids))
         ).all()
+
+        #get and consolidate category data
+        cat_rows = session.execute(
+            select(SubmissionCategory.submission_id, SubmissionCategory.category, SubmissionCategory.is_primary)
+            .where(SubmissionCategory.submission_id.in_(submission_ids))
+        ).all()
+
+        cats_by_sub: dict[int, list[tuple[str, int]]] = {}
+        for cr in cat_rows:
+            cats_by_sub.setdefault(cr.submission_id, []).append((cr.category, cr.is_primary))
+
         return {
             row.submission_id: SubEmailData(
                 submission_id=row.submission_id,
@@ -45,6 +77,7 @@ def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
                 status=row.status,
                 submitter_name=row.submitter_name or "",
                 submitter_id=row.submitter_id or 0,
+                submission_categories=_build_category_string(cats_by_sub.get(row.submission_id, [])),
             )
             for row in rows
         }
