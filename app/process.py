@@ -146,7 +146,7 @@ def _send_email_tasks(
             change_texts, change_htmls = [], []
             for change in task.notifications.changes:
                 contact = ids_to_contact.get(change.user_id)
-                name = contact.nickname if contact else f"user {change.user_id}"
+                name = contact.display_name if contact else f"user {change.user_id}"
                 ct, ch = render_change_block(change, name)
                 change_texts.append(ct)
                 change_htmls.append(ch)

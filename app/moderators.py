@@ -112,7 +112,7 @@ def get_mod_emails(user_ids: set[int]) -> dict[int, UserContact]:
         return {}
     with Session() as session:
         rows = session.execute(
-            select(TapirUser.user_id, TapirUser.email, TapirNickname.nickname)
+            select(TapirUser.user_id, TapirUser.email, TapirUser.first_name, TapirUser.last_name, TapirNickname.nickname)
             .outerjoin(
                 TapirNickname,
                 (TapirNickname.user_id == TapirUser.user_id),
@@ -122,7 +122,9 @@ def get_mod_emails(user_ids: set[int]) -> dict[int, UserContact]:
         return {
             row.user_id: UserContact(
                 email=row.email,
-                nickname=row.nickname or "nickname_not_found",
+                nickname=row.nickname or "",
+                first_name=row.first_name or "",
+                last_name=row.last_name or "",
             )
             for row in rows
         }
