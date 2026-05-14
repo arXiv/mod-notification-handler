@@ -1,0 +1,66 @@
+"""builds email content for submission notifications"""
+import logging
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from sqlalchemy import select
+
+from arxiv.db import Session
+from arxiv.db.models import Submission
+
+from app.schema import SubEmailData, SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData
+
+_ET = ZoneInfo("America/New_York") #TODO
+def _fmt_time(dt: datetime) -> str:
+    et = dt.astimezone(_ET) #TODO
+    return et.strftime("%m-%d %H:%M ET")
+
+from app.templates.comment import render_comment_block
+from app.templates.promote import render_promote_block
+from app.templates.new_prop import render_new_prop_block
+from app.templates.prop_resp import render_prop_resp_block
+
+logger = logging.getLogger(__name__)
+
+
+def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
+    """Fetch submission fields needed for email rendering. Returns only found rows."""
+    if not submission_ids:
+        return {}
+    with Session() as session:
+        rows = session.execute(
+            select(
+                Submission.submission_id,
+                Submission.title,
+                Submission.authors,
+                Submission.status,
+                Submission.submitter_name,
+                Submission.submitter_id,
+            ).where(Submission.submission_id.in_(submission_ids))
+        ).all()
+        return {
+            row.submission_id: SubEmailData(
+                submission_id=row.submission_id,
+                title=row.title or "",
+                authors=row.authors or "",
+                status=row.status,
+                submitter_name=row.submitter_name or "",
+                submitter_id=row.submitter_id or 0,
+            )
+            for row in rows
+        }
+
+
+def render_change_block(change: SimplifiedNotification, user_name: str) -> tuple[str, str]:
+    """Dispatch to the correct per-change render function."""
+    match change.data:
+        case CommentData():
+            return render_comment_block(change, user_name)
+        case PromoteData():
+            return render_promote_block(change, user_name)
+        case NewPropData():
+            return render_new_prop_block(change, user_name)
+        case PropRespData():
+            return render_prop_resp_block(change, user_name)
+        case _:
+            raise ValueError(f"unknown change data type: {type(change.data)}")
+

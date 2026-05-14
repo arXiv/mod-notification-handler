@@ -1,7 +1,7 @@
 """email sending via Halon SMTP relay"""
 import smtplib
 import email.message
-import email.utils
+from email.utils import format_datetime, localtime, make_msgid
 import logging
 from typing import Optional
 
@@ -16,9 +16,10 @@ def send_email(
     to_emails: list[str],
     subject: str,
     body: str,
+    html_body: str,
     reply_to_emails: Optional[list[str]] = None,
 ) -> None:
-    """Send a plain-text email via the Halon SMTP relay."""
+    """Send a plain-text and HTML email via the Halon SMTP relay."""
 
     if not settings.SEND_EMAILS:
         logger.info(f"Email sending disabled. Would send to {to_emails}: {subject}")
@@ -28,18 +29,20 @@ def send_email(
     if reply_to_emails:
         redirect_header += f"\nOriginal Reply-To: {', '.join(reply_to_emails)}"
     body = redirect_header + "\n\n" + body
+    html_body = redirect_header.replace("\n", "<br>\n") + "<br><br>\n" + html_body
     to_emails = [_OVERRIDE_RECIPIENT]
     reply_to_emails = None
 
     msg = email.message.EmailMessage()
-    msg["Date"] = email.utils.format_datetime(email.utils.localtime())
-    msg["Message-ID"] = email.utils.make_msgid()
+    msg["Date"] = format_datetime(localtime())
+    msg["Message-ID"] = make_msgid()
     msg["From"] = settings.MAIL_FROM
     msg["To"] = ", ".join(to_emails)
     msg["Subject"] = subject
     if reply_to_emails:
         msg["Reply-To"] = ", ".join(reply_to_emails)
     msg.set_content(body, cte="8bit")
+    msg.add_alternative(html_body, subtype="html")
 
     with smtplib.SMTP_SSL(host=settings.SMTP_HOST) as sess:
         sess.login(settings.SMTP_USER, settings.SMTP_PASSWORD)

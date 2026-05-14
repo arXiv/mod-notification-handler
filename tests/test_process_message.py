@@ -132,6 +132,7 @@ def test_parse_comment():
     assert full_note.submission_id== 123
     assert isinstance(simple_note.data, CommentData)
     assert simple_note.data.comment=="hello"
+    assert simple_note.user_id == 1
     assert simple_note.time == datetime(2024, 1, 1, 10, 0, tzinfo=timezone.utc)
 
 def test_parse_new_prop():
@@ -179,6 +180,7 @@ def test_parse_promote():
     assert isinstance(simple_note.data, PromoteData)
     assert simple_note.data.category == "cs.LG"
     assert simple_note.data.promotion_type == "primary"
+    assert simple_note.user_id == 1
     assert simple_note.time == datetime(2024, 1, 1, 10, 0, tzinfo=timezone.utc)
 
 def test_parse_prop_response():
@@ -255,10 +257,12 @@ def test_consolidate_messages():
 
 _NOTE = SimplifiedNotification(
     time=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    user_id=246231,
     data=CommentData(comment="test"),
 )
 _NOTE_2 = SimplifiedNotification(
     time=datetime(2024, 1, 2, tzinfo=timezone.utc),
+    user_id=681201,
     data=CommentData(comment="test reply"),
 )
 
@@ -270,7 +274,7 @@ def test_sole_actor_excluded():
         user_ids={246231},
         changes=[_NOTE],
     )
-    tasks = _build_email_tasks({1: notifications})
+    tasks, _ = _build_email_tasks({1: notifications})
     assert len(tasks) == 1
     task = tasks[0]
     assert 'no-mail@example.com' not in task.to_emails          # sole actor excluded from email
@@ -285,7 +289,7 @@ def test_multi_actor_not_excluded():
         user_ids={246231, 681201},
         changes=[_NOTE, _NOTE_2],
     )
-    tasks = _build_email_tasks({1: notifications})
+    tasks, _ = _build_email_tasks({1: notifications})
     assert len(tasks) == 1
     task = tasks[0]
     assert 'no-mail@example.com' in task.to_emails          # 246231 not excluded (multiple actors)
@@ -300,7 +304,7 @@ def test_skip_task_with_no_recipients():
         user_ids={99999},
         changes=[_NOTE],
     )
-    tasks = _build_email_tasks({1: notifications})
+    tasks, _ = _build_email_tasks({1: notifications})
     assert tasks == []
 
 @pytest.mark.usefixtures("db_session")

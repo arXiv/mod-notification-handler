@@ -40,7 +40,13 @@ class PromoteData(BaseModel):
 
 class SimplifiedNotification(BaseModel):
     time: datetime
+    user_id: int
     data: Union[CommentData, PromoteData, PropRespData, NewPropData]
+
+@dataclass
+class UserContact:
+    email: str
+    nickname: str
 
 @dataclass
 class ConsolidatedNotifications:
@@ -56,3 +62,12 @@ class EmailTask:
     to_emails: list[str]
     notifications: ConsolidatedNotifications
     reply_to_emails: Optional[list[str]] = None
+
+@dataclass
+class SubEmailData:
+    submission_id: int
+    title: str
+    authors: str
+    status: int
+    submitter_name: str
+    submitter_id: int

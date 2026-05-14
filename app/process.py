@@ -6,9 +6,9 @@ from google.pubsub import ReceivedMessage
 
 from arxiv.taxonomy.category import Category
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
-
 from app.email import send_email
-from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData
+from app.email_content import get_submission_info, render_submission_block, render_change_block, render_email
+from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData, UserContact, SubEmailData
 from app.moderators import get_all_moderators, get_recipient_ids_for_categories, get_mod_emails
 
 logging.basicConfig(level=logging.INFO)
@@ -21,7 +21,7 @@ def _parse_message(payload)-> tuple[NotificationParams, SimplifiedNotification]:
 
     match full_note.action:
         case NotificationType.COMMENT:
-            data = CommentData.model_validate(full_note.data)   
+            data = CommentData.model_validate(full_note.data)
         case NotificationType.NEW_PROP:
             data = NewPropData.model_validate(full_note.data)
         case NotificationType.PROMOTE:
@@ -32,7 +32,7 @@ def _parse_message(payload)-> tuple[NotificationParams, SimplifiedNotification]:
             logging.error(f"unhandled action type: {full_note.action}, skipping message")
             raise ValueError(f"unhandled action: {full_note.action}")
 
-    simple_note=SimplifiedNotification(time=full_note.time, data=data)
+    simple_note=SimplifiedNotification(time=full_note.time, user_id=full_note.user_id, data=data)
     return full_note, simple_note
 
 def _convert_messages(messages:list[ReceivedMessage]) ->  tuple[dict[int, ConsolidatedNotifications], list[str]]:
@@ -72,10 +72,10 @@ def _convert_messages(messages:list[ReceivedMessage]) ->  tuple[dict[int, Consol
 
     return all_notifications, failed_parse_acks
 
-def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) -> list[EmailTask]:
+def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) -> tuple[list[EmailTask], dict[int, UserContact]]:
     if not all_notifications:
         logger.info("No notifications to process")
-        return []
+        return [], {}
 
     #collect all the categories and emails
     archives, cats = get_all_moderators()
@@ -84,8 +84,11 @@ def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) 
     for notifications in all_notifications.values():
         all_categories.update(notifications.categories)
 
-    per_cat, all_user_ids = get_recipient_ids_for_categories(all_categories, archives, cats)
-    ids_to_email = get_mod_emails(all_user_ids)
+    per_cat, ids_to_email = get_recipient_ids_for_categories(all_categories, archives, cats)
+
+    #include actor user IDs so one query covers everyone
+    actor_ids = {c.user_id for n in all_notifications.values() for c in n.changes}
+    ids_to_contact = get_mod_emails(ids_to_email | actor_ids)
 
     #build individual email tasks
     tasks = []
@@ -102,10 +105,10 @@ def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) 
             sole_actor = next(iter(notifications.user_ids))
             email_ids.discard(sole_actor)
 
-        to_emails = [ids_to_email[uid] for uid in email_ids if uid in ids_to_email]
-        reply_to = [ids_to_email[uid] for uid in reply_ids if uid in ids_to_email] or None
+        to_emails = [ids_to_contact[uid].email for uid in email_ids if uid in ids_to_contact]
+        reply_to = [ids_to_contact[uid].email for uid in reply_ids if uid in ids_to_contact] or None
 
-        missing = (email_ids | reply_ids) - ids_to_email.keys()
+        missing = (email_ids | reply_ids) - ids_to_contact.keys()
         if missing:
             logger.error(f"submission {sub_id}: no tapir_users row for moderator ids {missing}")
 
@@ -120,7 +123,53 @@ def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) 
             reply_to_emails=reply_to,
             notifications=notifications,
         ))
-    return tasks
+    return tasks, ids_to_contact
+
+
+def _send_email_tasks(
+    email_tasks: list[EmailTask],
+    sub_infos: dict[int, SubEmailData],
+    ids_to_contact: dict[int, UserContact],
+    final_acks: list[str],
+) -> None:
+    """render emails, send, and collect ack IDs for successes"""
+
+    for task in email_tasks:
+        sub = sub_infos.get(task.submission_id)
+        if sub is None:
+            logger.error(f"submission {task.submission_id}: not found in DB, skipping")
+            continue  # don't ack — will redeliver
+
+        #render email content — failure skips this task (no ack)
+        try:
+            sub_text, sub_html = render_submission_block(sub, task.notifications.categories)
+            change_texts, change_htmls = [], []
+            for change in task.notifications.changes:
+                contact = ids_to_contact.get(change.user_id)
+                name = contact.nickname if contact else f"user {change.user_id}"
+                ct, ch = render_change_block(change, name)
+                change_texts.append(ct)
+                change_htmls.append(ch)
+            body_text, body_html = render_email(sub_text, sub_html, change_texts, change_htmls)
+        except Exception:
+            logger.exception(f"Failed to render email for submission {task.submission_id}, skipping")
+            continue
+
+        #send email — failure skips ack (will redeliver)
+        try:
+            cat_str = ", ".join(sorted(c.id for c in task.notifications.categories))#TODO
+            submitter = sub.submitter_name or f"user {sub.submitter_id}"
+            subject = f"Action Required: arXiv submission submit/{task.submission_id} to {cat_str} by {submitter}"
+            send_email(
+                to_emails=task.to_emails,
+                subject=subject,
+                body=body_text,
+                html_body=body_html,
+                reply_to_emails=task.reply_to_emails,
+            )
+            final_acks.extend(task.notifications.ack_ids) #ack only on success
+        except Exception:
+            logger.exception(f"Failed to send email for submission {task.submission_id}, will redeliver")
 
 
 def process_messages(messages:list[ReceivedMessage])->list[str]:
@@ -135,23 +184,20 @@ def process_messages(messages:list[ReceivedMessage])->list[str]:
         return final_acks
 
     #determine who to email what
-    email_tasks = _build_email_tasks(all_notifications)
+    email_tasks, ids_to_contact = _build_email_tasks(all_notifications)
     if not email_tasks:
         logger.info("No emails to send")
         return final_acks
 
+    #fetch submission data — if batch query fails, skip all sends (will redeliver)
+    try:
+        sub_infos = get_submission_info({t.submission_id for t in email_tasks})
+    except Exception:
+        logger.exception("Failed to fetch submission info, skipping all email sends")
+        return final_acks
+
     #send emails
-    for task in email_tasks:
-        try:
-            send_email(
-                to_emails=task.to_emails,
-                subject=f"Notification for submission {task.submission_id}",
-                body="TBD",
-                reply_to_emails=task.reply_to_emails,
-            )
-            final_acks.extend(task.notifications.ack_ids) #ack only on success
-        except Exception:
-            logger.exception(f"Failed to send email for submission {task.submission_id}, will redeliver")
+    _send_email_tasks(email_tasks, sub_infos, ids_to_contact, final_acks)
 
     #test logging
     logger.info(f"Processed {len(final_acks)} messages. Sent {len(email_tasks)} (hypothetical) emails.")
