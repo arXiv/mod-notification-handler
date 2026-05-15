@@ -10,9 +10,9 @@ from arxiv.taxonomy.definitions import CATEGORY_ALIASES
 
 from app.schema import SubEmailData, SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData
 
-_ET = ZoneInfo("America/New_York") #TODO
+_ET = ZoneInfo("America/New_York")
 def _fmt_time(dt: datetime) -> str:
-    et = dt.astimezone(_ET) #TODO
+    et = dt.astimezone(_ET) 
     return et.strftime("%m-%d %H:%M ET")
 
 from app.templates.comment import render_comment_block

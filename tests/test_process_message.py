@@ -332,3 +332,40 @@ def test_all_successful_sends_all_acked():
     assert "ack-1" in ack_ids  # successful send
     assert "ack-2" in ack_ids  # successful send
     assert "ack-3" in ack_ids  # parse failure — acked immediately, won't retry
+
+@pytest.mark.usefixtures("db_session")
+def test_changes_ordered_newest_first():
+    older = {
+        "time": "2024-01-01T10:00:00Z",
+        "submission_id": 123,
+        "user_id": 1,
+        "categories": ["cs.LG", "cs.AI"],
+        "action": "Comment Added",
+        "data": {"comment": "first comment"}
+    }
+    newer = {
+        "time": "2024-01-02T10:00:00Z",
+        "submission_id": 123,
+        "user_id": 2,
+        "categories": ["cs.LG", "cs.AI"],
+        "action": "Comment Added",
+        "data": {"comment": "second comment"}
+    }
+    # messages arrive in chronological order; rendered email should show newest first
+    msg1 = _make_pubsub_message("ack-1", older)
+    msg2 = _make_pubsub_message("ack-2", newer)
+
+    mock_send = Mock()
+    with patch("app.process.send_email", mock_send):
+        process_messages([msg1, msg2])
+
+    assert mock_send.call_count == 1
+    body = mock_send.call_args.kwargs["body"]
+    assert body.index("01-02 05:00 ET") < body.index("01-01 05:00 ET")
+
+    with patch("app.process.send_email", mock_send):
+        process_messages([msg2, msg1])
+
+    assert mock_send.call_count == 2
+    body = mock_send.call_args.kwargs["body"]
+    assert body.index("01-02 05:00 ET") < body.index("01-01 05:00 ET")

@@ -146,7 +146,7 @@ def _send_email_tasks(
         try:
             sub_text, sub_html = render_submission_block(sub)
             change_texts, change_htmls = [], []
-            for change in task.notifications.changes:
+            for change in sorted(task.notifications.changes, key=lambda c: c.time, reverse=True):
                 contact = ids_to_contact.get(change.user_id)
                 name = contact.display_name if contact else f"user {change.user_id}"
                 ct, ch = render_change_block(change, name)
@@ -159,7 +159,7 @@ def _send_email_tasks(
 
         #send email — failure skips ack (will redeliver)
         try:
-            cat_str = ", ".join(sorted(c.id for c in task.notifications.categories))#TODO
+            cat_str = " ".join(sorted(c.id for c in task.notifications.categories))
             submitter = sub.submitter_name or f"user {sub.submitter_id}"
             subject = f"Action Required: arXiv submission submit/{task.submission_id} to {cat_str} by {submitter}"
             send_email(
