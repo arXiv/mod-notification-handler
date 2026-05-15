@@ -8,7 +8,7 @@ def render_prop_resp_block(change: SimplifiedNotification, user_name: str) -> tu
     text = (
         f"[{when}] {user_name} responded to category proposal(s):\n"
         f"  {data.responses}\n"
-        f"  Change:     {data.category_change}\n"
+        f"  Change: {data.category_change}\n"
     )
     html_out = (
         f"<p><strong>[{when}] {user_name}</strong> responded to category proposal(s):<br>\n"

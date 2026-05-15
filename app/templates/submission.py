@@ -20,7 +20,7 @@ def render_submission_block(sub: SubEmailData) -> tuple[str, str]:
         f"Authors:    {authors}\n"
         f"Status:     {status_label}\n"
         f"Current Categories: {cat_list}\n"
-        f"View in Check:      {check_url}\n"
+        f"View in Check: {check_url}\n"
     )
     html_out = (
         f"<p><strong>Submission:</strong> submit/{sub.submission_id}<br>\n"
