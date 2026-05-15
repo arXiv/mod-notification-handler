@@ -38,7 +38,7 @@ def _build_category_string(cats: list[tuple[str, int]]) -> str:
         #catch aliases
         if cat_id in _ALIAS_BY_CANONICAL:
             secondaries.add(_ALIAS_BY_CANONICAL[cat_id])
-    parts = primary + sorted(secondaries)
+    parts = [f"{primary}"] + sorted(secondaries)
     return " ".join(parts)
 
 
