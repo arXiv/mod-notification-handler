@@ -378,3 +378,12 @@ def test_get_submission_info_no_categories():
     assert result[125].submission_categories == "no primary"
 
 
+@pytest.mark.usefixtures("db_session")
+def test_get_submission_info_multiple_ids():
+    result = get_submission_info({123, 124, 125})
+    assert set(result.keys()) == {123, 124, 125}
+    assert result[123].submission_categories == "cs.LG cs.AI"
+    assert result[124].submission_categories == "no primary cs.AI cs.LG"
+    assert result[125].submission_categories == "no primary"
+
+

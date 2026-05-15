@@ -27,7 +27,7 @@ GOOD_PROMOTE = {
     "data": {
         "category": "cs.LG",
         "promotion_type": "primary",
-        "category_change": "promoted"
+        "category_change": "Promoted category cs.LG to primary; cs.AI => cs.LG cs.AI"
     }
 }
 
@@ -233,7 +233,7 @@ def test_consolidate_messages():
     assert sub2.changes[0].time== datetime(2024, 1, 1, 10, 0, tzinfo=timezone.utc)
     assert isinstance(sub2.changes[0].data, PromoteData)
     assert sub2.changes[0].data.category == 'cs.LG'
-    assert sub2.changes[0].data.category_change == "promoted"
+    assert sub2.changes[0].data.category_change == "Promoted category cs.LG to primary; cs.AI => cs.LG cs.AI"
     assert sub2.changes[0].data.promotion_type == "primary"
 
     sub1=data[123]
