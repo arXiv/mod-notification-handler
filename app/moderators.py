@@ -5,7 +5,9 @@ from sqlalchemy import select
 
 from arxiv.taxonomy.category import Category
 from arxiv.db import Session
-from arxiv.db.models import t_arXiv_moderators, TapirUser
+from arxiv.db.models import t_arXiv_moderators, TapirUser, TapirNickname
+
+from app.schema import UserContact
 
 class Moderator(BaseModel):
     user_id:int
@@ -104,13 +106,25 @@ def get_recipient_ids_for_categories(categories: set[Category], all_archives: di
         all_user_ids.update(e | r)
     return per_cat, all_user_ids
 
-def get_mod_emails(user_ids: set[int]) -> dict[int, str]:
-    """Returns {user_id: email} for the given user_ids."""
+def get_mod_emails(user_ids: set[int]) -> dict[int, UserContact]:
+    """Returns {user_id: UserContact} with email and primary nickname for the given user_ids."""
     if not user_ids:
         return {}
     with Session() as session:
         rows = session.execute(
-            select(TapirUser.user_id, TapirUser.email)
+            select(TapirUser.user_id, TapirUser.email, TapirUser.first_name, TapirUser.last_name, TapirNickname.nickname)
+            .outerjoin(
+                TapirNickname,
+                (TapirNickname.user_id == TapirUser.user_id),
+            )
             .where(TapirUser.user_id.in_(user_ids))
         )
-        return {row.user_id: row.email for row in rows}
+        return {
+            row.user_id: UserContact(
+                email=row.email,
+                nickname=row.nickname or "",
+                first_name=row.first_name or "",
+                last_name=row.last_name or "",
+            )
+            for row in rows
+        }

@@ -56,8 +56,8 @@ sphinx = ["sphinx", "sphinx-autodoc-typehints", "sphinxcontrib-websupport"]
 [package.source]
 type = "git"
 url = "https://github.com/arXiv/arxiv-base.git"
-reference = "8135d213c8409297e807f1d9a73709799b9750ef"
-resolved_reference = "8135d213c8409297e807f1d9a73709799b9750ef"
+reference = "4c53f9bf6b77cceeb8ec71942e53a5b32ceb7cad"
+resolved_reference = "4c53f9bf6b77cceeb8ec71942e53a5b32ceb7cad"
 
 [[package]]
 name = "bleach"
@@ -2214,4 +2214,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "bc12c30c4222acacd2139cd76e2a7cc997eae7ce74d4f0ad202942f313f1776d"
+content-hash = "1038fd37882ce3ed0dc5858b26854298ebadd3e44cbfa9b2650597907dbfc472"

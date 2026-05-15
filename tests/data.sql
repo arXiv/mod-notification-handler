@@ -43,3 +43,28 @@ INSERT INTO `arXiv_moderators` VALUES (50004, 'cs', '',  0, 0, 0, 0, 0);
 INSERT INTO `tapir_users` VALUES (77777,'Archive','OptOut','',1,1,'archive-optout@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);
 INSERT INTO `arXiv_moderators` VALUES (77777, 'astro-ph', '', 0, 0, 0, 0, 0);
 INSERT INTO `arXiv_moderators` VALUES (77777, 'astro-ph', 'HE', 0, 1, 0, 1, 0);
+
+-- actor users referenced in test messages (user_id=1 and user_id=2)
+INSERT INTO `tapir_users` VALUES (1,'Test','Editor','',1,1,'editor-one@example.com',8,0,2,1384185389,'','',0,0,0,1,1,0,0,0,0,'',0,0);
+INSERT INTO `tapir_users` VALUES (2,'Jane','Smith','',1,1,'editor-two@example.com',8,0,2,1384185389,'','',0,0,0,1,1,0,0,0,0,'',0,0);
+
+-- nicknames for key test users (nick_id, nickname, user_id, user_seq, flag_valid, role, policy, flag_primary)
+INSERT INTO `tapir_nicknames` VALUES (10001,'bbarker',246231,1,1,0,0,1);
+INSERT INTO `tapir_nicknames` VALUES (10002,'shamsi',681201,1,1,0,0,1);
+INSERT INTO `tapir_nicknames` VALUES (10003,'moddevs',1234544,1,1,0,0,1);
+INSERT INTO `tapir_nicknames` VALUES (10004,'testeditor',1,1,1,0,0,1);
+INSERT INTO `tapir_nicknames` VALUES (10005,'jsmith',2,1,1,0,0,1);
+
+-- test submissions used in integration tests
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, remote_addr, remote_host, package) VALUES (123, 'A Test Paper on Machine Learning', 'Author One, Author Two', 1, '127.0.0.1', 'localhost', '');
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, remote_addr, remote_host, package) VALUES (124, 'Another Test Paper on Category Promotion', 'Author Three', 1, '127.0.0.1', 'localhost', '');
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, remote_addr, remote_host, package) VALUES (125, 'Paper With No Categories', 'Some Author', 1, '127.0.0.1', 'localhost', '');
+
+-- submission categories for get_submission_info tests
+-- 123: cs.LG primary + cs.AI cross-list
+INSERT INTO `arXiv_submission_category` VALUES (123, 'cs.LG', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (123, 'cs.AI', 0, NULL);
+-- 124: no primary, two cross-list
+INSERT INTO `arXiv_submission_category` VALUES (124, 'cs.AI', 0, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (124, 'cs.LG', 0, NULL);
+-- 125: no categories

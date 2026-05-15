@@ -166,8 +166,14 @@ def test_get_recipient_ids_archive_optout_excluded():
 @pytest.mark.usefixtures("db_session")
 def test_get_user_emails_returns_map():
     result = get_mod_emails({246231, 681201})
-    assert result[246231] == 'no-mail@example.com'
-    assert result[681201] == 'also-dont-mail@example.com'
+    assert result[246231].email == 'no-mail@example.com'
+    assert result[246231].nickname == 'bbarker'
+    assert result[246231].first_name == 'Brandon'
+    assert result[246231].last_name == 'Barker'
+    assert result[246231].display_name == 'Brandon Barker (bbarker)'
+    assert result[681201].email == 'also-dont-mail@example.com'
+    assert result[681201].nickname == 'shamsi'
+    assert result[681201].display_name == 'Shams Brinn (shamsi)'
 
 @pytest.mark.usefixtures("db_session")
 def test_get_user_emails_empty_input():

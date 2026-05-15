@@ -27,7 +27,7 @@ GOOD_PROMOTE = {
     "data": {
         "category": "cs.LG",
         "promotion_type": "primary",
-        "category_change": "promoted"
+        "category_change": "Promoted category cs.LG to primary; cs.AI => cs.LG cs.AI"
     }
 }
 
@@ -132,6 +132,7 @@ def test_parse_comment():
     assert full_note.submission_id== 123
     assert isinstance(simple_note.data, CommentData)
     assert simple_note.data.comment=="hello"
+    assert simple_note.user_id == 1
     assert simple_note.time == datetime(2024, 1, 1, 10, 0, tzinfo=timezone.utc)
 
 def test_parse_new_prop():
@@ -179,6 +180,7 @@ def test_parse_promote():
     assert isinstance(simple_note.data, PromoteData)
     assert simple_note.data.category == "cs.LG"
     assert simple_note.data.promotion_type == "primary"
+    assert simple_note.user_id == 1
     assert simple_note.time == datetime(2024, 1, 1, 10, 0, tzinfo=timezone.utc)
 
 def test_parse_prop_response():
@@ -231,7 +233,7 @@ def test_consolidate_messages():
     assert sub2.changes[0].time== datetime(2024, 1, 1, 10, 0, tzinfo=timezone.utc)
     assert isinstance(sub2.changes[0].data, PromoteData)
     assert sub2.changes[0].data.category == 'cs.LG'
-    assert sub2.changes[0].data.category_change == "promoted"
+    assert sub2.changes[0].data.category_change == "Promoted category cs.LG to primary; cs.AI => cs.LG cs.AI"
     assert sub2.changes[0].data.promotion_type == "primary"
 
     sub1=data[123]
@@ -255,10 +257,12 @@ def test_consolidate_messages():
 
 _NOTE = SimplifiedNotification(
     time=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    user_id=246231,
     data=CommentData(comment="test"),
 )
 _NOTE_2 = SimplifiedNotification(
     time=datetime(2024, 1, 2, tzinfo=timezone.utc),
+    user_id=681201,
     data=CommentData(comment="test reply"),
 )
 
@@ -270,7 +274,7 @@ def test_sole_actor_excluded():
         user_ids={246231},
         changes=[_NOTE],
     )
-    tasks = _build_email_tasks({1: notifications})
+    tasks, _ = _build_email_tasks({1: notifications})
     assert len(tasks) == 1
     task = tasks[0]
     assert 'no-mail@example.com' not in task.to_emails          # sole actor excluded from email
@@ -285,7 +289,7 @@ def test_multi_actor_not_excluded():
         user_ids={246231, 681201},
         changes=[_NOTE, _NOTE_2],
     )
-    tasks = _build_email_tasks({1: notifications})
+    tasks, _ = _build_email_tasks({1: notifications})
     assert len(tasks) == 1
     task = tasks[0]
     assert 'no-mail@example.com' in task.to_emails          # 246231 not excluded (multiple actors)
@@ -300,7 +304,7 @@ def test_skip_task_with_no_recipients():
         user_ids={99999},
         changes=[_NOTE],
     )
-    tasks = _build_email_tasks({1: notifications})
+    tasks, _ = _build_email_tasks({1: notifications})
     assert tasks == []
 
 @pytest.mark.usefixtures("db_session")
@@ -328,3 +332,40 @@ def test_all_successful_sends_all_acked():
     assert "ack-1" in ack_ids  # successful send
     assert "ack-2" in ack_ids  # successful send
     assert "ack-3" in ack_ids  # parse failure — acked immediately, won't retry
+
+@pytest.mark.usefixtures("db_session")
+def test_changes_ordered_newest_first():
+    older = {
+        "time": "2024-01-01T10:00:00Z",
+        "submission_id": 123,
+        "user_id": 1,
+        "categories": ["cs.LG", "cs.AI"],
+        "action": "Comment Added",
+        "data": {"comment": "first comment"}
+    }
+    newer = {
+        "time": "2024-01-02T10:00:00Z",
+        "submission_id": 123,
+        "user_id": 2,
+        "categories": ["cs.LG", "cs.AI"],
+        "action": "Comment Added",
+        "data": {"comment": "second comment"}
+    }
+    # messages arrive in chronological order; rendered email should show newest first
+    msg1 = _make_pubsub_message("ack-1", older)
+    msg2 = _make_pubsub_message("ack-2", newer)
+
+    mock_send = Mock()
+    with patch("app.process.send_email", mock_send):
+        process_messages([msg1, msg2])
+
+    assert mock_send.call_count == 1
+    body = mock_send.call_args.kwargs["body"]
+    assert body.index("01-02 05:00 ET") < body.index("01-01 05:00 ET")
+
+    with patch("app.process.send_email", mock_send):
+        process_messages([msg2, msg1])
+
+    assert mock_send.call_count == 2
+    body = mock_send.call_args.kwargs["body"]
+    assert body.index("01-02 05:00 ET") < body.index("01-01 05:00 ET")
