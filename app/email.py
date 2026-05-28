@@ -2,6 +2,7 @@
 import smtplib
 import email.message
 from email.utils import format_datetime, localtime, make_msgid
+from urllib.parse import urlparse
 import logging
 from typing import Optional
 
@@ -44,8 +45,9 @@ def send_email(
     msg.set_content(body, cte="8bit")
     msg.add_alternative(html_body, subtype="html")
 
-    with smtplib.SMTP_SSL(host=settings.SMTP_HOST) as sess:
-        sess.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+    creds = urlparse(settings.HALON_CREDS)
+    with smtplib.SMTP_SSL(host=creds.hostname, port=creds.port) as sess:
+        sess.login(creds.username, creds.password)
         sess.send_message(
             msg,
             from_addr=settings.MAIL_FROM,
