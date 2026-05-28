@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Union
+from typing import Literal, Union, Optional
 from enum import Enum
 from pydantic import BaseModel
 from dataclasses import dataclass, field
@@ -78,3 +78,4 @@ class SubEmailData:
     submitter_name: str
     submitter_id: int
     submission_categories: str = ""
+    submit_time: Optional[datetime] = None

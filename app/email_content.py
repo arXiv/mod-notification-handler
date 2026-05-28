@@ -3,13 +3,14 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from sqlalchemy import select
 
+from arxiv.config import settings as arxiv_settings
 from arxiv.db import Session
 from arxiv.db.models import Submission, SubmissionCategory
 from arxiv.taxonomy.definitions import CATEGORY_ALIASES
 
 from app.schema import SubEmailData, SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, EmailTask, UserContact
 
-_ET = ZoneInfo("America/New_York")
+_ET = ZoneInfo(arxiv_settings.ARXIV_BUSINESS_TZ)
 def _fmt_time(dt: datetime) -> str:
     et = dt.astimezone(_ET)
     return et.strftime("%m-%d %H:%M ET")
@@ -55,6 +56,7 @@ def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
                 Submission.status,
                 Submission.submitter_name,
                 Submission.submitter_id,
+                Submission.submit_time,
             ).where(Submission.submission_id.in_(submission_ids))
         ).all()
 
@@ -77,6 +79,7 @@ def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
                 submitter_name=row.submitter_name or "",
                 submitter_id=row.submitter_id or 0,
                 submission_categories=_build_category_string(cats_by_sub.get(row.submission_id, [])),
+                submit_time=row.submit_time,
             )
             for row in rows
         }
