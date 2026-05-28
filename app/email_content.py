@@ -1,5 +1,4 @@
 """builds email content for submission notifications"""
-import logging
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from sqlalchemy import select
@@ -12,15 +11,13 @@ from app.schema import SubEmailData, SimplifiedNotification, CommentData, Promot
 
 _ET = ZoneInfo("America/New_York")
 def _fmt_time(dt: datetime) -> str:
-    et = dt.astimezone(_ET) 
+    et = dt.astimezone(_ET)
     return et.strftime("%m-%d %H:%M ET")
 
 from app.templates.comment import render_comment_block
 from app.templates.promote import render_promote_block
 from app.templates.new_prop import render_new_prop_block
 from app.templates.prop_resp import render_prop_resp_block
-
-logger = logging.getLogger(__name__)
 
 
 _ALIAS_BY_CANONICAL = {v: k for k, v in CATEGORY_ALIASES.items()}

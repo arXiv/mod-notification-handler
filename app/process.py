@@ -13,7 +13,6 @@ from app.templates.email_body import render_email
 from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData, UserContact, SubEmailData
 from app.moderators import get_all_moderators, get_recipient_ids_for_categories, get_mod_emails
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +30,7 @@ def _parse_message(payload)-> tuple[NotificationParams, SimplifiedNotification]:
         case NotificationType.PROP_RESP:
             data = PropRespData.model_validate(full_note.data)
         case _:
-            logging.error(f"unhandled action type: {full_note.action}, skipping message")
+            logger.error(f"unhandled action type: {full_note.action}, skipping message")
             raise ValueError(f"unhandled action: {full_note.action}")
 
     simple_note=SimplifiedNotification(time=full_note.time, user_id=full_note.user_id, data=data)
@@ -51,7 +50,7 @@ def _convert_messages(messages:list[ReceivedMessage]) ->  tuple[dict[int, Consol
             payload = json.loads(msg.message.data.decode("utf-8"))
             full_note, simple_note = _parse_message(payload)
         except Exception as e:
-            logging.error(f"[PARSE FAILURE] {e} — msg: {msg.message.data}")
+            logger.error(f"[PARSE FAILURE] {e} — msg: {msg.message.data}")
             failed_parse_acks.append(msg.ack_id) #ack parse failures so they don't repeat
             continue
 
@@ -61,7 +60,7 @@ def _convert_messages(messages:list[ReceivedMessage]) ->  tuple[dict[int, Consol
             try:
                 categories.add(CATEGORIES_ACTIVE[cat])
             except KeyError:
-                logging.error(f"unknown category: {cat}, skipping")
+                logger.error(f"unknown category: {cat}, skipping")
 
         id=full_note.submission_id
         sub_notes = all_notifications.get(id, ConsolidatedNotifications(submission_id=id))

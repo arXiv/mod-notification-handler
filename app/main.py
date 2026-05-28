@@ -7,6 +7,7 @@ from typing import List
 from google.cloud import pubsub_v1
 from google.pubsub import ReceivedMessage, SubscriberClient
 
+from app.config import settings
 from app.process import process_messages
 
 PROJECT_ID = "arxiv-development"
@@ -14,7 +15,7 @@ SUBSCRIPTION_ID = "mod-notification-handler"
 BATCH_SIZE = 300
 MAX_PULL_SEC=60
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=settings.LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 
