@@ -105,7 +105,7 @@ def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) 
             email_ids.discard(sole_actor)
 
         to_emails = [ids_to_contact[uid].email for uid in email_ids if uid in ids_to_contact]
-        reply_to = [ids_to_contact[uid].email for uid in reply_ids if uid in ids_to_contact] or None
+        reply_to = [ids_to_contact[uid].email for uid in reply_ids if uid in ids_to_contact]
 
         missing = (email_ids | reply_ids) - ids_to_contact.keys()
         if missing:
