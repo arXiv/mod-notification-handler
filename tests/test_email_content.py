@@ -11,7 +11,7 @@ from app.templates.promote import render_promote_block
 from app.templates.new_prop import render_new_prop_block
 from app.templates.prop_resp import render_prop_resp_block
 from app.templates.submission import render_submission_block
-from app.templates.email_body import render_email, CHECK_GUIDE_URL, HOW_TO_MOD_URL, MOD_HUB_URL
+from app.templates.email_body import render_body, CHECK_GUIDE_URL, HOW_TO_MOD_URL, MOD_HUB_URL
 
 _TIME = datetime(2024, 6, 15, 14, 30, tzinfo=timezone.utc)
 _USER = "Alice Mod"
@@ -143,7 +143,7 @@ def test_render_email_contains_all_sections_and_footer():
         change_texts.append(ct)
         change_htmls.append(ch)
 
-    body_text, body_html = render_email(sub_text, sub_html, change_texts, change_htmls)
+    body_text, body_html = render_body(sub_text, sub_html, change_texts, change_htmls)
 
     # submission info present
     assert "ML Paper" in body_text and "ML Paper" in body_html
@@ -273,7 +273,7 @@ def test_full_email_exact_text():
     sub_text, sub_html = render_submission_block(sub)
     comment_text, comment_html = render_change_block(comment, _USER)
     promote_text, promote_html = render_change_block(promote, _USER)
-    body_text, _ = render_email(sub_text, sub_html, [comment_text, promote_text], [comment_html, promote_html])
+    body_text, _ = render_body(sub_text, sub_html, [comment_text, promote_text], [comment_html, promote_html])
     assert body_text == (
         "Submission: submit/123\n"
         "Title:      ML Paper\n"
@@ -303,7 +303,7 @@ def test_full_email_exact_html():
     sub_text, sub_html = render_submission_block(sub)
     comment_text, comment_html = render_change_block(comment, _USER)
     promote_text, promote_html = render_change_block(promote, _USER)
-    _, body_html = render_email(sub_text, sub_html, [comment_text, promote_text], [comment_html, promote_html])
+    _, body_html = render_body(sub_text, sub_html, [comment_text, promote_text], [comment_html, promote_html])
     assert body_html == (
         "<p><strong>Submission:</strong> submit/123<br>\n"
         "<strong>Title:</strong> ML Paper<br>\n"

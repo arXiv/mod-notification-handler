@@ -77,9 +77,10 @@ def test_collect_acks():
         {"submission_id": 123, "action": "created"},
     )
 
-    messages = [msg1, msg2]
-    result = process_messages(messages) #type: ignore 
-    assert result == ["ack-1", "ack-2"]
+    mock_ack = Mock()
+    process_messages([msg1, msg2], ack_fn=mock_ack)
+    mock_ack.assert_any_call(["ack-1"])  # parse failures acked immediately
+    mock_ack.assert_any_call(["ack-2"])
 
 def test_general_parse():
 
@@ -221,9 +222,10 @@ def test_consolidate_messages():
     msg5 = _make_pubsub_message("ack-7", GOOD_PROP_RESP)
     messages=[msg1, msg2, msg3, msg4, msg5]
 
-    data, ids = _convert_messages(messages) #type: ignore
+    mock_ack = Mock()
+    data = _convert_messages(messages, ack_fn=mock_ack)
 
-    assert ids == ['ack-5'] #only parse failures returned; valid acks live on each submission
+    mock_ack.assert_called_once_with(['ack-5'])  # parse failure acked immediately
 
     sub2=data[124]
     assert sub2.ack_ids == ['ack-4']
@@ -312,12 +314,14 @@ def test_send_error_does_not_abort():
     msg1 = _make_pubsub_message("ack-1", GOOD_COMMENT)   # sub 123, cs.AI + cs.LG
     msg2 = _make_pubsub_message("ack-2", GOOD_PROMOTE)   # sub 124, cs.AI + cs.LG
 
+    mock_ack = Mock()
     mock_send = Mock(side_effect=[RuntimeError("smtp down"), None])
     with patch("app.process.send_email", mock_send):
-        ack_ids = process_messages([msg1, msg2])
+        process_messages([msg1, msg2], ack_fn=mock_ack)
 
-    assert "ack-1" not in ack_ids  # failed send — sub 123 will redeliver
-    assert "ack-2" in ack_ids      # successful send — sub 124 acked
+    acked = [id for call in mock_ack.call_args_list for id in call.args[0]]
+    assert "ack-1" not in acked  # failed send — sub 123 will redeliver
+    assert "ack-2" in acked      # successful send — sub 124 acked
     assert mock_send.call_count == 2
 
 @pytest.mark.usefixtures("db_session")
@@ -326,12 +330,14 @@ def test_all_successful_sends_all_acked():
     msg2 = _make_pubsub_message("ack-2", GOOD_PROMOTE)  # sub 124
     msg3 = _make_pubsub_message("ack-3", BAD_PROMOTE)   # parse failure
 
+    mock_ack = Mock()
     with patch("app.process.send_email"):
-        ack_ids = process_messages([msg1, msg2, msg3])
+        process_messages([msg1, msg2, msg3], ack_fn=mock_ack)
 
-    assert "ack-1" in ack_ids  # successful send
-    assert "ack-2" in ack_ids  # successful send
-    assert "ack-3" in ack_ids  # parse failure — acked immediately, won't retry
+    acked = [id for call in mock_ack.call_args_list for id in call.args[0]]
+    assert "ack-1" in acked      # successful send
+    assert "ack-2" in acked      # successful send
+    assert "ack-3" in acked      # parse failure — acked immediately
 
 @pytest.mark.usefixtures("db_session")
 def test_changes_ordered_newest_first():
@@ -357,14 +363,14 @@ def test_changes_ordered_newest_first():
 
     mock_send = Mock()
     with patch("app.process.send_email", mock_send):
-        process_messages([msg1, msg2])
+        process_messages([msg1, msg2], ack_fn=Mock())
 
     assert mock_send.call_count == 1
     body = mock_send.call_args.kwargs["body"]
     assert body.index("01-02 05:00 ET") < body.index("01-01 05:00 ET")
 
     with patch("app.process.send_email", mock_send):
-        process_messages([msg2, msg1])
+        process_messages([msg2, msg1], ack_fn=Mock())
 
     assert mock_send.call_count == 2
     body = mock_send.call_args.kwargs["body"]

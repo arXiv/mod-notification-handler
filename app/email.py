@@ -31,7 +31,7 @@ def send_email(
     body = redirect_header + "\n\n" + body
     html_body = redirect_header.replace("\n", "<br>\n") + "<br><br>\n" + html_body
     to_emails = [_OVERRIDE_RECIPIENT]
-    reply_to_emails = None
+    reply_to_emails = []
 
     msg = email.message.EmailMessage()
     msg["Date"] = format_datetime(localtime())

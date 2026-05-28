@@ -7,6 +7,7 @@ from typing import List
 from google.cloud import pubsub_v1
 from google.pubsub import ReceivedMessage, SubscriberClient
 
+from app.config import settings
 from app.process import process_messages
 
 PROJECT_ID = "arxiv-development"
@@ -14,7 +15,7 @@ SUBSCRIPTION_ID = "mod-notification-handler"
 BATCH_SIZE = 300
 MAX_PULL_SEC=60
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=settings.LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 
@@ -55,16 +56,10 @@ def main():
         logger.warning("No messages found.")
         return
 
-    #collect data
-    to_ack=process_messages(messages)
+    def ack(ids: list[str]) -> None:
+        subscriber.acknowledge(request={"subscription": subscription_path, "ack_ids": ids})
 
-    #acknowledge all
-    subscriber.acknowledge(
-        request={
-            "subscription": subscription_path,
-            "ack_ids": to_ack,
-        }
-    )
+    process_messages(messages, ack_fn=ack)
 
 
 if __name__ == "__main__":

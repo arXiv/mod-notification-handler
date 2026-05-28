@@ -4,6 +4,8 @@ class Settings(BaseSettings):
     CLASSIC_DB_URI: str = "sqlite:///:memory:"
     ENV: str = 'LOCAL'
 
+    LOG_LEVEL: str = "INFO"
+
     #email related
     SEND_EMAILS: bool = False
     SMTP_PASSWORD: str = "not-configured"

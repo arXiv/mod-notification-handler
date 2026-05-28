@@ -6,7 +6,7 @@ MOD_HUB_URL       = "https://arxiv-org.atlassian.net/wiki/spaces/ModRes/pages/81
 MOD_HUB_TITLE     = "Moderator Hub"
 
 
-def render_email(
+def render_body(
     sub_text: str,
     sub_html: str,
     change_texts: list[str],
