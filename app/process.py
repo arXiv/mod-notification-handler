@@ -1,6 +1,7 @@
 """processes notifications"""
 import logging
 import json
+from typing import Callable
 
 from google.pubsub import ReceivedMessage
 
@@ -34,10 +35,9 @@ def _parse_message(payload)-> tuple[NotificationParams, SimplifiedNotification]:
     simple_note=SimplifiedNotification(time=full_note.time, user_id=full_note.user_id, data=data)
     return full_note, simple_note
 
-def _convert_messages(messages:list[ReceivedMessage]) ->  tuple[dict[int, ConsolidatedNotifications], list[str]]:
+def _convert_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[str]], None]) -> dict[int, ConsolidatedNotifications]:
     """manages turning the recieved pubsub messages into consolidated data on submissions with notifications"""
 
-    failed_parse_acks: list[str] = [] #parse failures: always ack, won't fix on retry
     all_notifications: dict[int, ConsolidatedNotifications]={} #tracks all notifications for each submission
 
     #convert each message and store in lists
@@ -49,7 +49,7 @@ def _convert_messages(messages:list[ReceivedMessage]) ->  tuple[dict[int, Consol
             full_note, simple_note = _parse_message(payload)
         except Exception as e:
             logger.error(f"[PARSE FAILURE] {e} — msg: {msg.message.data}")
-            failed_parse_acks.append(msg.ack_id) #ack parse failures so they don't repeat
+            ack_fn([msg.ack_id]) #ack immediately — won't be fixed on retry
             continue
 
         #convert and store
@@ -69,7 +69,7 @@ def _convert_messages(messages:list[ReceivedMessage]) ->  tuple[dict[int, Consol
 
         all_notifications[id]=sub_notes
 
-    return all_notifications, failed_parse_acks
+    return all_notifications
 
 def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) -> tuple[list[EmailTask], dict[int, UserContact]]:
     if not all_notifications:
@@ -129,9 +129,9 @@ def _send_email_tasks(
     email_tasks: list[EmailTask],
     sub_infos: dict[int, SubEmailData],
     ids_to_contact: dict[int, UserContact],
-    final_acks: list[str],
+    ack_fn: Callable[[list[str]], None],
 ) -> None:
-    """render emails, send, and collect ack IDs for successes"""
+    """render and send emails, acking each submission only after its email sends"""
 
     for task in email_tasks:
         sub = sub_infos.get(task.submission_id)
@@ -158,40 +158,35 @@ def _send_email_tasks(
                 html_body=body_html,
                 reply_to_emails=task.reply_to_emails,
             )
-            final_acks.extend(task.notifications.ack_ids) #ack only on success
+            ack_fn(task.notifications.ack_ids)  # ack only after successful send
         except Exception:
             logger.exception(f"Failed to send email for submission {task.submission_id}, will redeliver")
 
 
-def process_messages(messages:list[ReceivedMessage])->list[str]:
+def process_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[str]], None]) -> None:
     """handles the overall message processing"""
 
-    #turn messages into data
-    all_notifications, failed_parse_acks = _convert_messages(messages)
-    final_acks = list(failed_parse_acks)
+    #turn messages into data — parse failures acked immediately via ack_fn
+    all_notifications = _convert_messages(messages, ack_fn)
 
     if not all_notifications:
         logger.info("No valid notifications after parsing, nothing to send")
-        return final_acks
+        return
 
     #determine who to email what
     email_tasks, ids_to_contact = _build_email_tasks(all_notifications)
     if not email_tasks:
         logger.info("No emails to send")
-        return final_acks
+        return
 
     #fetch submission data — if batch query fails, skip all sends (will redeliver)
     try:
         sub_infos = get_submission_info({t.submission_id for t in email_tasks})
     except Exception:
         logger.exception("Failed to fetch submission info, skipping all email sends")
-        return final_acks
+        return
 
     #send emails
-    _send_email_tasks(email_tasks, sub_infos, ids_to_contact, final_acks)
-
-    #test logging
-    logger.info(f"Processed {len(final_acks)} messages. Sent {len(email_tasks)} (hypothetical) emails.")
-
-    #make sure to acknowledge when done
-    return final_acks
+    _send_email_tasks(email_tasks, sub_infos, ids_to_contact, ack_fn)
+    logger.info(f"Processed {len(messages)} messages. Sent {len(email_tasks)} (hypothetical) emails.")
+    return

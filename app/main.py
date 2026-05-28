@@ -56,16 +56,10 @@ def main():
         logger.warning("No messages found.")
         return
 
-    #collect data
-    to_ack=process_messages(messages)
+    def ack(ids: list[str]) -> None:
+        subscriber.acknowledge(request={"subscription": subscription_path, "ack_ids": ids})
 
-    #acknowledge all
-    subscriber.acknowledge(
-        request={
-            "subscription": subscription_path,
-            "ack_ids": to_ack,
-        }
-    )
+    process_messages(messages, ack_fn=ack)
 
 
 if __name__ == "__main__":
