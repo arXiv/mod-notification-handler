@@ -375,3 +375,41 @@ def test_changes_ordered_newest_first():
     assert mock_send.call_count == 2
     body = mock_send.call_args.kwargs["body"]
     assert body.index("01-02 05:00 ET") < body.index("01-01 05:00 ET")
+
+@pytest.mark.usefixtures("db_session")
+def test_subject_uses_paper_categories():
+    # submission 123: cs.LG (primary) + cs.AI (cross), no submitter name in DB
+    msg = _make_pubsub_message("ack-1", GOOD_COMMENT)
+
+    mock_send = Mock()
+    with patch("app.process.send_email", mock_send):
+        process_messages([msg], ack_fn=Mock())
+
+    assert mock_send.call_args.kwargs["subject"] == \
+        "Action Required: arXiv submission submit/123 to cs.LG cs.AI by user 0"
+
+@pytest.mark.usefixtures("db_session")
+def test_subject_no_primary_category():
+    # submission 124: cs.AI + cs.LG both cross-list, no primary
+    note = {**GOOD_COMMENT, "submission_id": 124}
+    msg = _make_pubsub_message("ack-1", note)
+
+    mock_send = Mock()
+    with patch("app.process.send_email", mock_send):
+        process_messages([msg], ack_fn=Mock())
+
+    assert mock_send.call_args.kwargs["subject"] == \
+        "Action Required: arXiv submission submit/124 to no primary cs.AI cs.LG by user 0"
+
+@pytest.mark.usefixtures("db_session")
+def test_subject_alias_category_expands():
+    # submission 126: math-ph (primary); math.MP alias should also appear
+    note = {**GOOD_COMMENT, "submission_id": 126}
+    msg = _make_pubsub_message("ack-1", note)
+
+    mock_send = Mock()
+    with patch("app.process.send_email", mock_send):
+        process_messages([msg], ack_fn=Mock())
+
+    assert mock_send.call_args.kwargs["subject"] == \
+        "Action Required: arXiv submission submit/126 to math-ph math.MP by user 0"

@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     SMTP_HOST: str = "mailh.arxiv.org"
     SMTP_USER: str = "arxiv"
     MAIL_FROM: str = "e-prints@arxiv.org"
-    REDIRECT_RECIPIENT: str = "test-colab-group@arxiv.org"
+    REDIRECT_RECIPIENT: Optional[str] = None
     ARCHIVAL_EMAIL: Optional[str] = None
     MOD_REPLY_TO: Optional[str] = None
 

@@ -27,6 +27,10 @@ def send_email(
         return
 
     # redirect emails while under development
+    if not settings.REDIRECT_RECIPIENT:
+        logger.error("REDIRECT_RECIPIENT not set — refusing to send to avoid misdirected email")
+        return
+
     redirect_header = f"[TEST REDIRECT]\nOriginal To: {', '.join(to_emails)}"
     if reply_to_emails:
         redirect_header += f"\nOriginal Reply-To: {', '.join(reply_to_emails)}"

@@ -59,6 +59,7 @@ INSERT INTO `tapir_nicknames` VALUES (10005,'jsmith',2,1,1,0,0,1);
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, remote_addr, remote_host, package) VALUES (123, 'A Test Paper on Machine Learning', 'Author One, Author Two', 1, '127.0.0.1', 'localhost', '');
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, remote_addr, remote_host, package) VALUES (124, 'Another Test Paper on Category Promotion', 'Author Three', 1, '127.0.0.1', 'localhost', '');
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, remote_addr, remote_host, package) VALUES (125, 'Paper With No Categories', 'Some Author', 1, '127.0.0.1', 'localhost', '');
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, remote_addr, remote_host, package) VALUES (126, 'A Math-Physics Paper', 'Author Math', 1, '127.0.0.1', 'localhost', '');
 
 -- submission categories for get_submission_info tests
 -- 123: cs.LG primary + cs.AI cross-list
@@ -68,3 +69,5 @@ INSERT INTO `arXiv_submission_category` VALUES (123, 'cs.AI', 0, NULL);
 INSERT INTO `arXiv_submission_category` VALUES (124, 'cs.AI', 0, NULL);
 INSERT INTO `arXiv_submission_category` VALUES (124, 'cs.LG', 0, NULL);
 -- 125: no categories
+-- 126: math-ph primary (math.MP alias should also appear)
+INSERT INTO `arXiv_submission_category` VALUES (126, 'math-ph', 1, NULL);
