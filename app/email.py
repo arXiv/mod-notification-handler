@@ -9,8 +9,6 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-_OVERRIDE_RECIPIENT = "test-colab-group@arxiv.org"
-
 
 def send_email(
     to_emails: list[str],
@@ -21,18 +19,26 @@ def send_email(
 ) -> None:
     """Send a plain-text and HTML email via the Halon SMTP relay."""
 
+    reply_to_emails = (reply_to_emails or []) + ([settings.MOD_REPLY_TO] if settings.MOD_REPLY_TO else [])
+    bcc_emails: list[str] = [settings.ARCHIVAL_EMAIL] if settings.ARCHIVAL_EMAIL else []
+
     if not settings.SEND_EMAILS:
         logger.info(f"Email sending disabled. Would send to {to_emails}: {subject}")
         return
 
+    # redirect emails while under development
     redirect_header = f"[TEST REDIRECT]\nOriginal To: {', '.join(to_emails)}"
     if reply_to_emails:
         redirect_header += f"\nOriginal Reply-To: {', '.join(reply_to_emails)}"
+    if bcc_emails:
+        redirect_header += f"\nOriginal Bcc: {', '.join(bcc_emails)}"
     body = redirect_header + "\n\n" + body
     html_body = redirect_header.replace("\n", "<br>\n") + "<br><br>\n" + html_body
-    to_emails = [_OVERRIDE_RECIPIENT]
+    to_emails = [settings.REDIRECT_RECIPIENT]
     reply_to_emails = []
+    bcc_emails = []
 
+    #build email
     msg = email.message.EmailMessage()
     msg["Date"] = format_datetime(localtime())
     msg["Message-ID"] = make_msgid()
@@ -49,7 +55,7 @@ def send_email(
         sess.send_message(
             msg,
             from_addr=settings.MAIL_FROM,
-            to_addrs=to_emails,
+            to_addrs=to_emails + bcc_emails,
             mail_options=("8bitmime",),
         )
-    logger.info(f"Email sent to {to_emails}: {subject}")
+    logger.debug(f"Email sent to {to_emails + bcc_emails}: {subject}")
