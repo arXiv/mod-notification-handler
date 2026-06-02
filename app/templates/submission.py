@@ -18,7 +18,7 @@ def render_submission_block(sub: SubEmailData) -> tuple[str, str]:
     authors = sub.authors or "(no authors)"
 
     submit_time_str = (
-        sub.submit_time.astimezone(_ET).strftime("%Y-%m-%d %H:%M EST")
+        sub.submit_time.astimezone(_ET).strftime("%Y-%m-%d %H:%M ET")
         if sub.submit_time else None
     )
 
