@@ -148,9 +148,8 @@ def _send_email_tasks(
 
         #send email — failure skips ack (will redeliver)
         try:
-            cat_str = " ".join(sorted(c.id for c in task.notifications.categories))
             submitter = sub.submitter_name or f"user {sub.submitter_id}"
-            subject = f"Action Required: arXiv submission submit/{task.submission_id} to {cat_str} by {submitter}"
+            subject = f"Action Required: arXiv submission submit/{task.submission_id} to {sub.submission_categories} by {submitter}"
             send_email(
                 to_emails=task.to_emails,
                 subject=subject,

@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -9,6 +10,9 @@ class Settings(BaseSettings):
     #email related
     SEND_EMAILS: bool = False
     MAIL_FROM: str = "e-prints@arxiv.org"
+    REDIRECT_RECIPIENT: Optional[str] = None
+    ARCHIVAL_EMAIL: Optional[str] = None
+    MOD_REPLY_TO: Optional[str] = None
     HALON_CREDS: str = "smtps://user:pass@host:port"
 
     model_config = SettingsConfigDict(
