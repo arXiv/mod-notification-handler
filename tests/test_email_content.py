@@ -28,7 +28,7 @@ def test_render_comment_block():
     text, html_out = render_comment_block(note, _USER)
     assert "looks good to me" in text and "looks good to me" in html_out
     assert _USER in text and _USER in html_out
-    assert "ET" in text
+    assert "EDT" in text
 
 def test_render_comment_escapes_html():
     note = _note(CommentData(comment="<script>alert('xss')</script> & done"))
@@ -164,8 +164,8 @@ def test_render_email_contains_all_sections_and_footer():
 # ── exact output tests ────────────────────────────────────────────────────────
 #will need to be updated whenever format changes
 #feel free to delete if too annoying, but its kind of nice to see the whole output
-_WHEN = "06-15 10:30 ET"  # _TIME (2024-06-15 14:30 UTC) converted to ET
-_SUBMIT_TIME_STR = "2024-06-15 10:30 ET"  # _TIME converted to ET
+_WHEN = "06-15 10:30 EDT"  # _TIME (2024-06-15 14:30 UTC) 
+_SUBMIT_TIME_STR = "2024-06-15 10:30 EDT"  
 _CHECK_URL_123 = "https://check.arxiv.org/submit/123"
 
 

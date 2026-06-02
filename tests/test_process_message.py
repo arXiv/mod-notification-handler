@@ -367,14 +367,14 @@ def test_changes_ordered_newest_first():
 
     assert mock_send.call_count == 1
     body = mock_send.call_args.kwargs["body"]
-    assert body.index("01-02 05:00 ET") < body.index("01-01 05:00 ET")
+    assert body.index("01-02 05:00 EST") < body.index("01-01 05:00 EST")
 
     with patch("app.process.send_email", mock_send):
         process_messages([msg2, msg1], ack_fn=Mock())
 
     assert mock_send.call_count == 2
     body = mock_send.call_args.kwargs["body"]
-    assert body.index("01-02 05:00 ET") < body.index("01-01 05:00 ET")
+    assert body.index("01-02 05:00 EST") < body.index("01-01 05:00 EST")
 
 @pytest.mark.usefixtures("db_session")
 def test_subject_uses_paper_categories():

@@ -13,7 +13,7 @@ from app.schema import SubEmailData, SimplifiedNotification, CommentData, Promot
 _ET = ZoneInfo(arxiv_settings.ARXIV_BUSINESS_TZ)
 def _fmt_time(dt: datetime) -> str:
     et = dt.astimezone(_ET)
-    return et.strftime("%m-%d %H:%M ET")
+    return et.strftime("%m-%d %H:%M %Z")
 
 from app.templates.comment import render_comment_block
 from app.templates.promote import render_promote_block
