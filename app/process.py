@@ -155,6 +155,7 @@ def _send_email_tasks(
                 subject=subject,
                 body=body_text,
                 html_body=body_html,
+                submission_id=task.submission_id,
                 reply_to_emails=task.reply_to_emails,
             )
             ack_fn(task.notifications.ack_ids)  # ack only after successful send
