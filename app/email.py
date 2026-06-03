@@ -16,6 +16,7 @@ def send_email(
     subject: str,
     body: str,
     html_body: str,
+    submission_id: int,
     reply_to_emails: Optional[list[str]] = None,
 ) -> None:
     """Send a plain-text and HTML email via the Halon SMTP relay."""
@@ -44,9 +45,12 @@ def send_email(
     bcc_emails = []
 
     #build email
+    thread_root = f"<moderation-submit-{submission_id}@arxiv.org>"
     msg = email.message.EmailMessage()
     msg["Date"] = format_datetime(localtime())
     msg["Message-ID"] = make_msgid()
+    msg["In-Reply-To"] = thread_root
+    msg["References"] = thread_root
     msg["From"] = settings.MAIL_FROM
     msg["To"] = ", ".join(to_emails)
     msg["Subject"] = subject
