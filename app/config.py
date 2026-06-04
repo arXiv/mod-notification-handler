@@ -7,8 +7,15 @@ class Settings(BaseSettings):
 
     LOG_LEVEL: str = "INFO"
 
+    #pubsub
+    GCP_PROJECT_ID: str = "arxiv-development"
+    PUBSUB_SUBSCRIPTION_ID: str = "mod-notification-handler"
+    PUBSUB_BATCH_SIZE: int = 300
+    PUBSUB_MAX_PULL_SEC: int = 60
+
     #email related
     SEND_EMAILS: bool = False
+    REDIRECT_EMAILS: bool = True
     MAIL_FROM: str = "e-prints@arxiv.org"
     REDIRECT_RECIPIENT: Optional[str] = None
     ARCHIVAL_EMAIL: Optional[str] = None

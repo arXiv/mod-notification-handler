@@ -10,10 +10,6 @@ from google.pubsub import ReceivedMessage, SubscriberClient
 from app.config import settings
 from app.process import process_messages
 
-PROJECT_ID = "arxiv-development"
-SUBSCRIPTION_ID = "mod-notification-handler"
-BATCH_SIZE = 300
-MAX_PULL_SEC=60
 
 logging.basicConfig(level=settings.LOG_LEVEL)
 logger = logging.getLogger(__name__)
@@ -26,15 +22,15 @@ def get_messages(subscriber: SubscriberClient, sub_path:str) -> List[ReceivedMes
     start_time = time.time()
 
     while ( #loop to try to collect large batch of messages
-        len(collected_msgs)< BATCH_SIZE #stop if enough messages are found
-        and time.time() -start_time < MAX_PULL_SEC #stop if we have been waiting too long
+        len(collected_msgs)< settings.PUBSUB_BATCH_SIZE #stop if enough messages are found
+        and time.time() -start_time < settings.PUBSUB_MAX_PULL_SEC #stop if we have been waiting too long
         ):
             
         #keep trying to acquire messages
         response = subscriber.pull(
             request={
                 "subscription": sub_path,
-                "max_messages": BATCH_SIZE,
+                "max_messages": settings.PUBSUB_BATCH_SIZE,
             }
         )
         if not response.received_messages:
@@ -48,9 +44,18 @@ def get_messages(subscriber: SubscriberClient, sub_path:str) -> List[ReceivedMes
 
 def main():
 
+    #fail fast on email misconfiguration before touching the queue
+    if settings.SEND_EMAILS:
+        if settings.REDIRECT_EMAILS and not settings.REDIRECT_RECIPIENT:
+            logger.error("SEND_EMAILS=True and REDIRECT_EMAILS=True but REDIRECT_RECIPIENT is not set — exiting")
+            return
+        if not settings.REDIRECT_EMAILS and settings.ENV != "PRODUCTION":
+            logger.error("SEND_EMAILS=True and REDIRECT_EMAILS=False but ENV is not PRODUCTION — exiting")
+            return
+
     #get messages
     subscriber = pubsub_v1.SubscriberClient()
-    subscription_path = subscriber.subscription_path(PROJECT_ID, SUBSCRIPTION_ID)
+    subscription_path = subscriber.subscription_path(settings.GCP_PROJECT_ID, settings.PUBSUB_SUBSCRIPTION_ID)
     messages=get_messages(subscriber, subscription_path)
     if len(messages)==0:
         logger.warning("No messages found.")

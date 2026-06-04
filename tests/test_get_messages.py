@@ -1,6 +1,6 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
-from app.main import get_messages
+from app.main import get_messages, main
 
 class FakeResponse:
     def __init__(self, messages):
@@ -30,3 +30,23 @@ def test_get_messages_stops_on_empty():
 
     assert result == []
     subscriber.pull.assert_called_once()
+
+
+def test_main_exits_if_redirect_recipient_missing():
+    with patch("app.main.settings") as mock_settings, \
+         patch("app.main.pubsub_v1.SubscriberClient") as mock_client:
+        mock_settings.SEND_EMAILS = True
+        mock_settings.REDIRECT_EMAILS = True
+        mock_settings.REDIRECT_RECIPIENT = None
+        main()
+        mock_client.assert_not_called()
+
+
+def test_main_exits_if_no_redirect_outside_production():
+    with patch("app.main.settings") as mock_settings, \
+         patch("app.main.pubsub_v1.SubscriberClient") as mock_client:
+        mock_settings.SEND_EMAILS = True
+        mock_settings.REDIRECT_EMAILS = False
+        mock_settings.ENV = "LOCAL"
+        main()
+        mock_client.assert_not_called()
