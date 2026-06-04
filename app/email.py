@@ -28,21 +28,17 @@ def send_email(
         logger.info(f"Email sending disabled. Would send to {to_emails}: {subject}")
         return
 
-    # redirect emails while under development
-    if not settings.REDIRECT_RECIPIENT:
-        logger.error("REDIRECT_RECIPIENT not set — refusing to send to avoid misdirected email")
-        return
-
-    redirect_header = f"[TEST REDIRECT]\nOriginal To: {', '.join(to_emails)}"
-    if reply_to_emails:
-        redirect_header += f"\nOriginal Reply-To: {', '.join(reply_to_emails)}"
-    if bcc_emails:
-        redirect_header += f"\nOriginal Bcc: {', '.join(bcc_emails)}"
-    body = redirect_header + "\n\n" + body
-    html_body = redirect_header.replace("\n", "<br>\n") + "<br><br>\n" + html_body
-    to_emails = [settings.REDIRECT_RECIPIENT]
-    reply_to_emails = []
-    bcc_emails = []
+    if settings.REDIRECT_EMAILS:
+        redirect_header = f"[TEST REDIRECT]\nOriginal To: {', '.join(to_emails)}"
+        if reply_to_emails:
+            redirect_header += f"\nOriginal Reply-To: {', '.join(reply_to_emails)}"
+        if bcc_emails:
+            redirect_header += f"\nOriginal Bcc: {', '.join(bcc_emails)}"
+        body = redirect_header + "\n\n" + body
+        html_body = redirect_header.replace("\n", "<br>\n") + "<br><br>\n" + html_body
+        to_emails = [settings.REDIRECT_RECIPIENT]
+        reply_to_emails = []
+        bcc_emails = []
 
     #build email
     thread_root = f"<moderation-submit-{submission_id}@arxiv.org>"
