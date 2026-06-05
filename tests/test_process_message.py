@@ -14,7 +14,7 @@ GOOD_COMMENT = {
     "submission_id": 123,
     "user_id": 1,
     "categories": ["cs.LG", "cs.AI"],
-    "action": "Comment Added",
+    "action": "comment-added",
     "data": {"comment": "hello"}
 }
 
@@ -23,7 +23,7 @@ GOOD_PROMOTE = {
     "submission_id": 124,
     "user_id": 1,
     "categories": ["cs.LG", "cs.AI"],
-    "action": "Category Promotion",
+    "action": "category-promotion",
     "data": {
         "category": "cs.LG",
         "promotion_type": "primary",
@@ -36,7 +36,7 @@ BAD_PROMOTE = {
     "submission_id": 123,
     "user_id": 1,
     "categories": ["cs.LG", "cs.AI"],
-    "action": "Category Promotion",
+    "action": "category-promotion",
     "data": {
         "category": "cs.LG",
         "promotion_type": "invalid",  # bad enum
@@ -49,7 +49,7 @@ GOOD_PROP_RESP = {
     "submission_id": 123,
     "user_id": 2,
     "categories": ["hep-lat"],
-    "action": "Category Proposal Responses",
+    "action": "proposal-response",
     "data": {
         "responses": "Primary accepted: hep-lat",
         "category_change": "no primary -> hep-lat"
@@ -98,7 +98,7 @@ def test_general_parse():
         "submission_id": 123,
         "user_id": 1,
         "categories": "cs.LG",
-        "action": "Comment Added",
+        "action": "comment-added",
         "data": {"comment": "goodbye"}
     }
 
@@ -109,7 +109,7 @@ def test_general_parse():
         full_note, simple_note = _parse_message(bad2)
 
     full_note, simple_note=_parse_message(GOOD_COMMENT)
-    assert full_note.action== "Comment Added"
+    assert full_note.action== "comment-added"
     assert full_note.categories== ["cs.LG", "cs.AI"]
     assert full_note.submission_id== 123
     assert full_note.time == datetime(2024, 1, 1, 10, 0, tzinfo=timezone.utc)
@@ -120,7 +120,7 @@ def test_parse_comment():
         "submission_id": 123,
         "user_id": 1,
         "categories": ["cs.LG", "cs.AI"],
-        "action": "Comment Added",
+        "action": "comment-added",
         "data": {"comment": 5}
     }
 
@@ -128,7 +128,7 @@ def test_parse_comment():
         full_note, simple_note = _parse_message(bad_comment)
 
     full_note, simple_note=_parse_message(GOOD_COMMENT)
-    assert full_note.action== "Comment Added"
+    assert full_note.action== "comment-added"
     assert full_note.categories== ["cs.LG", "cs.AI"]
     assert full_note.submission_id== 123
     assert isinstance(simple_note.data, CommentData)
@@ -142,7 +142,7 @@ def test_parse_new_prop():
         "submission_id": 123,
         "user_id": 1,
         "categories": ["cs.LG", "cs.AI"],
-        "action": "New Category Proposal",
+        "action": "new-proposal",
         "data": {"msg": "new category request"}
     }
 
@@ -151,7 +151,7 @@ def test_parse_new_prop():
         "submission_id": 123,
         "user_id": 1,
         "categories": ["cs.LG", "cs.AI"],
-        "action": "New Category Proposal",
+        "action": "new-proposal",
         "data": {"message": "new category request"} 
     }
 
@@ -160,7 +160,7 @@ def test_parse_new_prop():
 
     full_note, simple_note = _parse_message(good_new_prop)
 
-    assert full_note.action == "New Category Proposal"
+    assert full_note.action == "new-proposal"
     assert full_note.categories == ["cs.LG", "cs.AI"]
     assert full_note.submission_id == 123
 
@@ -174,7 +174,7 @@ def test_parse_promote():
 
     full_note, simple_note = _parse_message(GOOD_PROMOTE)
 
-    assert full_note.action == "Category Promotion"
+    assert full_note.action == "category-promotion"
     assert full_note.categories == ["cs.LG", "cs.AI"]
     assert full_note.submission_id == 124
 
@@ -191,7 +191,7 @@ def test_parse_prop_response():
         "submission_id": 123,
         "user_id": 1,
         "categories": ["cs.LG", "cs.AI"],
-        "action": "Category Proposal Responses",
+        "action": "proposal-response",
         "data": {
             "responses": 123,  # invalid type
             "category_change": "none"
@@ -203,7 +203,7 @@ def test_parse_prop_response():
 
     full_note, simple_note = _parse_message(GOOD_PROP_RESP)
 
-    assert full_note.action == "Category Proposal Responses"
+    assert full_note.action == "proposal-response"
     assert full_note.categories == ["hep-lat"]
     assert full_note.submission_id == 123
     assert full_note.time == datetime(2024, 1, 1, 10, 0, tzinfo=timezone.utc)
@@ -346,7 +346,7 @@ def test_changes_ordered_newest_first():
         "submission_id": 123,
         "user_id": 1,
         "categories": ["cs.LG", "cs.AI"],
-        "action": "Comment Added",
+        "action": "comment-added",
         "data": {"comment": "first comment"}
     }
     newer = {
@@ -354,7 +354,7 @@ def test_changes_ordered_newest_first():
         "submission_id": 123,
         "user_id": 2,
         "categories": ["cs.LG", "cs.AI"],
-        "action": "Comment Added",
+        "action": "comment-added",
         "data": {"comment": "second comment"}
     }
     # messages arrive in chronological order; rendered email should show newest first

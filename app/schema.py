@@ -7,10 +7,10 @@ from dataclasses import dataclass, field
 from arxiv.taxonomy.category import Category
 
 class NotificationType(str, Enum):
-    COMMENT = 'Comment Added'
-    PROP_RESP = 'Category Proposal Responses'
-    NEW_PROP = 'New Category Proposal'
-    PROMOTE = 'Category Promotion'
+    COMMENT = 'comment-added'
+    PROP_RESP = 'proposal-response'
+    NEW_PROP = 'new-proposal'
+    PROMOTE = 'category-promotion'
     #TODO should rejections eventually send emails?
 
 #the shape the data comes in the pubsub message
