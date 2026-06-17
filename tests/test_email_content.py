@@ -5,7 +5,8 @@ import pytest
 
 from app.schema import SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData
 from app.schema import SubEmailData
-from app.email_content import get_submission_info, _build_category_string, render_change_block
+from app.email_content import get_submission_info, _build_category_string, render_change_block, render_email
+from app.schema import EmailTask, ConsolidatedNotifications
 from app.templates.comment import render_comment_block
 from app.templates.promote import render_promote_block
 from app.templates.new_prop import render_new_prop_block
@@ -174,6 +175,17 @@ def test_render_email_contains_all_sections_and_footer():
     for url in [CHECK_GUIDE_URL, HOW_TO_MOD_URL, MOD_HUB_URL]:
         assert url in body_text, f"missing {url} in text"
         assert url in body_html, f"missing {url} in html"
+
+
+def test_render_email_changes_oldest_first():
+    t_old = datetime(2024, 6, 15, 14, 30, tzinfo=timezone.utc)
+    t_new = datetime(2024, 6, 15, 14, 32, tzinfo=timezone.utc)
+    older = SimplifiedNotification(time=t_old, user_id=1, data=CommentData(comment="older comment"))
+    newer = SimplifiedNotification(time=t_new, user_id=1, data=CommentData(comment="newer comment"))
+    notifications = ConsolidatedNotifications(submission_id=123, changes=[newer, older])
+    task = EmailTask(submission_id=123, to_emails=[], notifications=notifications)
+    text, _ = render_email(task, _mock_submission(), {})
+    assert text.index("older comment") < text.index("newer comment")
 
 
 # ── exact output tests ────────────────────────────────────────────────────────
