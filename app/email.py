@@ -56,12 +56,18 @@ def send_email(
     msg.add_alternative(html_body, subtype="html")
 
     creds = urlparse(settings.HALON_CREDS)
-    with smtplib.SMTP_SSL(host=creds.hostname, port=creds.port) as sess:
+    with smtplib.SMTP_SSL(host=creds.hostname, port=creds.port, timeout=60) as sess:
         sess.login(creds.username, creds.password)
-        sess.send_message(
-            msg,
-            from_addr=settings.MAIL_FROM,
-            to_addrs=to_emails + bcc_emails,
-            mail_options=("8bitmime",),
-        )
+        try:
+            refused = sess.send_message(
+                msg,
+                from_addr=settings.MAIL_FROM,
+                to_addrs=to_emails + bcc_emails,
+                mail_options=("8bitmime",),
+            )
+        except smtplib.SMTPRecipientsRefused as e:
+            for addr, (code, resp) in e.recipients.items():
+                logger.error(f"Recipient refused (all failed): {addr} — {code} {resp}")
+        for addr, (code, resp) in refused.items():
+            logger.error(f"Recipient refused: {addr} — {code} {resp}")
     logger.debug(f"Email sent to {to_emails + bcc_emails}: {subject}")
