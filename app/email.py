@@ -56,7 +56,7 @@ def send_email(
     msg.add_alternative(html_body, subtype="html")
 
     creds = urlparse(settings.HALON_CREDS)
-    with smtplib.SMTP_SSL(host=creds.hostname, port=creds.port) as sess:
+    with smtplib.SMTP_SSL(host=creds.hostname, port=creds.port, timeout=60) as sess:
         sess.login(creds.username, creds.password)
         try:
             refused = sess.send_message(
