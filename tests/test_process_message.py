@@ -340,7 +340,7 @@ def test_all_successful_sends_all_acked():
     assert "ack-3" in acked      # parse failure — acked immediately
 
 @pytest.mark.usefixtures("db_session")
-def test_changes_ordered_newest_first():
+def test_changes_ordered_oldest_first():
     older = {
         "time": "2024-01-01T10:00:00Z",
         "submission_id": 123,
@@ -357,7 +357,7 @@ def test_changes_ordered_newest_first():
         "action": "comment-added",
         "data": {"comment": "second comment"}
     }
-    # messages arrive in chronological order; rendered email should show newest first
+    # messages arrive in reverse order; rendered email should show oldest first (newest on bottom)
     msg1 = _make_pubsub_message("ack-1", older)
     msg2 = _make_pubsub_message("ack-2", newer)
 
@@ -367,14 +367,14 @@ def test_changes_ordered_newest_first():
 
     assert mock_send.call_count == 1
     body = mock_send.call_args.kwargs["body"]
-    assert body.index("01-02 05:00 EST") < body.index("01-01 05:00 EST")
+    assert body.index("01-01 05:00 EST") < body.index("01-02 05:00 EST")
 
     with patch("app.process.send_email", mock_send):
         process_messages([msg2, msg1], ack_fn=Mock())
 
     assert mock_send.call_count == 2
     body = mock_send.call_args.kwargs["body"]
-    assert body.index("01-02 05:00 EST") < body.index("01-01 05:00 EST")
+    assert body.index("01-01 05:00 EST") < body.index("01-02 05:00 EST")
 
 @pytest.mark.usefixtures("db_session")
 def test_subject_uses_paper_categories():

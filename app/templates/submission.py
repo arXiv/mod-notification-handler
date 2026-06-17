@@ -8,6 +8,14 @@ from app.schema import SubEmailData
 
 CHECK_SUBMISSION_URL = "https://check.arxiv.org/submit/{submission_id}"
 _ET = ZoneInfo(arxiv_settings.ARXIV_BUSINESS_TZ)
+MAX_AUTHORS = 15
+
+
+def truncate_authors(authors_str: str) -> str:
+    parts = [a.strip() for a in authors_str.split(",")]
+    if len(parts) > MAX_AUTHORS:
+        return ", ".join(parts[:MAX_AUTHORS]) + ", ..."
+    return ", ".join(parts)
 
 
 def render_submission_block(sub: SubEmailData) -> tuple[str, str]:
@@ -15,7 +23,7 @@ def render_submission_block(sub: SubEmailData) -> tuple[str, str]:
     cat_list = sub.submission_categories or "(none)"
     check_url = CHECK_SUBMISSION_URL.format(submission_id=sub.submission_id)
     title = sub.title or "(no title)"
-    authors = sub.authors or "(no authors)"
+    authors = truncate_authors(sub.authors) if sub.authors else "(no authors)"
 
     submit_time_str = (
         sub.submit_time.astimezone(_ET).strftime("%Y-%m-%d %H:%M %Z")

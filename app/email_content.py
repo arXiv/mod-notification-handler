@@ -103,7 +103,7 @@ def render_change_block(change: SimplifiedNotification, user_name: str) -> tuple
 def render_email(task: EmailTask, sub: SubEmailData, ids_to_contact: dict[int, UserContact]) -> tuple[str, str]:
     sub_text, sub_html = render_submission_block(sub)
     change_texts, change_htmls = [], []
-    for change in sorted(task.notifications.changes, key=lambda c: c.time, reverse=True):
+    for change in sorted(task.notifications.changes, key=lambda c: c.time):
         contact = ids_to_contact.get(change.user_id)
         name = contact.display_name if contact else f"user {change.user_id}"
         ct, ch = render_change_block(change, name)

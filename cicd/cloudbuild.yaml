@@ -1,3 +1,6 @@
+# this can be used to update the cloud run job
+# for the initial creation use the same template but switch update command with create
+
 options:
   logging: CLOUD_LOGGING_ONLY
 
