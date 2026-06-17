@@ -10,10 +10,10 @@ package-mode = false
 python = "^3.11"
 arxiv-base = {git = "https://github.com/arXiv/arxiv-base.git", rev = "4c53f9bf6b77cceeb8ec71942e53a5b32ceb7cad"}
 google-cloud-pubsub = "*"
-coverage = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
+coverage = "*"
 
 [build-system]
 requires = ["poetry-core"]
