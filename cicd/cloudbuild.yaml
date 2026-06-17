@@ -1,0 +1,46 @@
+# this can be used to update the cloud run job
+# for the initial creation use the same template but switch update command with create
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: ['-c', 'docker pull gcr.io/$PROJECT_ID/$_JOB_NAME:latest || echo "no cache image"']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--cache-from'
+      - 'gcr.io/$PROJECT_ID/$_JOB_NAME:latest'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/$_JOB_NAME:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/$_JOB_NAME:latest'
+      - '-f'
+      - 'cicd/Dockerfile'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - '--all-tags'
+      - 'gcr.io/$PROJECT_ID/$_JOB_NAME'
+    id: Push
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: Deploy
+    entrypoint: gcloud
+    args:
+      - run
+      - jobs
+      - update
+      - $_JOB_NAME
+      - '--region=$_DEPLOY_REGION'
+      - '--image=gcr.io/$PROJECT_ID/$_JOB_NAME:$COMMIT_SHA'
+      - '--quiet'
+
+images:
+  - 'gcr.io/$PROJECT_ID/$_JOB_NAME:latest'
+  - 'gcr.io/$PROJECT_ID/$_JOB_NAME:$COMMIT_SHA'

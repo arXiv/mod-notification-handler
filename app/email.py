@@ -1,0 +1,73 @@
+"""email sending via Halon SMTP relay"""
+import smtplib
+import email.message
+from email.utils import format_datetime, localtime, make_msgid
+from urllib.parse import urlparse
+import logging
+from typing import Optional
+
+from app.config import settings
+
+logger = logging.getLogger(__name__)
+
+
+def send_email(
+    to_emails: list[str],
+    subject: str,
+    body: str,
+    html_body: str,
+    submission_id: int,
+    reply_to_emails: Optional[list[str]] = None,
+) -> None:
+    """Send a plain-text and HTML email via the Halon SMTP relay."""
+
+    reply_to_emails = (reply_to_emails or []) + ([settings.MOD_REPLY_TO] if settings.MOD_REPLY_TO else [])
+    bcc_emails: list[str] = [settings.ARCHIVAL_EMAIL] if settings.ARCHIVAL_EMAIL else []
+
+    if not settings.SEND_EMAILS:
+        logger.info(f"Email sending disabled. Would send to {to_emails}: {subject}")
+        return
+
+    if settings.REDIRECT_EMAILS:
+        redirect_header = f"[TEST REDIRECT]\nOriginal To: {', '.join(to_emails)}"
+        if reply_to_emails:
+            redirect_header += f"\nOriginal Reply-To: {', '.join(reply_to_emails)}"
+        if bcc_emails:
+            redirect_header += f"\nOriginal Bcc: {', '.join(bcc_emails)}"
+        body = redirect_header + "\n\n" + body
+        html_body = redirect_header.replace("\n", "<br>\n") + "<br><br>\n" + html_body
+        to_emails = [settings.REDIRECT_RECIPIENT]
+        reply_to_emails = []
+        bcc_emails = []
+
+    #build email
+    thread_root = f"<moderation-submit-{submission_id}@arxiv.org>"
+    msg = email.message.EmailMessage()
+    msg["Date"] = format_datetime(localtime())
+    msg["Message-ID"] = make_msgid()
+    msg["In-Reply-To"] = thread_root
+    msg["References"] = thread_root
+    msg["From"] = settings.MAIL_FROM
+    msg["To"] = ", ".join(to_emails)
+    msg["Subject"] = subject
+    if reply_to_emails:
+        msg["Reply-To"] = ", ".join(reply_to_emails)
+    msg.set_content(body, cte="8bit")
+    msg.add_alternative(html_body, subtype="html")
+
+    creds = urlparse(settings.HALON_CREDS)
+    with smtplib.SMTP_SSL(host=creds.hostname, port=creds.port, timeout=60) as sess:
+        sess.login(creds.username, creds.password)
+        try:
+            refused = sess.send_message(
+                msg,
+                from_addr=settings.MAIL_FROM,
+                to_addrs=to_emails + bcc_emails,
+                mail_options=("8bitmime",),
+            )
+        except smtplib.SMTPRecipientsRefused as e:
+            for addr, (code, resp) in e.recipients.items():
+                logger.error(f"Recipient refused (all failed): {addr} — {code} {resp}")
+        for addr, (code, resp) in refused.items():
+            logger.error(f"Recipient refused: {addr} — {code} {resp}")
+    logger.debug(f"Email sent to {to_emails + bcc_emails}: {subject}")
