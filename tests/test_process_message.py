@@ -399,7 +399,7 @@ def test_subject_no_primary_category():
         process_messages([msg], ack_fn=Mock())
 
     assert mock_send.call_args.kwargs["subject"] == \
-        "Action Required: arXiv submission submit/124 to no primary cs.AI cs.LG by user 0"
+        "Action Required: arXiv submission submit/124 to - cs.AI cs.LG by user 0"
 
 @pytest.mark.usefixtures("db_session")
 def test_subject_alias_category_expands():

@@ -141,6 +141,17 @@ def test_render_submission_block_escapes_html():
     assert "&lt;b&gt;" in html_out
     assert "&amp;" in html_out
 
+def test_render_submission_block_no_primary():
+    sub = _mock_submission(submission_categories="-")
+    text, html_out = render_submission_block(sub)
+    assert "no primary" in text and "no primary" in html_out
+    assert "-" not in text.split("Current Categories:")[1].split("\n")[0]
+
+def test_render_submission_block_no_primary_with_secondaries():
+    sub = _mock_submission(submission_categories="- cs.AI cs.LG")
+    text, html_out = render_submission_block(sub)
+    assert "no primary cs.AI cs.LG" in text and "no primary cs.AI cs.LG" in html_out
+
 
 # ── full email ────────────────────────────────────────────────────────────────
 
@@ -386,7 +397,7 @@ def test_full_email_exact_html():
 # ── _build_category_string unit tests ─────────────────────────────────────────
 
 def test_category_string_empty():
-    assert _build_category_string([]) == "no primary"
+    assert _build_category_string([]) == "-"
 
 
 def test_category_string_primary_only():
@@ -401,7 +412,7 @@ def test_category_string_primary_and_cross():
 
 def test_category_string_no_primary_with_secondaries():
     result = _build_category_string([("cs.AI", 0), ("cs.LG", 0)])
-    assert result == "no primary cs.AI cs.LG"
+    assert result == "- cs.AI cs.LG"
 
 
 def test_category_string_alias_expansion():
@@ -426,14 +437,14 @@ def test_get_submission_info_primary_and_cross():
 def test_get_submission_info_no_primary_has_secondaries():
     result = get_submission_info({124})
     assert 124 in result
-    assert result[124].submission_categories == "no primary cs.AI cs.LG"
+    assert result[124].submission_categories == "- cs.AI cs.LG"
 
 
 @pytest.mark.usefixtures("db_session")
 def test_get_submission_info_no_categories():
     result = get_submission_info({125})
     assert 125 in result
-    assert result[125].submission_categories == "no primary"
+    assert result[125].submission_categories == "-"
 
 
 @pytest.mark.usefixtures("db_session")
@@ -441,7 +452,7 @@ def test_get_submission_info_multiple_ids():
     result = get_submission_info({123, 124, 125})
     assert set(result.keys()) == {123, 124, 125}
     assert result[123].submission_categories == "cs.LG cs.AI"
-    assert result[124].submission_categories == "no primary cs.AI cs.LG"
-    assert result[125].submission_categories == "no primary"
+    assert result[124].submission_categories == "- cs.AI cs.LG"
+    assert result[125].submission_categories == "-"
 
 
