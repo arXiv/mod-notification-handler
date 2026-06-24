@@ -28,7 +28,7 @@ _ALIAS_BY_CANONICAL = {v: k for k, v in CATEGORY_ALIASES.items()}
 
 def _build_category_string(cats: list[tuple[str, int]]) -> str:
     """Format [(category, is_primary), ...] into 'cs.LG (primary), cs.AI'."""
-    primary = "no primary"
+    primary = "-" #TODO change to no primary when more off of legacy system
     secondaries: set[str] = set()
     for cat_id, is_primary in cats:
         if is_primary:
