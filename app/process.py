@@ -201,7 +201,7 @@ def process_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[str
             skipped_sub_ids.append(sub_id)
 
     if not email_tasks:
-        logger.info(f"No emails to send — submissions with no recipients: {sorted(skipped_sub_ids)}")
+        logger.warning(f"No emails to send — submissions with no recipients: {sorted(skipped_sub_ids)}")
         return
 
     if skipped_sub_ids:
