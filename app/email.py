@@ -18,15 +18,14 @@ def send_email(
     html_body: str,
     submission_id: int,
     reply_to_emails: Optional[list[str]] = None,
-) -> None:
-    """Send a plain-text and HTML email via the Halon SMTP relay."""
+) -> bool:
+    """Send a plain-text and HTML email via the Halon SMTP relay. Returns True if relay accepted."""
 
     reply_to_emails = (reply_to_emails or []) + ([settings.MOD_REPLY_TO] if settings.MOD_REPLY_TO else [])
     bcc_emails: list[str] = [settings.ARCHIVAL_EMAIL] if settings.ARCHIVAL_EMAIL else []
 
     if not settings.SEND_EMAILS:
-        logger.info(f"Email sending disabled. Would send to {to_emails}: {subject}")
-        return
+        return False
 
     if settings.REDIRECT_EMAILS:
         redirect_header = f"[TEST REDIRECT]\nOriginal To: {', '.join(to_emails)}"
@@ -55,19 +54,22 @@ def send_email(
     msg.set_content(body, cte="8bit")
     msg.add_alternative(html_body, subtype="html")
 
+    all_recipients = to_emails + bcc_emails
     creds = urlparse(settings.HALON_CREDS)
     with smtplib.SMTP_SSL(host=creds.hostname, port=creds.port, timeout=60) as sess:
         sess.login(creds.username, creds.password)
+        refused = {}
         try:
             refused = sess.send_message(
                 msg,
                 from_addr=settings.MAIL_FROM,
-                to_addrs=to_emails + bcc_emails,
+                to_addrs=all_recipients,
                 mail_options=("8bitmime",),
             )
         except smtplib.SMTPRecipientsRefused as e:
             for addr, (code, resp) in e.recipients.items():
-                logger.error(f"Recipient refused (all failed): {addr} — {code} {resp}")
+                logger.error(f"Recipient refused (all failed): {addr} — {code} {resp!r}")
+            return False
         for addr, (code, resp) in refused.items():
-            logger.error(f"Recipient refused: {addr} — {code} {resp}")
-    logger.debug(f"Email sent to {to_emails + bcc_emails}: {subject}")
+            logger.error(f"Recipient refused: {addr} — {code} {resp!r}")
+    return True

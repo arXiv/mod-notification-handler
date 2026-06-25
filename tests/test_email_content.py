@@ -152,6 +152,12 @@ def test_render_submission_block_no_primary_with_secondaries():
     text, html_out = render_submission_block(sub)
     assert "no primary cs.AI cs.LG" in text and "no primary cs.AI cs.LG" in html_out
 
+def test_render_submission_block_dash_in_category_name():
+    sub = _mock_submission(submission_categories="math-ph cs.LG")
+    text, html_out = render_submission_block(sub)
+    assert "math-ph cs.LG" in text and "math-ph cs.LG" in html_out
+    assert "no primary" not in text and "no primary" not in html_out
+
 
 # ── full email ────────────────────────────────────────────────────────────────
 

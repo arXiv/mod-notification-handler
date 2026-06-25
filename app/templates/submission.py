@@ -20,7 +20,8 @@ def truncate_authors(authors_str: str) -> str:
 
 def render_submission_block(sub: SubEmailData) -> tuple[str, str]:
     status_label = STATUS_NAMES.get(sub.status, str(sub.status))
-    cat_list = (sub.submission_categories or "(none)").replace("-", "no primary")
+    raw = sub.submission_categories or "(none)"
+    cat_list = "no primary" + raw[1:] if (raw == "-" or raw.startswith("- ")) else raw
     check_url = CHECK_SUBMISSION_URL.format(submission_id=sub.submission_id)
     title = sub.title or "(no title)"
     authors = truncate_authors(sub.authors) if sub.authors else "(no authors)"
