@@ -52,6 +52,8 @@ def main():
         if not settings.REDIRECT_EMAILS and settings.ENV != "PRODUCTION":
             logger.error("SEND_EMAILS=True and REDIRECT_EMAILS=False but ENV is not PRODUCTION — exiting")
             return
+    elif settings.ENV == "PRODUCTION":
+        logger.warning("SEND_EMAILS=False in PRODUCTION — messages will be acked without sending email")
 
     #get messages
     subscriber = pubsub_v1.SubscriberClient()
