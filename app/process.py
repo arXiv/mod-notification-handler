@@ -194,13 +194,18 @@ def process_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[str
 
     #ack any submissions skipped due to no valid recipients (terminal — retrying won't help)
     task_sub_ids = {t.submission_id for t in email_tasks}
+    skipped_sub_ids = []
     for sub_id, notifications in all_notifications.items():
         if sub_id not in task_sub_ids:
             ack_fn(notifications.ack_ids)
+            skipped_sub_ids.append(sub_id)
 
     if not email_tasks:
-        logger.info("No emails to send")
+        logger.warning(f"No emails to send — submissions with no recipients: {sorted(skipped_sub_ids)}")
         return
+
+    if skipped_sub_ids:
+        logger.info(f"Skipped submissions (no recipients): {sorted(skipped_sub_ids)}")
 
     #fetch submission data — if batch query fails, skip all sends (will redeliver)
     try:
