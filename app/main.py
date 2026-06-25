@@ -1,5 +1,6 @@
 """manages the job and pubsub message handling"""
 
+import json
 import logging
 import time
 from typing import List
@@ -11,7 +12,33 @@ from app.config import settings
 from app.process import process_messages
 
 
-logging.basicConfig(level=settings.LOG_LEVEL)
+class _GCPFormatter(logging.Formatter):
+    """Emit structured JSON so GCP Cloud Logging picks up the correct severity."""
+
+    _SEVERITY = {
+        logging.DEBUG: "DEBUG",
+        logging.INFO: "INFO",
+        logging.WARNING: "WARNING",
+        logging.ERROR: "ERROR",
+        logging.CRITICAL: "CRITICAL",
+    }
+
+    def format(self, record: logging.LogRecord) -> str:
+        message = record.getMessage()
+        if record.exc_info:
+            message += "\n" + self.formatException(record.exc_info)
+        return json.dumps({
+            "severity": self._SEVERITY.get(record.levelno, "DEFAULT"),
+            "message": message,
+            "logger": record.name,
+        })
+
+
+_handler = logging.StreamHandler()
+_handler.setFormatter(_GCPFormatter())
+logging.root.setLevel(settings.LOG_LEVEL)
+logging.root.addHandler(_handler)
+
 logger = logging.getLogger(__name__)
 
 
@@ -52,6 +79,8 @@ def main():
         if not settings.REDIRECT_EMAILS and settings.ENV != "PRODUCTION":
             logger.error("SEND_EMAILS=True and REDIRECT_EMAILS=False but ENV is not PRODUCTION — exiting")
             return
+    elif settings.ENV == "PRODUCTION":
+        logger.warning("SEND_EMAILS=False in PRODUCTION — messages will be acked without sending email")
 
     #get messages
     subscriber = pubsub_v1.SubscriberClient()

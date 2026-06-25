@@ -134,10 +134,6 @@ def _send_email_tasks(
 ) -> None:
     """render and send emails, acking each submission only after its email sends"""
 
-    if not settings.SEND_EMAILS:
-        logger.info(f"Email sending disabled — {len(email_tasks)} email task(s) skipped")
-        return
-
     if settings.REDIRECT_EMAILS:
         logger.info(f"REDIRECT_EMAILS active — all emails → {settings.REDIRECT_RECIPIENT}")
 
@@ -167,8 +163,8 @@ def _send_email_tasks(
                 submission_id=task.submission_id,
                 reply_to_emails=task.reply_to_emails,
             )
+            ack_fn(task.notifications.ack_ids)  # ack on success or all-refused (terminal)
             if accepted:
-                ack_fn(task.notifications.ack_ids)  # ack only after successful send
                 sent += 1
         except Exception:
             logger.exception(f"Failed to send email for submission {task.submission_id}, will redeliver")
@@ -182,12 +178,26 @@ def process_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[str
     #turn messages into data — parse failures acked immediately via ack_fn
     all_notifications = _convert_messages(messages, ack_fn)
 
+    #if sending is disabled, ack everything and stop — no DB calls, no rendering
+    if not settings.SEND_EMAILS:
+        for notifications in all_notifications.values():
+            ack_fn(notifications.ack_ids)
+        logger.info(f"Email sending disabled — acked {len(all_notifications)} notification group(s)")
+        return
+
     if not all_notifications:
         logger.info("No valid notifications after parsing, nothing to send")
         return
 
     #determine who to email what
     email_tasks, ids_to_contact = _build_email_tasks(all_notifications)
+
+    #ack any submissions skipped due to no valid recipients (terminal — retrying won't help)
+    task_sub_ids = {t.submission_id for t in email_tasks}
+    for sub_id, notifications in all_notifications.items():
+        if sub_id not in task_sub_ids:
+            ack_fn(notifications.ack_ids)
+
     if not email_tasks:
         logger.info("No emails to send")
         return
