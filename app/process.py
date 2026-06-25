@@ -7,6 +7,7 @@ from google.pubsub import ReceivedMessage
 
 from arxiv.taxonomy.category import Category
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
+from app.config import settings
 from app.email import send_email
 from app.email_content import get_submission_info, render_email
 from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData, UserContact, SubEmailData
@@ -133,6 +134,14 @@ def _send_email_tasks(
 ) -> None:
     """render and send emails, acking each submission only after its email sends"""
 
+    if not settings.SEND_EMAILS:
+        logger.info(f"Email sending disabled — {len(email_tasks)} email task(s) skipped")
+        return
+
+    if settings.REDIRECT_EMAILS:
+        logger.info(f"REDIRECT_EMAILS active — all emails → {settings.REDIRECT_RECIPIENT}")
+
+    sent = 0
     for task in email_tasks:
         sub = sub_infos.get(task.submission_id)
         if sub is None:
@@ -150,7 +159,7 @@ def _send_email_tasks(
         try:
             submitter = sub.submitter_name or f"user {sub.submitter_id}"
             subject = f"Action Required: arXiv submission submit/{task.submission_id} to {sub.submission_categories} by {submitter}"
-            send_email(
+            accepted = send_email(
                 to_emails=task.to_emails,
                 subject=subject,
                 body=body_text,
@@ -158,9 +167,13 @@ def _send_email_tasks(
                 submission_id=task.submission_id,
                 reply_to_emails=task.reply_to_emails,
             )
-            ack_fn(task.notifications.ack_ids)  # ack only after successful send
+            if accepted:
+                ack_fn(task.notifications.ack_ids)  # ack only after successful send
+                sent += 1
         except Exception:
             logger.exception(f"Failed to send email for submission {task.submission_id}, will redeliver")
+
+    logger.info(f"Sent {sent}/{len(email_tasks)} email(s) to relay")
 
 
 def process_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[str]], None]) -> None:
@@ -188,5 +201,5 @@ def process_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[str
 
     #send emails
     _send_email_tasks(email_tasks, sub_infos, ids_to_contact, ack_fn)
-    logger.info(f"Processed {len(messages)} messages. Sent {len(email_tasks)} (hypothetical) emails.")
+    logger.info(f"Processed {len(messages)} messages, built {len(email_tasks)} email task(s).")
     return
