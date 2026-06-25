@@ -325,6 +325,44 @@ def test_send_error_does_not_abort():
     assert mock_send.call_count == 2
 
 @pytest.mark.usefixtures("db_session")
+def test_no_recipients_is_acked():
+    # sub 126 uses math-ph; no math-ph moderators in test DB → no recipients → terminal, ack it
+    note = {**GOOD_COMMENT, "submission_id": 126, "categories": ["math-ph"]}
+    msg = _make_pubsub_message("ack-1", note)
+
+    mock_ack = Mock()
+    process_messages([msg], ack_fn=mock_ack)
+
+    acked = [id for call in mock_ack.call_args_list for id in call.args[0]]
+    assert "ack-1" in acked
+
+@pytest.mark.usefixtures("db_session")
+def test_all_recipients_refused_is_acked():
+    # relay explicitly rejects all addresses — terminal, ack it
+    msg = _make_pubsub_message("ack-1", GOOD_COMMENT)
+
+    mock_ack = Mock()
+    mock_send = Mock(return_value=False)
+    with patch("app.process.settings.SEND_EMAILS", True), patch("app.process.send_email", mock_send):
+        process_messages([msg], ack_fn=mock_ack)
+
+    acked = [id for call in mock_ack.call_args_list for id in call.args[0]]
+    assert "ack-1" in acked
+
+@pytest.mark.usefixtures("db_session")
+def test_transient_smtp_failure_is_not_acked():
+    # connection/server error — transient, do not ack so it redelivers
+    msg = _make_pubsub_message("ack-1", GOOD_COMMENT)
+
+    mock_ack = Mock()
+    mock_send = Mock(side_effect=RuntimeError("smtp error"))
+    with patch("app.process.settings.SEND_EMAILS", True), patch("app.process.send_email", mock_send):
+        process_messages([msg], ack_fn=mock_ack)
+
+    acked = [id for call in mock_ack.call_args_list for id in call.args[0]]
+    assert "ack-1" not in acked
+
+@pytest.mark.usefixtures("db_session")
 def test_all_successful_sends_all_acked():
     msg1 = _make_pubsub_message("ack-1", GOOD_COMMENT)  # sub 123
     msg2 = _make_pubsub_message("ack-2", GOOD_PROMOTE)  # sub 124
