@@ -216,14 +216,14 @@ _CHECK_URL_123 = "https://check.arxiv.org/submit/123"
 def test_comment_exact_text():
     note = _note(CommentData(comment="looks good"))
     text, _ = render_comment_block(note, _USER)
-    assert text == f"[{_WHEN}] {_USER} added a comment:\n  looks good\n"
+    assert text == f"[{_WHEN}] {_USER} commented:\n  looks good\n"
 
 
 def test_comment_exact_html():
     note = _note(CommentData(comment="looks good"))
     _, html_out = render_comment_block(note, _USER)
     assert html_out == (
-        f"<p><strong>[{_WHEN}] {_USER}</strong> added a comment:<br>\n"
+        f"<p><strong>[{_WHEN}] {_USER}</strong> commented:<br>\n"
         f"looks good</p>\n"
     )
 
@@ -249,14 +249,14 @@ def test_promote_exact_html():
 def test_new_prop_exact_text():
     note = _note(NewPropData(msg="New category(ies) proposed. primary: q-bio.NC"))
     text, _ = render_new_prop_block(note, _USER)
-    assert text == f"[{_WHEN}] {_USER} submitted a new category proposal:\n  New category(ies) proposed. primary: q-bio.NC\n"
+    assert text == f"[{_WHEN}] {_USER} category proposal:\n  New category(ies) proposed. primary: q-bio.NC\n"
 
 
 def test_new_prop_exact_html():
     note = _note(NewPropData(msg="New category(ies) proposed. primary: q-bio.NC"))
     _, html_out = render_new_prop_block(note, _USER)
     assert html_out == (
-        f"<p><strong>[{_WHEN}] {_USER}</strong> submitted a new category proposal:<br>\n"
+        f"<p><strong>[{_WHEN}] {_USER}</strong> category proposal:<br>\n"
         f"New category(ies) proposed. primary: q-bio.NC</p>\n"
     )
 
@@ -353,7 +353,7 @@ def test_full_email_exact_text():
         f"Submitted:  {_SUBMIT_TIME_STR}\n"
         "\n"
         "----------------------------------------\n"
-        f"[{_WHEN}] {_USER} added a comment:\n"
+        f"[{_WHEN}] {_USER} commented:\n"
         "  looks good\n"
         "----------------------------------------\n"
         f"[{_WHEN}] {_USER} promoted cs.AI to secondary:\n"
@@ -386,7 +386,7 @@ def test_full_email_exact_html():
         f"<strong>Submitted:</strong> {_SUBMIT_TIME_STR}</p>\n"
         "\n"
         "<hr>\n"
-        f"<p><strong>[{_WHEN}] {_USER}</strong> added a comment:<br>\n"
+        f"<p><strong>[{_WHEN}] {_USER}</strong> commented:<br>\n"
         "looks good</p>\n"
         f"<p><strong>[{_WHEN}] {_USER}</strong> promoted cs.AI to secondary<br>\n"
         "Change: Promoted category cs.AI to secondary; hep-lat => hep-lat cs.AI</p>\n"
