@@ -8,11 +8,11 @@ def render_comment_block(change: SimplifiedNotification, user_name: str) -> tupl
     data: CommentData = change.data  
     when = _fmt_time(change.time)
     text = (
-        f"[{when}] {user_name} added a comment:\n"
+        f"[{when}] {user_name} commented:\n"
         f"  {data.comment}\n"
     )
     html_out = (
-        f"<p><strong>[{when}] {user_name}</strong> added a comment:<br>\n"
+        f"<p><strong>[{when}] {user_name}</strong> commented:<br>\n"
         f"{html.escape(data.comment)}</p>\n"
     )
     return text, html_out
