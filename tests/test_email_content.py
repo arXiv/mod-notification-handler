@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app.schema import SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData
+from app.schema import SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData
 from app.schema import SubEmailData
 from app.email_content import get_submission_info, _build_category_string, render_change_block, render_email
 from app.schema import EmailTask, ConsolidatedNotifications
@@ -11,6 +11,7 @@ from app.templates.comment import render_comment_block
 from app.templates.promote import render_promote_block
 from app.templates.new_prop import render_new_prop_block
 from app.templates.prop_resp import render_prop_resp_block
+from app.templates.category_rejection import render_category_rejection_block
 from app.templates.submission import render_submission_block, truncate_authors, MAX_AUTHORS
 from app.templates.email_body import render_body, CHECK_GUIDE_URL, HOW_TO_MOD_URL, MOD_HUB_URL
 
@@ -69,6 +70,30 @@ def test_render_prop_resp_block():
     assert _USER in text and _USER in html_out
 
 
+# ── category rejection ────────────────────────────────────────────────────────
+
+def test_render_category_rejection_block_reject():
+    note = _note(CategoryRejectionData(category="cs.LG", rejection_type="reject", category_change="cs.LG cs.AI => no primary cs.AI"))
+    text, html_out = render_category_rejection_block(note, _USER)
+    assert "cs.LG" in text and "cs.LG" in html_out
+    assert "removed from submission" in text and "removed from submission" in html_out
+    assert "cs.LG cs.AI => no primary cs.AI" in text and "cs.LG cs.AI => no primary cs.AI" in html_out
+    assert _USER in text and _USER in html_out
+
+def test_render_category_rejection_block_accept_secondary():
+    note = _note(CategoryRejectionData(category="cs.LG", rejection_type="accept_secondary", category_change="cs.LG cs.AI => no primary cs.AI cs.LG"))
+    text, html_out = render_category_rejection_block(note, _USER)
+    assert "demoted to secondary" in text and "demoted to secondary" in html_out
+    assert _USER in text and _USER in html_out
+
+def test_render_category_rejection_block_cross_submission():
+    note = _note(CategoryRejectionData(category="hep-ph", rejection_type="cross_submission", category_change="cs.LG hep-ph => cs.LG"))
+    text, html_out = render_category_rejection_block(note, _USER)
+    assert "removed from cross submission" in text and "removed from cross submission" in html_out
+    assert "hep-ph" in text and "hep-ph" in html_out
+    assert _USER in text and _USER in html_out
+
+
 # ── dispatcher ────────────────────────────────────────────────────────────────
 
 def test_render_change_block_dispatches():
@@ -94,6 +119,12 @@ def test_render_change_block_dispatches():
     assert "eess.AS" in text and "eess.AS" in html_out
     assert "q-bio.BM" in text and "q-bio.BM" in html_out
     assert "cs.LG cs.DC hep-ph => eess.AS cs.DC cs.LG hep-ph q-bio.BM" in text and "cs.LG cs.DC hep-ph => eess.AS cs.DC cs.LG hep-ph q-bio.BM" in html_out
+
+    rejection = _note(CategoryRejectionData(category="cs.LG", rejection_type="reject", category_change="cs.LG cs.AI => no primary cs.AI"))
+    text, html_out = render_change_block(rejection, _USER)
+    assert "cs.LG" in text and "cs.LG" in html_out
+    assert "removed from submission" in text and "removed from submission" in html_out
+    assert "cs.LG cs.AI => no primary cs.AI" in text and "cs.LG cs.AI => no primary cs.AI" in html_out
 
 
 # ── submission block ──────────────────────────────────────────────────────────
@@ -278,6 +309,60 @@ def test_prop_resp_exact_html():
         f"<p><strong>[{_WHEN}] {_USER}</strong> responded to category proposal(s):<br>\n"
         f"Primary accepted: hep-lat<br>\n"
         f"Change: no primary -> hep-lat</p>\n"
+    )
+
+
+def test_rejection_exact_text_reject():
+    note = _note(CategoryRejectionData(category="cs.LG", rejection_type="reject", category_change="cs.LG cs.AI => no primary cs.AI"))
+    text, _ = render_category_rejection_block(note, _USER)
+    assert text == (
+        f"[{_WHEN}] {_USER} rejected cs.LG (removed from submission):\n"
+        f"  Change: cs.LG cs.AI => no primary cs.AI\n"
+    )
+
+
+def test_rejection_exact_html_reject():
+    note = _note(CategoryRejectionData(category="cs.LG", rejection_type="reject", category_change="cs.LG cs.AI => no primary cs.AI"))
+    _, html_out = render_category_rejection_block(note, _USER)
+    assert html_out == (
+        f"<p><strong>[{_WHEN}] {_USER}</strong> rejected cs.LG (removed from submission)<br>\n"
+        f"Change: cs.LG cs.AI => no primary cs.AI</p>\n"
+    )
+
+
+def test_rejection_exact_text_accept_secondary():
+    note = _note(CategoryRejectionData(category="cs.LG", rejection_type="accept_secondary", category_change="cs.LG cs.AI => no primary cs.AI cs.LG"))
+    text, _ = render_category_rejection_block(note, _USER)
+    assert text == (
+        f"[{_WHEN}] {_USER} rejected cs.LG (demoted to secondary):\n"
+        f"  Change: cs.LG cs.AI => no primary cs.AI cs.LG\n"
+    )
+
+
+def test_rejection_exact_html_accept_secondary():
+    note = _note(CategoryRejectionData(category="cs.LG", rejection_type="accept_secondary", category_change="cs.LG cs.AI => no primary cs.AI cs.LG"))
+    _, html_out = render_category_rejection_block(note, _USER)
+    assert html_out == (
+        f"<p><strong>[{_WHEN}] {_USER}</strong> rejected cs.LG (demoted to secondary)<br>\n"
+        f"Change: cs.LG cs.AI => no primary cs.AI cs.LG</p>\n"
+    )
+
+
+def test_rejection_exact_text_cross_submission():
+    note = _note(CategoryRejectionData(category="hep-ph", rejection_type="cross_submission", category_change="cs.LG hep-ph => cs.LG"))
+    text, _ = render_category_rejection_block(note, _USER)
+    assert text == (
+        f"[{_WHEN}] {_USER} rejected hep-ph (removed from cross submission):\n"
+        f"  Change: cs.LG hep-ph => cs.LG\n"
+    )
+
+
+def test_rejection_exact_html_cross_submission():
+    note = _note(CategoryRejectionData(category="hep-ph", rejection_type="cross_submission", category_change="cs.LG hep-ph => cs.LG"))
+    _, html_out = render_category_rejection_block(note, _USER)
+    assert html_out == (
+        f"<p><strong>[{_WHEN}] {_USER}</strong> rejected hep-ph (removed from cross submission)<br>\n"
+        f"Change: cs.LG hep-ph => cs.LG</p>\n"
     )
 
 

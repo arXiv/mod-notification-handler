@@ -10,7 +10,7 @@ from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
 from app.config import settings
 from app.email import send_email
 from app.email_content import get_submission_info, render_email
-from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData, UserContact, SubEmailData
+from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, UserContact, SubEmailData
 from app.moderators import get_all_moderators, get_recipient_ids_for_categories, get_mod_emails
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,8 @@ def _parse_message(payload)-> tuple[NotificationParams, SimplifiedNotification]:
             data = PromoteData.model_validate(full_note.data)
         case NotificationType.PROP_RESP:
             data = PropRespData.model_validate(full_note.data)
+        case NotificationType.CATEGORY_REJECTION:
+            data = CategoryRejectionData.model_validate(full_note.data)
         case _:
             logger.error(f"unhandled action type: {full_note.action}, skipping message")
             raise ValueError(f"unhandled action: {full_note.action}")

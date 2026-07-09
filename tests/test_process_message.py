@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
 
 from app.process import process_messages, _parse_message, _convert_messages, _build_email_tasks
-from app.schema import  CommentData, PromoteData, NewPropData, PropRespData, ConsolidatedNotifications, SimplifiedNotification
+from app.schema import  CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, ConsolidatedNotifications, SimplifiedNotification
 
 GOOD_COMMENT = {
     "time": "2024-01-01T10:00:00Z",
@@ -53,6 +53,32 @@ GOOD_PROP_RESP = {
     "data": {
         "responses": "Primary accepted: hep-lat",
         "category_change": "no primary -> hep-lat"
+    }
+}
+
+GOOD_REJECTION = {
+    "time": "2024-01-01T10:00:00Z",
+    "submission_id": 125,
+    "user_id": 3,
+    "categories": ["cs.LG", "cs.AI"],
+    "action": "category-rejection",
+    "data": {
+        "category": "cs.LG",
+        "rejection_type": "reject",
+        "category_change": "cs.LG cs.AI => no primary cs.AI"
+    }
+}
+
+BAD_REJECTION = {
+    "time": "2024-01-01T10:00:00Z",
+    "submission_id": 125,
+    "user_id": 3,
+    "categories": ["cs.LG"],
+    "action": "category-rejection",
+    "data": {
+        "category": "cs.LG",
+        "rejection_type": "invalid_type",  # bad enum
+        "category_change": "cs.LG => "
     }
 }
 
@@ -184,6 +210,23 @@ def test_parse_promote():
     assert simple_note.user_id == 1
     assert simple_note.time == datetime(2024, 1, 1, 10, 0, tzinfo=timezone.utc)
 
+def test_parse_category_rejection():
+    with pytest.raises(Exception):
+        _parse_message(BAD_REJECTION)
+
+    full_note, simple_note = _parse_message(GOOD_REJECTION)
+
+    assert full_note.action == "category-rejection"
+    assert full_note.categories == ["cs.LG", "cs.AI"]
+    assert full_note.submission_id == 125
+
+    assert isinstance(simple_note.data, CategoryRejectionData)
+    assert simple_note.data.category == "cs.LG"
+    assert simple_note.data.rejection_type == "reject"
+    assert simple_note.data.category_change == "cs.LG cs.AI => no primary cs.AI"
+    assert simple_note.user_id == 3
+    assert simple_note.time == datetime(2024, 1, 1, 10, 0, tzinfo=timezone.utc)
+
 def test_parse_prop_response():
 
     bad_prop_resp = {
@@ -220,7 +263,8 @@ def test_consolidate_messages():
     msg3 = _make_pubsub_message("ack-4", GOOD_PROMOTE)
     msg4 = _make_pubsub_message("ack-5", BAD_PROMOTE)
     msg5 = _make_pubsub_message("ack-7", GOOD_PROP_RESP)
-    messages=[msg1, msg2, msg3, msg4, msg5]
+    msg6 = _make_pubsub_message("ack-8", GOOD_REJECTION)
+    messages=[msg1, msg2, msg3, msg4, msg5, msg6]
 
     mock_ack = Mock()
     data = _convert_messages(messages, ack_fn=mock_ack)
@@ -256,6 +300,16 @@ def test_consolidate_messages():
     assert isinstance(sub1.changes[2].data, PropRespData)
     assert sub1.changes[2].data.category_change == 'no primary -> hep-lat'
     assert sub1.changes[2].data.responses=="Primary accepted: hep-lat"
+
+    sub3=data[125]
+    assert sub3.ack_ids == ['ack-8']
+    assert sub3.categories == {CATEGORIES_ACTIVE['cs.LG'], CATEGORIES_ACTIVE['cs.AI']} #type: ignore
+    assert sub3.user_ids == {3}
+    assert len(sub3.changes) == 1
+    assert isinstance(sub3.changes[0].data, CategoryRejectionData)
+    assert sub3.changes[0].data.category == 'cs.LG'
+    assert sub3.changes[0].data.rejection_type == 'reject'
+    assert sub3.changes[0].data.category_change == 'cs.LG cs.AI => no primary cs.AI'
 
 _NOTE = SimplifiedNotification(
     time=datetime(2024, 1, 1, tzinfo=timezone.utc),
