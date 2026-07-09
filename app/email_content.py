@@ -8,7 +8,7 @@ from arxiv.db import Session
 from arxiv.db.models import Submission, SubmissionCategory
 from arxiv.taxonomy.definitions import CATEGORY_ALIASES
 
-from app.schema import SubEmailData, SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, EmailTask, UserContact
+from app.schema import SubEmailData, SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, EmailTask, UserContact
 
 _ET = ZoneInfo(arxiv_settings.ARXIV_BUSINESS_TZ)
 def _fmt_time(dt: datetime) -> str:
@@ -19,6 +19,7 @@ from app.templates.comment import render_comment_block
 from app.templates.promote import render_promote_block
 from app.templates.new_prop import render_new_prop_block
 from app.templates.prop_resp import render_prop_resp_block
+from app.templates.category_rejection import render_category_rejection_block
 from app.templates.submission import render_submission_block
 from app.templates.email_body import render_body
 
@@ -96,6 +97,8 @@ def render_change_block(change: SimplifiedNotification, user_name: str) -> tuple
             return render_new_prop_block(change, user_name)
         case PropRespData():
             return render_prop_resp_block(change, user_name)
+        case CategoryRejectionData():
+            return render_category_rejection_block(change, user_name)
         case _:
             raise ValueError(f"unknown change data type: {type(change.data)}")
 
