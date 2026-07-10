@@ -115,7 +115,6 @@ def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) 
             logger.error(f"submission {sub_id}: no tapir_users row for moderator ids {missing}")
 
         if not to_emails:
-            logger.info(f"submission {sub_id}: no recipients after exclusions, skipping")
             continue
 
         #email data
@@ -203,11 +202,11 @@ def process_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[str
             skipped_sub_ids.append(sub_id)
 
     if not email_tasks:
-        logger.warning(f"No emails to send — submissions with no recipients: {sorted(skipped_sub_ids)}")
+        logger.warning(f"No emails to send — no recipients after exclusions for submissions: {sorted(skipped_sub_ids)}")
         return
 
     if skipped_sub_ids:
-        logger.info(f"Skipped submissions (no recipients): {sorted(skipped_sub_ids)}")
+        logger.info(f"Skipped submissions (no recipients after exclusions): {sorted(skipped_sub_ids)}")
 
     #fetch submission data — if batch query fails, skip all sends (will redeliver)
     try:
