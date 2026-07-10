@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app.schema import SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData
+from app.schema import SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, NotificationType
 from app.schema import SubEmailData
 from app.email_content import get_submission_info, _build_category_string, render_change_block, render_email
 from app.schema import EmailTask, ConsolidatedNotifications
@@ -19,8 +19,8 @@ _TIME = datetime(2024, 6, 15, 14, 30, tzinfo=timezone.utc)
 _USER = "Alice Mod"
 
 
-def _note(data) -> SimplifiedNotification:
-    return SimplifiedNotification(time=_TIME, user_id=1, data=data)
+def _note(data, action=NotificationType.COMMENT) -> SimplifiedNotification:
+    return SimplifiedNotification(time=_TIME, user_id=1, action=action, data=data)
 
 
 # ── comment ───────────────────────────────────────────────────────────────────
@@ -228,8 +228,8 @@ def test_render_email_contains_all_sections_and_footer():
 def test_render_email_changes_oldest_first():
     t_old = datetime(2024, 6, 15, 14, 30, tzinfo=timezone.utc)
     t_new = datetime(2024, 6, 15, 14, 32, tzinfo=timezone.utc)
-    older = SimplifiedNotification(time=t_old, user_id=1, data=CommentData(comment="older comment"))
-    newer = SimplifiedNotification(time=t_new, user_id=1, data=CommentData(comment="newer comment"))
+    older = SimplifiedNotification(time=t_old, user_id=1, action=NotificationType.COMMENT, data=CommentData(comment="older comment"))
+    newer = SimplifiedNotification(time=t_new, user_id=1, action=NotificationType.COMMENT, data=CommentData(comment="newer comment"))
     notifications = ConsolidatedNotifications(submission_id=123, changes=[newer, older])
     task = EmailTask(submission_id=123, to_emails=[], notifications=notifications)
     text, _ = render_email(task, _mock_submission(), {})

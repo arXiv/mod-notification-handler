@@ -1,6 +1,7 @@
 """processes notifications"""
 import logging
 import json
+from collections import Counter
 from typing import Callable
 
 from google.pubsub import ReceivedMessage
@@ -35,7 +36,7 @@ def _parse_message(payload)-> tuple[NotificationParams, SimplifiedNotification]:
             logger.error(f"unhandled action type: {full_note.action}, skipping message")
             raise ValueError(f"unhandled action: {full_note.action}")
 
-    simple_note=SimplifiedNotification(time=full_note.time, user_id=full_note.user_id, data=data)
+    simple_note=SimplifiedNotification(time=full_note.time, user_id=full_note.user_id, action=full_note.action, data=data)
     return full_note, simple_note
 
 def _convert_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[str]], None]) -> dict[int, ConsolidatedNotifications]:
@@ -132,13 +133,13 @@ def _send_email_tasks(
     sub_infos: dict[int, SubEmailData],
     ids_to_contact: dict[int, UserContact],
     ack_fn: Callable[[list[str]], None],
-) -> None:
+) -> list[int]:
     """render and send emails, acking each submission only after its email sends"""
 
     if settings.REDIRECT_EMAILS:
         logger.info(f"REDIRECT_EMAILS active — all emails → {settings.REDIRECT_RECIPIENT}")
 
-    sent = 0
+    sent_sub_ids: list[int] = []
     for task in email_tasks:
         sub = sub_infos.get(task.submission_id)
         if sub is None:
@@ -166,11 +167,11 @@ def _send_email_tasks(
             )
             ack_fn(task.notifications.ack_ids)  # ack on success or all-refused (terminal)
             if accepted:
-                sent += 1
+                sent_sub_ids.append(task.submission_id)
         except Exception:
             logger.exception(f"Failed to send email for submission {task.submission_id}, will redeliver")
 
-    logger.info(f"Sent {sent}/{len(email_tasks)} email(s) to relay")
+    return sent_sub_ids
 
 
 def process_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[str]], None]) -> None:
@@ -216,6 +217,23 @@ def process_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[str
         return
 
     #send emails
-    _send_email_tasks(email_tasks, sub_infos, ids_to_contact, ack_fn)
-    logger.info(f"Processed {len(messages)} messages, built {len(email_tasks)} email task(s).")
-    return
+    sent_sub_ids = _send_email_tasks(email_tasks, sub_infos, ids_to_contact, ack_fn)
+
+    #stat logging
+    action_counts = Counter(
+        change.action.value
+        for n in all_notifications.values()
+        for change in n.changes
+    )
+    action_summary = ", ".join(f"{k}: {v}" for k, v in sorted(action_counts.items()))
+    total_actions = sum(action_counts.values())
+
+    if len(sent_sub_ids) > 20:
+        sub_summary = f"over 20 submissions"
+    else:
+        sub_summary = f"submission ids: {sorted(sent_sub_ids)}" if sent_sub_ids else "none"
+
+    logger.info(
+        f"Stats: {total_actions} actions ({action_summary}) | "
+        f"{len(sent_sub_ids)}/{len(email_tasks)} emails accepted by relay ({sub_summary})"
+    )
