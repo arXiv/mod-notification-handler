@@ -46,6 +46,7 @@ class CategoryRejectionData(BaseModel):
 class SimplifiedNotification(BaseModel):
     time: datetime
     user_id: int
+    action: NotificationType
     data: Union[CommentData, PromoteData, PropRespData, NewPropData, CategoryRejectionData]
 
 @dataclass

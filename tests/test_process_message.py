@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
 
 from app.process import process_messages, _parse_message, _convert_messages, _build_email_tasks
-from app.schema import  CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, ConsolidatedNotifications, SimplifiedNotification
+from app.schema import  CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, ConsolidatedNotifications, SimplifiedNotification, NotificationType
 
 GOOD_COMMENT = {
     "time": "2024-01-01T10:00:00Z",
@@ -314,11 +314,13 @@ def test_consolidate_messages():
 _NOTE = SimplifiedNotification(
     time=datetime(2024, 1, 1, tzinfo=timezone.utc),
     user_id=246231,
+    action=NotificationType.COMMENT,
     data=CommentData(comment="test"),
 )
 _NOTE_2 = SimplifiedNotification(
     time=datetime(2024, 1, 2, tzinfo=timezone.utc),
     user_id=681201,
+    action=NotificationType.COMMENT,
     data=CommentData(comment="test reply"),
 )
 
