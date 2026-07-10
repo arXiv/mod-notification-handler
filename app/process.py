@@ -188,7 +188,7 @@ def process_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[str
         return
 
     if not all_notifications:
-        logger.info("No valid notifications after parsing, nothing to send")
+        logger.warning("No valid notifications after parsing, nothing to send")
         return
 
     #determine who to email what
