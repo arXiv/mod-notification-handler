@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mod-notification-handler"
-version = "0.1.0"
+version = "1.0"
 description = "processes notifications for moderators"
 authors = ["Erin Aster <erin@arxiv.org>"]
 readme = "README.md"

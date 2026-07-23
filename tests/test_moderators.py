@@ -118,6 +118,30 @@ def test_who_to_email_category_optout_overrides_archive():
     assert 77777 not in email
 
 @pytest.mark.usefixtures("db_session")
+def test_who_to_email_alias_category_mod():
+    # 60001 mods q-fin.EC only, the alias of canonical econ.GN
+    archives, cats = get_all_moderators()
+    email, _ = who_to_email(CATEGORIES_ACTIVE['econ.GN'], archives, cats)
+    assert 60001 in email
+
+@pytest.mark.usefixtures("db_session")
+def test_who_to_email_alias_archive_mod():
+    # 246232 mods 'q-fin' archive-wide only -- not listed under econ, econ.GN, or q-fin.EC --
+    # but 'q-fin' is the alias archive of econ.GN's alias category (q-fin.EC), so should still get emailed
+    archives, cats = get_all_moderators()
+    email, reply_to = who_to_email(CATEGORIES_ACTIVE['econ.GN'], archives, cats)
+    assert 246232 in email
+    assert 246232 in reply_to
+
+@pytest.mark.usefixtures("db_session")
+def test_who_to_email_named_category_optout_cascades_to_alias_archive():
+    # 60002 opts out at named category econ.GN and mods alias archive q-fin --
+    # named-category opt-out should suppress the alias-archive inclusion too
+    archives, cats = get_all_moderators()
+    email, _ = who_to_email(CATEGORIES_ACTIVE['econ.GN'], archives, cats)
+    assert 60002 not in email
+
+@pytest.mark.usefixtures("db_session")
 def test_who_to_email_no_mods_returns_empty():
     archives, cats = get_all_moderators()
     email, reply_to = who_to_email(CATEGORIES_ACTIVE['econ.EM'], archives, cats)

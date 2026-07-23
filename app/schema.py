@@ -11,7 +11,7 @@ class NotificationType(str, Enum):
     PROP_RESP = 'proposal-response'
     NEW_PROP = 'new-proposal'
     PROMOTE = 'category-promotion'
-    #TODO should rejections eventually send emails?
+    CATEGORY_REJECTION = 'category-rejection'
 
 #the shape the data comes in the pubsub message
 class NotificationParams(BaseModel):
@@ -37,11 +37,17 @@ class PromoteData(BaseModel):
     promotion_type: Literal["primary", "secondary"]
     category_change: str
 
+class CategoryRejectionData(BaseModel):
+    category: str
+    rejection_type: Literal["reject", "accept_secondary", "cross_submission"]
+    category_change: str
+
 
 class SimplifiedNotification(BaseModel):
     time: datetime
     user_id: int
-    data: Union[CommentData, PromoteData, PropRespData, NewPropData]
+    action: NotificationType
+    data: Union[CommentData, PromoteData, PropRespData, NewPropData, CategoryRejectionData]
 
 @dataclass
 class UserContact:

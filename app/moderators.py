@@ -4,6 +4,7 @@ from typing import Optional
 from sqlalchemy import select
 
 from arxiv.taxonomy.category import Category
+from arxiv.taxonomy.definitions import CATEGORY_ALIASES, CATEGORIES_ACTIVE
 from arxiv.db import Session
 from arxiv.db.models import t_arXiv_moderators, TapirUser, TapirNickname
 
@@ -76,22 +77,53 @@ def get_all_moderators() -> tuple [dict[str, ToEmail], dict[str, ToEmail]]:
 
     return all_archives, all_cats
 
+_ALIAS_BY_CANONICAL = {v: k for k, v in CATEGORY_ALIASES.items()}
+
 def who_to_email(category: Category, all_archives: dict[str, ToEmail], all_cats: dict[str, ToEmail])-> tuple[set[int], set[int]]:
     """determines who to include in an email for a given set of categories"""
 
     email: set[int] = set()
     reply_to: set[int] = set()
+    rolling_dont_email: set[int] = set()
+    rolling_dont_reply: set[int] = set()
 
     cat_entry = all_cats.get(category.id, ToEmail())
     archive_entry = all_archives.get(category.in_archive, ToEmail())
 
-    #add specific category moderators
+    #dont forget alaises
+    alias_id = _ALIAS_BY_CANONICAL.get(category.id)
+    if alias_id:
+        alias=CATEGORIES_ACTIVE[alias_id]
+        alias_cat_entry = all_cats.get(alias_id, ToEmail())
+        alias_archive_entry = all_archives.get(alias.in_archive, ToEmail())
+
+    # factory in email preferences
+    #priority: named category > alias category > named archive > alias archive
+    #each lower-priority group excludes anyone who opted out at a higher-priority level
+
+    #named category moderators
     email.update(cat_entry.send_to)
     reply_to.update(cat_entry.include_reply_to)
+    rolling_dont_email.update(cat_entry.dont_send_to)
+    rolling_dont_reply.update(cat_entry.dont_include_reply_to)
 
-    #add archive mods unless they have specifically declined
-    email.update(archive_entry.send_to - cat_entry.dont_send_to)
-    reply_to.update(archive_entry.include_reply_to - cat_entry.dont_include_reply_to)
+    #alias category moderators
+    if alias_id:
+        email.update(alias_cat_entry.send_to - rolling_dont_email)
+        reply_to.update(alias_cat_entry.include_reply_to - rolling_dont_reply)
+        rolling_dont_email.update(alias_cat_entry.dont_send_to)
+        rolling_dont_reply.update(alias_cat_entry.dont_include_reply_to)
+
+    #named archive moderators
+    email.update(archive_entry.send_to - rolling_dont_email)
+    reply_to.update(archive_entry.include_reply_to - rolling_dont_reply)
+    rolling_dont_email.update(archive_entry.dont_send_to)
+    rolling_dont_reply.update(archive_entry.dont_include_reply_to)
+
+    #alias archive moderators
+    if alias_id:
+        email.update(alias_archive_entry.send_to - rolling_dont_email)
+        reply_to.update(alias_archive_entry.include_reply_to - rolling_dont_reply)
 
     return email, reply_to
 

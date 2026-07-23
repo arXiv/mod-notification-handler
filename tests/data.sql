@@ -44,6 +44,15 @@ INSERT INTO `tapir_users` VALUES (77777,'Archive','OptOut','',1,1,'archive-optou
 INSERT INTO `arXiv_moderators` VALUES (77777, 'astro-ph', '', 0, 0, 0, 0, 0);
 INSERT INTO `arXiv_moderators` VALUES (77777, 'astro-ph', 'HE', 0, 1, 0, 1, 0);
 
+-- category alias tests: q-fin.EC is the alias of canonical category econ.GN
+INSERT INTO `tapir_users` VALUES (60001,'Alias','CatMod','',1,1,'aliascat@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);
+INSERT INTO `arXiv_moderators` VALUES (60001, 'q-fin', 'EC', 0, 0, 0, 0, 0);
+
+-- 60002 opts out of named category econ.GN and would otherwise qualify via the alias archive (q-fin)
+INSERT INTO `tapir_users` VALUES (60002,'Cascade','OptOut','',1,1,'cascadeoptout@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);
+INSERT INTO `arXiv_moderators` VALUES (60002, 'econ', 'GN', 0, 1, 0, 0, 0);
+INSERT INTO `arXiv_moderators` VALUES (60002, 'q-fin', '', 0, 0, 0, 0, 0);
+
 -- actor users referenced in test messages (user_id=1 and user_id=2)
 INSERT INTO `tapir_users` VALUES (1,'Test','Editor','',1,1,'editor-one@example.com',8,0,2,1384185389,'','',0,0,0,1,1,0,0,0,0,'',0,0);
 INSERT INTO `tapir_users` VALUES (2,'Jane','Smith','',1,1,'editor-two@example.com',8,0,2,1384185389,'','',0,0,0,1,1,0,0,0,0,'',0,0);

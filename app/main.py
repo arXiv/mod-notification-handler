@@ -87,7 +87,7 @@ def main():
     subscription_path = subscriber.subscription_path(settings.GCP_PROJECT_ID, settings.PUBSUB_SUBSCRIPTION_ID)
     messages=get_messages(subscriber, subscription_path)
     if len(messages)==0:
-        logger.warning("No messages found.")
+        logger.info("0 messages found.")
         return
 
     def ack(ids: list[str]) -> None:
