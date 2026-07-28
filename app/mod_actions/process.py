@@ -11,7 +11,8 @@ from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
 from app.shared.config import settings
 from app.shared.utils.email import send_email
 from app.shared.schema import UserContact
-from app.shared.moderators import get_all_moderators, get_recipient_ids_for_categories, get_mod_emails
+from app.shared.moderators import get_recipient_ids_for_categories, get_mod_emails
+from app.mod_actions.moderators import get_moderators
 from app.shared.submission import SubEmailData, get_submission_info
 from app.mod_actions.email_content import render_email
 from app.mod_actions.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData
@@ -83,7 +84,7 @@ def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) 
         return [], {}
 
     #collect all the categories and emails
-    archives, cats = get_all_moderators()
+    archives, cats = get_moderators()
 
     all_categories: set[Category] = set()
     for notifications in all_notifications.values():

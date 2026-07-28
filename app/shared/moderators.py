@@ -1,4 +1,10 @@
-"""handles getting data from the database"""
+"""handles getting moderator data from the database
+
+Deciding who actually gets emailed is job-specific — each job has its own
+rules about which email preference flags block a send, so each one owns a
+moderators.py that turns fetch_moderators() into ToEmail dicts. Everything
+downstream of those dicts (who_to_email and friends) is shared.
+"""
 from pydantic import BaseModel, Field
 from typing import Optional
 from sqlalchemy import select
@@ -9,8 +15,6 @@ from arxiv.db import Session
 from arxiv.db.models import t_arXiv_moderators, TapirUser, TapirNickname
 
 from app.shared.schema import UserContact
-
-#TODO refactor so each job can fetch and select the mod data they need
 
 class Moderator(BaseModel):
     user_id:int
@@ -32,15 +36,14 @@ def _build_category_name(row) -> Optional[str]:
     subject_class = row["subject_class"]
     return f"{row['archive']}.{subject_class}" if subject_class else None
 
-def get_all_moderators() -> tuple [dict[str, ToEmail], dict[str, ToEmail]]:
-    """fetch mod data from db. process into who to email for categories"""
+def fetch_moderators() -> list[Moderator]:
+    """fetch all moderator rows from the db. no filtering — each job decides what the flags mean"""
 
-    #fetch data
     with Session() as session:
         result = session.execute(select(t_arXiv_moderators))
         rows = result.mappings().all()
 
-    moderators = [
+    return [
         Moderator(
             user_id=row["user_id"],
             archive=row["archive"],
@@ -52,34 +55,6 @@ def get_all_moderators() -> tuple [dict[str, ToEmail], dict[str, ToEmail]]:
         )
         for row in rows
     ]
-
-    #who should get emailed
-    all_cats: dict[str, ToEmail] ={}
-    all_archives: dict[str, ToEmail] ={}
-
-    for mod in moderators:
-        # is this a category or archive entry
-        is_category = bool(mod.category)
-        store = all_cats if is_category else all_archives
-        key = mod.category if is_category else mod.archive
-
-        entry: ToEmail=store.get(key, ToEmail())
-
-        #email pref
-        if mod.no_email or mod.no_web_email:
-            entry.dont_send_to.add(mod.user_id)
-        else:
-            entry.send_to.add(mod.user_id)
-
-        # reply to pref
-        if mod.no_reply_to:
-            entry.dont_include_reply_to.add(mod.user_id)
-        else:
-            entry.include_reply_to.add(mod.user_id)
-
-        store[key] = entry
-
-    return all_archives, all_cats
 
 _ALIAS_BY_CANONICAL = {v: k for k, v in CATEGORY_ALIASES.items()}
 
