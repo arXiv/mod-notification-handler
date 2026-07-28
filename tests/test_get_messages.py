@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
-from app.main import get_messages, main
+from app.shared.pubsub import get_messages
+from app.mod_actions.main import main
 
 class FakeResponse:
     def __init__(self, messages):
@@ -33,8 +34,8 @@ def test_get_messages_stops_on_empty():
 
 
 def test_main_exits_if_redirect_recipient_missing():
-    with patch("app.main.settings") as mock_settings, \
-         patch("app.main.pubsub_v1.SubscriberClient") as mock_client:
+    with patch("app.shared.utils.startup.settings") as mock_settings, \
+         patch("app.mod_actions.main.pubsub_v1.SubscriberClient") as mock_client:
         mock_settings.SEND_EMAILS = True
         mock_settings.REDIRECT_EMAILS = True
         mock_settings.REDIRECT_RECIPIENT = None
@@ -43,8 +44,8 @@ def test_main_exits_if_redirect_recipient_missing():
 
 
 def test_main_exits_if_no_redirect_outside_production():
-    with patch("app.main.settings") as mock_settings, \
-         patch("app.main.pubsub_v1.SubscriberClient") as mock_client:
+    with patch("app.shared.utils.startup.settings") as mock_settings, \
+         patch("app.mod_actions.main.pubsub_v1.SubscriberClient") as mock_client:
         mock_settings.SEND_EMAILS = True
         mock_settings.REDIRECT_EMAILS = False
         mock_settings.ENV = "LOCAL"

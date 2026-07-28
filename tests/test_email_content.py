@@ -3,17 +3,17 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app.schema import SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, NotificationType
-from app.schema import SubEmailData
-from app.email_content import get_submission_info, _build_category_string, render_change_block, render_email
-from app.schema import EmailTask, ConsolidatedNotifications
-from app.templates.comment import render_comment_block
-from app.templates.promote import render_promote_block
-from app.templates.new_prop import render_new_prop_block
-from app.templates.prop_resp import render_prop_resp_block
-from app.templates.category_rejection import render_category_rejection_block
-from app.templates.submission import render_submission_block, truncate_authors, MAX_AUTHORS
-from app.templates.email_body import render_body, CHECK_GUIDE_URL, HOW_TO_MOD_URL, MOD_HUB_URL
+from app.mod_actions.schema import SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, NotificationType
+from app.mod_actions.schema import SubEmailData
+from app.mod_actions.email_content import get_submission_info, _build_category_string, render_change_block, render_email
+from app.mod_actions.schema import EmailTask, ConsolidatedNotifications
+from app.mod_actions.templates.comment import render_comment_block
+from app.mod_actions.templates.promote import render_promote_block
+from app.mod_actions.templates.new_prop import render_new_prop_block
+from app.mod_actions.templates.prop_resp import render_prop_resp_block
+from app.mod_actions.templates.category_rejection import render_category_rejection_block
+from app.mod_actions.templates.submission import render_submission_block, truncate_authors, MAX_AUTHORS
+from app.mod_actions.templates.email_body import render_body, CHECK_GUIDE_URL, HOW_TO_MOD_URL, MOD_HUB_URL
 
 _TIME = datetime(2024, 6, 15, 14, 30, tzinfo=timezone.utc)
 _USER = "Alice Mod"

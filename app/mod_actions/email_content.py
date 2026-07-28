@@ -1,27 +1,20 @@
 """builds email content for submission notifications"""
-from datetime import datetime
-from zoneinfo import ZoneInfo
 from sqlalchemy import select
 
-from arxiv.config import settings as arxiv_settings
 from arxiv.db import Session
 from arxiv.db.models import Submission, SubmissionCategory
 from arxiv.taxonomy.definitions import CATEGORY_ALIASES
 
-from app.schema import SubEmailData, SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, EmailTask, UserContact
+from app.shared.schema import UserContact
+from app.mod_actions.schema import SubEmailData, SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, EmailTask
 
-_ET = ZoneInfo(arxiv_settings.ARXIV_BUSINESS_TZ)
-def _fmt_time(dt: datetime) -> str:
-    et = dt.astimezone(_ET)
-    return et.strftime("%m-%d %H:%M %Z")
-
-from app.templates.comment import render_comment_block
-from app.templates.promote import render_promote_block
-from app.templates.new_prop import render_new_prop_block
-from app.templates.prop_resp import render_prop_resp_block
-from app.templates.category_rejection import render_category_rejection_block
-from app.templates.submission import render_submission_block
-from app.templates.email_body import render_body
+from app.mod_actions.templates.comment import render_comment_block
+from app.mod_actions.templates.promote import render_promote_block
+from app.mod_actions.templates.new_prop import render_new_prop_block
+from app.mod_actions.templates.prop_resp import render_prop_resp_block
+from app.mod_actions.templates.category_rejection import render_category_rejection_block
+from app.mod_actions.templates.submission import render_submission_block
+from app.mod_actions.templates.email_body import render_body
 
 
 _ALIAS_BY_CANONICAL = {v: k for k, v in CATEGORY_ALIASES.items()}

@@ -1,5 +1,5 @@
-from app.schema import SimplifiedNotification, CategoryRejectionData
-from app.email_content import _fmt_time
+from app.mod_actions.schema import SimplifiedNotification, CategoryRejectionData
+from app.shared.utils.dates import fmt_time
 
 _REJECTION_LABELS = {
     "reject": "removed from submission",
@@ -10,7 +10,7 @@ _REJECTION_LABELS = {
 
 def render_category_rejection_block(change: SimplifiedNotification, user_name: str) -> tuple[str, str]:
     data: CategoryRejectionData = change.data
-    when = _fmt_time(change.time)
+    when = fmt_time(change.time)
     label = _REJECTION_LABELS.get(data.rejection_type, data.rejection_type)
     text = (
         f"[{when}] {user_name} rejected {data.category} ({label}):\n"

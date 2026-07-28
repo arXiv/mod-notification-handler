@@ -8,7 +8,9 @@ from arxiv.taxonomy.definitions import CATEGORY_ALIASES, CATEGORIES_ACTIVE
 from arxiv.db import Session
 from arxiv.db.models import t_arXiv_moderators, TapirUser, TapirNickname
 
-from app.schema import UserContact
+from app.shared.schema import UserContact
+
+#TODO refactor so each job can fetch and select the mod data they need
 
 class Moderator(BaseModel):
     user_id:int
@@ -36,7 +38,7 @@ def get_all_moderators() -> tuple [dict[str, ToEmail], dict[str, ToEmail]]:
     with Session() as session:
         result = session.execute(select(t_arXiv_moderators))
         rows = result.mappings().all()
-     
+
     moderators = [
         Moderator(
             user_id=row["user_id"],
@@ -52,7 +54,7 @@ def get_all_moderators() -> tuple [dict[str, ToEmail], dict[str, ToEmail]]:
     #who should get emailed
     all_cats: dict[str, ToEmail] ={}
     all_archives: dict[str, ToEmail] ={}
-    
+
     for mod in moderators:
         # is this a category or archive entry
         is_category = bool(mod.category)

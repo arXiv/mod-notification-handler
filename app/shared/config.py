@@ -7,9 +7,10 @@ class Settings(BaseSettings):
 
     LOG_LEVEL: str = "INFO"
 
-    #configured the pubsub subscription notifications are pulled from
+    #configures the pubsub subscriptions notifications are pulled from, one per job
     GCP_PROJECT_ID: str = "arxiv-development"
-    PUBSUB_SUBSCRIPTION_ID: str = "mod-notification-handler"
+    PUBSUB_SUBSCRIPTION_ID_MOD_ACTIONS: str = "mod-notification-handler"
+    PUBSUB_SUBSCRIPTION_ID_NEW_SUBS: str = "NYI" #TODO
     PUBSUB_BATCH_SIZE: int = 300
     PUBSUB_MAX_PULL_SEC: int = 60
 
@@ -17,7 +18,7 @@ class Settings(BaseSettings):
     MAIL_FROM: str = "e-prints@arxiv.org" #address emails are sent from
     ARCHIVAL_EMAIL: Optional[str] = None #an archival address that recieves a copy of every email
     MOD_REPLY_TO: Optional[str] = None #the moderator support email to be included in the reply to of every email
-    HALON_CREDS: str = "smtps://user:pass@host:port" 
+    HALON_CREDS: str = "smtps://user:pass@host:port"
 
     #email enabling and control
     """true: emails can be sent at all, false: no email will ever be sent (but messages will be acked)"""

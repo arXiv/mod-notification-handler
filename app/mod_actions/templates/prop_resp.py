@@ -1,10 +1,10 @@
-from app.schema import SimplifiedNotification, PropRespData
-from app.email_content import _fmt_time
+from app.mod_actions.schema import SimplifiedNotification, PropRespData
+from app.shared.utils.dates import fmt_time
 
 
 def render_prop_resp_block(change: SimplifiedNotification, user_name: str) -> tuple[str, str]:
     data: PropRespData = change.data 
-    when = _fmt_time(change.time)
+    when = fmt_time(change.time)
     text = (
         f"[{when}] {user_name} responded to category proposal(s):\n"
         f"  {data.responses}\n"

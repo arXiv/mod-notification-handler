@@ -5,7 +5,7 @@ from arxiv.db.models import t_arXiv_moderators
 
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
 
-from app.moderators import get_all_moderators, who_to_email, get_recipient_ids_for_categories, get_mod_emails
+from app.shared.moderators import get_all_moderators, who_to_email, get_recipient_ids_for_categories, get_mod_emails
 
 def test_db_can_read(db_session):
     result = db_session.execute(select(t_arXiv_moderators))

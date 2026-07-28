@@ -50,17 +50,6 @@ class SimplifiedNotification(BaseModel):
     data: Union[CommentData, PromoteData, PropRespData, NewPropData, CategoryRejectionData]
 
 @dataclass
-class UserContact:
-    email: str
-    nickname: str
-    first_name: str
-    last_name: str
-
-    @property
-    def display_name(self) -> str:
-        return f"{self.first_name} {self.last_name} ({self.nickname})"
-
-@dataclass
 class ConsolidatedNotifications:
     submission_id: int
     categories: set[Category] =field(default_factory=set) #categories to notify about this submission

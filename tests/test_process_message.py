@@ -6,8 +6,8 @@ from types import SimpleNamespace
 
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
 
-from app.process import process_messages, _parse_message, _convert_messages, _build_email_tasks
-from app.schema import  CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, ConsolidatedNotifications, SimplifiedNotification, NotificationType
+from app.mod_actions.process import process_messages, _parse_message, _convert_messages, _build_email_tasks
+from app.mod_actions.schema import  CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, ConsolidatedNotifications, SimplifiedNotification, NotificationType
 
 GOOD_COMMENT = {
     "time": "2024-01-01T10:00:00Z",
@@ -372,7 +372,7 @@ def test_send_error_does_not_abort():
 
     mock_ack = Mock()
     mock_send = Mock(side_effect=[RuntimeError("smtp down"), True])
-    with patch("app.process.settings.SEND_EMAILS", True), patch("app.process.send_email", mock_send):
+    with patch("app.mod_actions.process.settings.SEND_EMAILS", True), patch("app.mod_actions.process.send_email", mock_send):
         process_messages([msg1, msg2], ack_fn=mock_ack)
 
     acked = [id for call in mock_ack.call_args_list for id in call.args[0]]
@@ -399,7 +399,7 @@ def test_all_recipients_refused_is_acked():
 
     mock_ack = Mock()
     mock_send = Mock(return_value=False)
-    with patch("app.process.settings.SEND_EMAILS", True), patch("app.process.send_email", mock_send):
+    with patch("app.mod_actions.process.settings.SEND_EMAILS", True), patch("app.mod_actions.process.send_email", mock_send):
         process_messages([msg], ack_fn=mock_ack)
 
     acked = [id for call in mock_ack.call_args_list for id in call.args[0]]
@@ -412,7 +412,7 @@ def test_transient_smtp_failure_is_not_acked():
 
     mock_ack = Mock()
     mock_send = Mock(side_effect=RuntimeError("smtp error"))
-    with patch("app.process.settings.SEND_EMAILS", True), patch("app.process.send_email", mock_send):
+    with patch("app.mod_actions.process.settings.SEND_EMAILS", True), patch("app.mod_actions.process.send_email", mock_send):
         process_messages([msg], ack_fn=mock_ack)
 
     acked = [id for call in mock_ack.call_args_list for id in call.args[0]]
@@ -425,7 +425,7 @@ def test_all_successful_sends_all_acked():
     msg3 = _make_pubsub_message("ack-3", BAD_PROMOTE)   # parse failure
 
     mock_ack = Mock()
-    with patch("app.process.settings.SEND_EMAILS", True), patch("app.process.send_email"):
+    with patch("app.mod_actions.process.settings.SEND_EMAILS", True), patch("app.mod_actions.process.send_email"):
         process_messages([msg1, msg2, msg3], ack_fn=mock_ack)
 
     acked = [id for call in mock_ack.call_args_list for id in call.args[0]]
@@ -456,14 +456,14 @@ def test_changes_ordered_oldest_first():
     msg2 = _make_pubsub_message("ack-2", newer)
 
     mock_send = Mock()
-    with patch("app.process.settings.SEND_EMAILS", True), patch("app.process.send_email", mock_send):
+    with patch("app.mod_actions.process.settings.SEND_EMAILS", True), patch("app.mod_actions.process.send_email", mock_send):
         process_messages([msg1, msg2], ack_fn=Mock())
 
     assert mock_send.call_count == 1
     body = mock_send.call_args.kwargs["body"]
     assert body.index("01-01 05:00 EST") < body.index("01-02 05:00 EST")
 
-    with patch("app.process.settings.SEND_EMAILS", True), patch("app.process.send_email", mock_send):
+    with patch("app.mod_actions.process.settings.SEND_EMAILS", True), patch("app.mod_actions.process.send_email", mock_send):
         process_messages([msg2, msg1], ack_fn=Mock())
 
     assert mock_send.call_count == 2
@@ -476,7 +476,7 @@ def test_subject_uses_paper_categories():
     msg = _make_pubsub_message("ack-1", GOOD_COMMENT)
 
     mock_send = Mock()
-    with patch("app.process.settings.SEND_EMAILS", True), patch("app.process.send_email", mock_send):
+    with patch("app.mod_actions.process.settings.SEND_EMAILS", True), patch("app.mod_actions.process.send_email", mock_send):
         process_messages([msg], ack_fn=Mock())
 
     assert mock_send.call_args.kwargs["subject"] == \
@@ -489,7 +489,7 @@ def test_subject_no_primary_category():
     msg = _make_pubsub_message("ack-1", note)
 
     mock_send = Mock()
-    with patch("app.process.settings.SEND_EMAILS", True), patch("app.process.send_email", mock_send):
+    with patch("app.mod_actions.process.settings.SEND_EMAILS", True), patch("app.mod_actions.process.send_email", mock_send):
         process_messages([msg], ack_fn=Mock())
 
     assert mock_send.call_args.kwargs["subject"] == \
@@ -502,7 +502,7 @@ def test_subject_alias_category_expands():
     msg = _make_pubsub_message("ack-1", note)
 
     mock_send = Mock()
-    with patch("app.process.settings.SEND_EMAILS", True), patch("app.process.send_email", mock_send):
+    with patch("app.mod_actions.process.settings.SEND_EMAILS", True), patch("app.mod_actions.process.send_email", mock_send):
         process_messages([msg], ack_fn=Mock())
 
     assert mock_send.call_args.kwargs["subject"] == \
