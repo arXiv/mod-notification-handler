@@ -1,12 +1,7 @@
 """builds email content for submission notifications"""
-from sqlalchemy import select
-
-from arxiv.db import Session
-from arxiv.db.models import Submission, SubmissionCategory
-from arxiv.taxonomy.definitions import CATEGORY_ALIASES
-
 from app.shared.schema import UserContact
-from app.mod_actions.schema import SubEmailData, SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, EmailTask
+from app.shared.submission import SubEmailData
+from app.mod_actions.schema import SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, EmailTask
 
 from app.mod_actions.templates.comment import render_comment_block
 from app.mod_actions.templates.promote import render_promote_block
@@ -15,68 +10,6 @@ from app.mod_actions.templates.prop_resp import render_prop_resp_block
 from app.mod_actions.templates.category_rejection import render_category_rejection_block
 from app.mod_actions.templates.submission import render_submission_block
 from app.mod_actions.templates.email_body import render_body
-
-
-_ALIAS_BY_CANONICAL = {v: k for k, v in CATEGORY_ALIASES.items()}
-
-
-def _build_category_string(cats: list[tuple[str, int]]) -> str:
-    """Format [(category, is_primary), ...] into 'cs.LG (primary), cs.AI'."""
-    primary = "-" #TODO change to no primary when more off of legacy system
-    secondaries: set[str] = set()
-    for cat_id, is_primary in cats:
-        if is_primary:
-            primary = cat_id
-        else:
-            secondaries.add(cat_id)
-        #catch aliases
-        if cat_id in _ALIAS_BY_CANONICAL:
-            secondaries.add(_ALIAS_BY_CANONICAL[cat_id])
-    parts = [f"{primary}"] + sorted(secondaries)
-    return " ".join(parts)
-
-
-def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
-    """Fetch submission fields needed for email rendering. Returns only found rows."""
-    if not submission_ids:
-        return {}
-    with Session() as session:
-        #get general submission data
-        rows = session.execute(
-            select(
-                Submission.submission_id,
-                Submission.title,
-                Submission.authors,
-                Submission.status,
-                Submission.submitter_name,
-                Submission.submitter_id,
-                Submission.submit_time,
-            ).where(Submission.submission_id.in_(submission_ids))
-        ).all()
-
-        #get and consolidate category data
-        cat_rows = session.execute(
-            select(SubmissionCategory.submission_id, SubmissionCategory.category, SubmissionCategory.is_primary)
-            .where(SubmissionCategory.submission_id.in_(submission_ids))
-        ).all()
-
-        cats_by_sub: dict[int, list[tuple[str, int]]] = {}
-        for cr in cat_rows:
-            cats_by_sub.setdefault(cr.submission_id, []).append((cr.category, cr.is_primary))
-
-        return {
-            row.submission_id: SubEmailData(
-                submission_id=row.submission_id,
-                title=row.title or "",
-                authors=row.authors or "",
-                status=row.status,
-                submitter_name=row.submitter_name or "",
-                submitter_id=row.submitter_id or 0,
-                submission_categories=_build_category_string(cats_by_sub.get(row.submission_id, [])),
-                submit_time=row.submit_time,
-            )
-            for row in rows
-        }
 
 
 def render_change_block(change: SimplifiedNotification, user_name: str) -> tuple[str, str]:

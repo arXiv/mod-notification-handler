@@ -4,8 +4,9 @@ from datetime import datetime, timezone
 import pytest
 
 from app.mod_actions.schema import SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, NotificationType
-from app.mod_actions.schema import SubEmailData
-from app.mod_actions.email_content import get_submission_info, _build_category_string, render_change_block, render_email
+from app.shared.submission import SubEmailData, get_submission_info
+from app.shared.utils.formatting import build_category_string
+from app.mod_actions.email_content import render_change_block, render_email
 from app.mod_actions.schema import EmailTask, ConsolidatedNotifications
 from app.mod_actions.templates.comment import render_comment_block
 from app.mod_actions.templates.promote import render_promote_block
@@ -485,30 +486,30 @@ def test_full_email_exact_html():
     )
 
 
-# ── _build_category_string unit tests ─────────────────────────────────────────
+# ── build_category_string unit tests ─────────────────────────────────────────
 
 def test_category_string_empty():
-    assert _build_category_string([]) == "-"
+    assert build_category_string([]) == "-"
 
 
 def test_category_string_primary_only():
-    assert _build_category_string([("cs.LG", 1)]) == "cs.LG"
+    assert build_category_string([("cs.LG", 1)]) == "cs.LG"
 
 
 def test_category_string_primary_and_cross():
     # math.ST is canonical target of stat.TH alias → stat.TH also added
-    result = _build_category_string([("cs.LG", 1), ("cs.AI", 0), ("math.ST", 0)])
+    result = build_category_string([("cs.LG", 1), ("cs.AI", 0), ("math.ST", 0)])
     assert result == "cs.LG cs.AI math.ST stat.TH"
 
 
 def test_category_string_no_primary_with_secondaries():
-    result = _build_category_string([("cs.AI", 0), ("cs.LG", 0)])
+    result = build_category_string([("cs.AI", 0), ("cs.LG", 0)])
     assert result == "- cs.AI cs.LG"
 
 
 def test_category_string_alias_expansion():
     # math-ph is canonical target of math.MP alias → math.MP added to secondaries
-    result = _build_category_string([("cs.LG", 0), ("math-ph", 1)])
+    result = build_category_string([("cs.LG", 0), ("math-ph", 1)])
     assert result == "math-ph cs.LG math.MP"
 
 

@@ -12,8 +12,9 @@ from app.shared.config import settings
 from app.shared.utils.email import send_email
 from app.shared.schema import UserContact
 from app.shared.moderators import get_all_moderators, get_recipient_ids_for_categories, get_mod_emails
-from app.mod_actions.email_content import get_submission_info, render_email
-from app.mod_actions.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, SubEmailData
+from app.shared.submission import SubEmailData, get_submission_info
+from app.mod_actions.email_content import render_email
+from app.mod_actions.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData
 
 logger = logging.getLogger(__name__)
 

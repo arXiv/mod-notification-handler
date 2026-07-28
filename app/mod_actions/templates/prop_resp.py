@@ -1,5 +1,5 @@
 from app.mod_actions.schema import SimplifiedNotification, PropRespData
-from app.shared.utils.dates import fmt_time
+from app.shared.utils.formatting import fmt_time
 
 
 def render_prop_resp_block(change: SimplifiedNotification, user_name: str) -> tuple[str, str]:

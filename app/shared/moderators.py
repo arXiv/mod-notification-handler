@@ -19,6 +19,7 @@ class Moderator(BaseModel):
     no_email: bool
     no_web_email:bool
     no_reply_to: bool
+    daily_update: bool
 
 class ToEmail(BaseModel):
     send_to: set[int] = Field(default_factory=set)# list of userids to send the email to
@@ -47,6 +48,7 @@ def get_all_moderators() -> tuple [dict[str, ToEmail], dict[str, ToEmail]]:
             no_email=bool(row["no_email"]),
             no_web_email=bool(row["no_web_email"]),
             no_reply_to=bool(row["no_reply_to"]),
+            daily_update=bool(row["daily_update"]),
         )
         for row in rows
     ]

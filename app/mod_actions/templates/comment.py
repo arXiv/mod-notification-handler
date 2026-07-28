@@ -1,7 +1,7 @@
 import html
 
 from app.mod_actions.schema import SimplifiedNotification, CommentData
-from app.shared.utils.dates import fmt_time
+from app.shared.utils.formatting import fmt_time
 
 
 def render_comment_block(change: SimplifiedNotification, user_name: str) -> tuple[str, str]:

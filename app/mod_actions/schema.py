@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Union, Optional
+from typing import Literal, Union
 from enum import Enum
 from pydantic import BaseModel
 from dataclasses import dataclass, field
@@ -63,14 +63,3 @@ class EmailTask:
     to_emails: list[str]
     notifications: ConsolidatedNotifications
     reply_to_emails: list[str] = field(default_factory=list)
-
-@dataclass
-class SubEmailData:
-    submission_id: int
-    title: str
-    authors: str
-    status: int
-    submitter_name: str
-    submitter_id: int
-    submission_categories: str = ""
-    submit_time: Optional[datetime] = None

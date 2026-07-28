@@ -1,5 +1,5 @@
 from app.mod_actions.schema import SimplifiedNotification, PromoteData
-from app.shared.utils.dates import fmt_time
+from app.shared.utils.formatting import fmt_time
 
 
 def render_promote_block(change: SimplifiedNotification, user_name: str) -> tuple[str, str]:

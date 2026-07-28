@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 from arxiv.config import settings as arxiv_settings
 from arxiv.submission.statuses import STATUS_NAMES
 
-from app.mod_actions.schema import SubEmailData
+from app.shared.submission import SubEmailData
 
 CHECK_SUBMISSION_URL = "https://check.arxiv.org/submit/{submission_id}"
 _ET = ZoneInfo(arxiv_settings.ARXIV_BUSINESS_TZ)

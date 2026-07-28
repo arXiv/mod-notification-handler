@@ -1,5 +1,5 @@
 from app.mod_actions.schema import SimplifiedNotification, CategoryRejectionData
-from app.shared.utils.dates import fmt_time
+from app.shared.utils.formatting import fmt_time
 
 _REJECTION_LABELS = {
     "reject": "removed from submission",
