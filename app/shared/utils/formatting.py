@@ -3,11 +3,10 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from arxiv.config import settings as arxiv_settings
-from arxiv.taxonomy.definitions import CATEGORY_ALIASES
+
+from app.shared.utils.taxonomy import ALIAS_BY_CANONICAL
 
 _ET = ZoneInfo(arxiv_settings.ARXIV_BUSINESS_TZ)
-
-_ALIAS_BY_CANONICAL = {v: k for k, v in CATEGORY_ALIASES.items()}
 
 
 def fmt_time(dt: datetime) -> str:
@@ -25,7 +24,7 @@ def build_category_string(cats: list[tuple[str, int]]) -> str:
         else:
             secondaries.add(cat_id)
         #catch aliases
-        if cat_id in _ALIAS_BY_CANONICAL:
-            secondaries.add(_ALIAS_BY_CANONICAL[cat_id])
+        if cat_id in ALIAS_BY_CANONICAL:
+            secondaries.add(ALIAS_BY_CANONICAL[cat_id])
     parts = [f"{primary}"] + sorted(secondaries)
     return " ".join(parts)

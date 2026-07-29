@@ -1,13 +1,11 @@
 import html
-from zoneinfo import ZoneInfo
 
-from arxiv.config import settings as arxiv_settings
 from arxiv.submission.statuses import STATUS_NAMES
 
 from app.shared.submission import SubEmailData
+from app.shared.utils.formatting import fmt_time
 
 CHECK_SUBMISSION_URL = "https://check.arxiv.org/submit/{submission_id}"
-_ET = ZoneInfo(arxiv_settings.ARXIV_BUSINESS_TZ)
 MAX_AUTHORS = 15
 
 
@@ -26,10 +24,7 @@ def render_submission_block(sub: SubEmailData) -> tuple[str, str]:
     title = sub.title or "(no title)"
     authors = truncate_authors(sub.authors) if sub.authors else "(no authors)"
 
-    submit_time_str = (
-        sub.submit_time.astimezone(_ET).strftime("%Y-%m-%d %H:%M %Z")
-        if sub.submit_time else None
-    )
+    submit_time_str = fmt_time(sub.submit_time) if sub.submit_time else None
 
     text = (
         f"Submission: submit/{sub.submission_id} | {check_url}\n"

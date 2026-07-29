@@ -10,11 +10,12 @@ from typing import Optional
 from sqlalchemy import select
 
 from arxiv.taxonomy.category import Category
-from arxiv.taxonomy.definitions import CATEGORY_ALIASES, CATEGORIES_ACTIVE
+from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
 from arxiv.db import Session
 from arxiv.db.models import t_arXiv_moderators, TapirUser, TapirNickname
 
 from app.shared.schema import UserContact
+from app.shared.utils.taxonomy import ALIAS_BY_CANONICAL
 
 class Moderator(BaseModel):
     user_id:int
@@ -56,8 +57,6 @@ def fetch_moderators() -> list[Moderator]:
         for row in rows
     ]
 
-_ALIAS_BY_CANONICAL = {v: k for k, v in CATEGORY_ALIASES.items()}
-
 def who_to_email(category: Category, all_archives: dict[str, ToEmail], all_cats: dict[str, ToEmail])-> tuple[set[int], set[int]]:
     """determines who to include in an email for a given set of categories"""
 
@@ -70,7 +69,7 @@ def who_to_email(category: Category, all_archives: dict[str, ToEmail], all_cats:
     archive_entry = all_archives.get(category.in_archive, ToEmail())
 
     #dont forget alaises
-    alias_id = _ALIAS_BY_CANONICAL.get(category.id)
+    alias_id = ALIAS_BY_CANONICAL.get(category.id)
     if alias_id:
         alias=CATEGORIES_ACTIVE[alias_id]
         alias_cat_entry = all_cats.get(alias_id, ToEmail())
