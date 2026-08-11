@@ -14,4 +14,5 @@ RUN poetry config virtualenvs.create false && \
 
 COPY app/ app/
 
-CMD ["python", "-m", "app.main"]
+#default entrypoint, the other jobs override this with --command/--args on their cloud run job
+CMD ["python", "-m", "app.mod_actions.main"]

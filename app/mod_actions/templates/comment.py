@@ -1,12 +1,12 @@
 import html
 
-from app.schema import SimplifiedNotification, CommentData
-from app.email_content import _fmt_time
+from app.mod_actions.schema import SimplifiedNotification, CommentData
+from app.shared.utils.formatting import fmt_time
 
 
 def render_comment_block(change: SimplifiedNotification, user_name: str) -> tuple[str, str]:
     data: CommentData = change.data  
-    when = _fmt_time(change.time)
+    when = fmt_time(change.time)
     text = (
         f"[{when}] {user_name} commented:\n"
         f"  {data.comment}\n"
