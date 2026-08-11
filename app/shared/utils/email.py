@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import logging
 from typing import Optional
 
-from app.config import settings
+from app.shared.config import settings
 
 logger = logging.getLogger(__name__)
 

@@ -1,14 +1,21 @@
-"""handles getting data from the database"""
+"""handles getting moderator data from the database
+
+Deciding who actually gets emailed is job-specific — each job has its own
+rules about which email preference flags block a send, so each one owns a
+moderators.py that turns fetch_moderators() into ToEmail dicts. Everything
+downstream of those dicts (who_to_email and friends) is shared.
+"""
 from pydantic import BaseModel, Field
 from typing import Optional
 from sqlalchemy import select
 
 from arxiv.taxonomy.category import Category
-from arxiv.taxonomy.definitions import CATEGORY_ALIASES, CATEGORIES_ACTIVE
+from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
 from arxiv.db import Session
 from arxiv.db.models import t_arXiv_moderators, TapirUser, TapirNickname
 
-from app.schema import UserContact
+from app.shared.schema import UserContact
+from app.shared.utils.taxonomy import ALIAS_BY_CANONICAL
 
 class Moderator(BaseModel):
     user_id:int
@@ -17,6 +24,7 @@ class Moderator(BaseModel):
     no_email: bool
     no_web_email:bool
     no_reply_to: bool
+    daily_update: bool
 
 class ToEmail(BaseModel):
     send_to: set[int] = Field(default_factory=set)# list of userids to send the email to
@@ -29,15 +37,14 @@ def _build_category_name(row) -> Optional[str]:
     subject_class = row["subject_class"]
     return f"{row['archive']}.{subject_class}" if subject_class else None
 
-def get_all_moderators() -> tuple [dict[str, ToEmail], dict[str, ToEmail]]:
-    """fetch mod data from db. process into who to email for categories"""
+def fetch_moderators() -> list[Moderator]:
+    """fetch all moderator rows from the db. no filtering — each job decides what the flags mean"""
 
-    #fetch data
     with Session() as session:
         result = session.execute(select(t_arXiv_moderators))
         rows = result.mappings().all()
-     
-    moderators = [
+
+    return [
         Moderator(
             user_id=row["user_id"],
             archive=row["archive"],
@@ -45,39 +52,10 @@ def get_all_moderators() -> tuple [dict[str, ToEmail], dict[str, ToEmail]]:
             no_email=bool(row["no_email"]),
             no_web_email=bool(row["no_web_email"]),
             no_reply_to=bool(row["no_reply_to"]),
+            daily_update=bool(row["daily_update"]),
         )
         for row in rows
     ]
-
-    #who should get emailed
-    all_cats: dict[str, ToEmail] ={}
-    all_archives: dict[str, ToEmail] ={}
-    
-    for mod in moderators:
-        # is this a category or archive entry
-        is_category = bool(mod.category)
-        store = all_cats if is_category else all_archives
-        key = mod.category if is_category else mod.archive
-
-        entry: ToEmail=store.get(key, ToEmail())
-
-        #email pref
-        if mod.no_email or mod.no_web_email:
-            entry.dont_send_to.add(mod.user_id)
-        else:
-            entry.send_to.add(mod.user_id)
-
-        # reply to pref
-        if mod.no_reply_to:
-            entry.dont_include_reply_to.add(mod.user_id)
-        else:
-            entry.include_reply_to.add(mod.user_id)
-
-        store[key] = entry
-
-    return all_archives, all_cats
-
-_ALIAS_BY_CANONICAL = {v: k for k, v in CATEGORY_ALIASES.items()}
 
 def who_to_email(category: Category, all_archives: dict[str, ToEmail], all_cats: dict[str, ToEmail])-> tuple[set[int], set[int]]:
     """determines who to include in an email for a given set of categories"""
@@ -91,7 +69,7 @@ def who_to_email(category: Category, all_archives: dict[str, ToEmail], all_cats:
     archive_entry = all_archives.get(category.in_archive, ToEmail())
 
     #dont forget alaises
-    alias_id = _ALIAS_BY_CANONICAL.get(category.id)
+    alias_id = ALIAS_BY_CANONICAL.get(category.id)
     if alias_id:
         alias=CATEGORIES_ACTIVE[alias_id]
         alias_cat_entry = all_cats.get(alias_id, ToEmail())

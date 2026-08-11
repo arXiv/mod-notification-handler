@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Union, Optional
+from typing import Literal, Union
 from enum import Enum
 from pydantic import BaseModel
 from dataclasses import dataclass, field
@@ -50,17 +50,6 @@ class SimplifiedNotification(BaseModel):
     data: Union[CommentData, PromoteData, PropRespData, NewPropData, CategoryRejectionData]
 
 @dataclass
-class UserContact:
-    email: str
-    nickname: str
-    first_name: str
-    last_name: str
-
-    @property
-    def display_name(self) -> str:
-        return f"{self.first_name} {self.last_name} ({self.nickname})"
-
-@dataclass
 class ConsolidatedNotifications:
     submission_id: int
     categories: set[Category] =field(default_factory=set) #categories to notify about this submission
@@ -74,14 +63,3 @@ class EmailTask:
     to_emails: list[str]
     notifications: ConsolidatedNotifications
     reply_to_emails: list[str] = field(default_factory=list)
-
-@dataclass
-class SubEmailData:
-    submission_id: int
-    title: str
-    authors: str
-    status: int
-    submitter_name: str
-    submitter_id: int
-    submission_categories: str = ""
-    submit_time: Optional[datetime] = None

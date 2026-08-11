@@ -8,11 +8,14 @@ from google.pubsub import ReceivedMessage
 
 from arxiv.taxonomy.category import Category
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
-from app.config import settings
-from app.email import send_email
-from app.email_content import get_submission_info, render_email
-from app.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, UserContact, SubEmailData
-from app.moderators import get_all_moderators, get_recipient_ids_for_categories, get_mod_emails
+from app.shared.config import settings
+from app.shared.utils.email import send_email
+from app.shared.schema import UserContact
+from app.shared.moderators import get_recipient_ids_for_categories, get_mod_emails
+from app.mod_actions.moderators import get_moderators
+from app.shared.submission import SubEmailData, get_submission_info
+from app.mod_actions.email_content import render_email
+from app.mod_actions.schema import NotificationParams, SimplifiedNotification, ConsolidatedNotifications, EmailTask, NotificationType, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +84,7 @@ def _build_email_tasks(all_notifications: dict[int, ConsolidatedNotifications]) 
         return [], {}
 
     #collect all the categories and emails
-    archives, cats = get_all_moderators()
+    archives, cats = get_moderators()
 
     all_categories: set[Category] = set()
     for notifications in all_notifications.values():
