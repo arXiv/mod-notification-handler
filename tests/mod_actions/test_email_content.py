@@ -294,7 +294,7 @@ def test_prop_resp_exact_text():
     note = _note(PropRespData(responses="Primary accepted: hep-lat", category_change="no primary -> hep-lat"))
     text, _ = render_prop_resp_block(note, _USER)
     assert text == (
-        f"[{_WHEN}] {_USER} responded to category proposal(s):\n"
+        f"[{_WHEN}] {_USER}:\n"
         f"  Primary accepted: hep-lat\n"
         f"  Change: no primary -> hep-lat\n"
     )
@@ -304,7 +304,7 @@ def test_prop_resp_exact_html():
     note = _note(PropRespData(responses="Primary accepted: hep-lat", category_change="no primary -> hep-lat"))
     _, html_out = render_prop_resp_block(note, _USER)
     assert html_out == (
-        f"<p><strong>[{_WHEN}] {_USER}</strong> responded to category proposal(s):<br>\n"
+        f"<p><strong>[{_WHEN}] {_USER}</strong>:<br>\n"
         f"Primary accepted: hep-lat<br>\n"
         f"Change: no primary -> hep-lat</p>\n"
     )
