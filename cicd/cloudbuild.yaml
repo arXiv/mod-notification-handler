@@ -1,8 +1,21 @@
 # this can be used to update the cloud run job
 # for the initial creation use the same template but switch update command with create
+#
+# Creating jobs is now cicd/terraform's job — this file only ever updates the image on
+# jobs that already exist. All jobs in this repo share one image and differ by their
+# entrypoint args, so one build updates all of them.
 
 options:
   logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  # Image repository name. Also the default job name, since they match today.
+  _JOB_NAME: mod-notification-handler
+  # Space-separated Cloud Run jobs to point at the new image. The Terraform-managed
+  # trigger fills this in from the jobs map, so adding a job there is enough.
+  # The default keeps builds working if a trigger doesn't set it.
+  _JOB_NAMES: mod-notification-handler
+  _DEPLOY_REGION: us-central1
 
 steps:
   - name: 'gcr.io/cloud-builders/docker'
@@ -31,15 +44,20 @@ steps:
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     id: Deploy
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - run
-      - jobs
-      - update
-      - $_JOB_NAME
-      - '--region=$_DEPLOY_REGION'
-      - '--image=gcr.io/$PROJECT_ID/$_JOB_NAME:$COMMIT_SHA'
-      - '--quiet'
+      - '-c'
+      - |
+        set -e
+        # $_JOB_NAMES is substituted by Cloud Build into a literal string, then split
+        # by the shell. $$job is an escaped $ — it reaches bash as $job.
+        for job in $_JOB_NAMES; do
+          echo "--- updating $$job ---"
+          gcloud run jobs update "$$job" \
+            --region="$_DEPLOY_REGION" \
+            --image="gcr.io/$PROJECT_ID/$_JOB_NAME:$COMMIT_SHA" \
+            --quiet
+        done
 
 images:
   - 'gcr.io/$PROJECT_ID/$_JOB_NAME:latest'
