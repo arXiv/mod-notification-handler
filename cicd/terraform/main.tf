@@ -123,6 +123,10 @@ resource "google_cloud_run_v2_job" "jobs" {
     parallelism = 1
     task_count  = 1
 
+    # Executions carry their own copy of the labels, separate from the job's. gcloud set
+    # both on the live jobs; dropping these would strip them from every execution.
+    labels = local.labels
+
     template {
       service_account       = google_service_account.job.email
       max_retries           = 1
@@ -231,9 +235,8 @@ resource "google_cloud_scheduler_job" "jobs" {
     # is why the 180s attempt deadline can be shorter than the job's own timeout.
     uri = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/jobs/${google_cloud_run_v2_job.jobs[each.key].name}:run"
 
-    headers = {
-      "User-Agent" = "Google-Cloud-Scheduler"
-    }
+    # No headers block: Cloud Scheduler sets User-Agent itself. `gcloud describe` reports
+    # it, but it isn't user-managed, so declaring it here creates a diff for nothing.
 
     # The job's own service account holds roles/run.invoker, so it can invoke itself.
     oauth_token {
@@ -273,10 +276,13 @@ resource "google_cloudbuild_trigger" "deploy" {
     _DEPLOY_REGION = var.region
     _JOB_NAME      = local.image_name
 
-    # Every job this environment declares. Adding one to the jobs map is enough for
-    # the next build to point it at the new image — no change to cloudbuild.yaml.
-    # Map iteration is ordered by key, so this value is stable across plans.
-    _JOB_NAMES = join(" ", [for job in var.jobs : job.job_name])
+    # Deliberately not setting _JOB_NAMES while there is only one job — cloudbuild.yaml
+    # declares a default that covers it. Add this line when a second job exists and the
+    # trigger needs to deploy more than one:
+    #
+    #   _JOB_NAMES = join(" ", [for job in var.jobs : job.job_name])
+    #
+    # Map iteration is ordered by key, so that value is stable across plans.
   }
 
   include_build_logs = "INCLUDE_BUILD_LOGS_WITH_STATUS"

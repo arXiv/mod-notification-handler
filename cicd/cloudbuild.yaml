@@ -11,9 +11,10 @@ options:
 substitutions:
   # Image repository name. Also the default job name, since they match today.
   _JOB_NAME: mod-notification-handler
-  # Space-separated Cloud Run jobs to point at the new image. The Terraform-managed
-  # trigger fills this in from the jobs map, so adding a job there is enough.
-  # The default keeps builds working if a trigger doesn't set it.
+  # Space-separated Cloud Run jobs to point at the new image. Only one job exists today,
+  # so this default is the whole list and no trigger overrides it. When a second job
+  # lands, have the Terraform-managed trigger supply _JOB_NAMES from its jobs map — see
+  # the commented line in cicd/terraform/main.tf.
   _JOB_NAMES: mod-notification-handler
   _DEPLOY_REGION: us-central1
 
