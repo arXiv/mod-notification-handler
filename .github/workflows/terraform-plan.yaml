@@ -104,23 +104,29 @@ jobs:
             // Written to the runner's scratch space, not the checked-out repo.
             const planFile = `${process.env.RUNNER_TEMP}/plan-${env}.txt`;
             let plan = fs.readFileSync(planFile, 'utf8');
+
+            // Terraform's own one-line verdict, pulled out before any truncation so it
+            // survives even on a very long plan. Either a "Plan: ..." tally or the
+            // "No changes." line when nothing differs.
+            const summaryMatch = plan.match(/^(Plan: .*|No changes\..*)$/m);
+            const summary = summaryMatch
+              ? summaryMatch[0]
+              : (outcome === 'success' ? 'Plan produced no summary line.' : 'Plan failed — see the job log.');
+
             let note = '';
             if (plan.length > MAX) {
               plan = plan.slice(-MAX);
               note = '\n_Output truncated — showing the last 60,000 characters. Full plan in the job log._';
             }
 
-            const status = outcome === 'success'
-              ? 'Plan succeeded.'
-              : 'Plan failed — see the job log.';
-
             const body = [
               marker,
               `### Terraform plan · \`${env}\``,
-              status,
+              '',
+              `**${summary}**`,
               note,
               '',
-              '<details><summary>Show plan</summary>',
+              '<details><summary>Show full plan</summary>',
               '',
               '```terraform',
               plan,
