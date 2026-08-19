@@ -32,14 +32,11 @@ cloudsql_instance = "arxiv-production:us-central1:arxiv-production-rep11"
 # Build trigger
 # ---------------------------------------------------------------------------
 
-# TODO dev's trigger is global and this one is us-east1. Consolidating them is a
-# destroy-and-recreate, so do it as a separate change after the import converges.
+# TODO dev's trigger is global and this one is us-east1. Consolidating them would be a
+# destroy-and-recreate, so make it its own change.
 build_trigger_location    = "us-east1"
 build_trigger_branch      = "^main$"
 build_trigger_description = "builds cloud run job that sends emails to mods"
-
-# Only read by imports.tf. Goes away with it.
-build_trigger_id = "62cf038d-dfab-483b-92eb-9e5744577517"
 
 # ---------------------------------------------------------------------------
 # Jobs

@@ -63,12 +63,7 @@ variable "build_trigger_branch" {
 }
 
 variable "build_trigger_description" {
-  description = "Free text on the trigger. Differs between environments; kept as-is so the import converges."
-  type        = string
-}
-
-variable "build_trigger_id" {
-  description = "UUID of the existing Cloud Build trigger. Only used by imports.tf — Cloud Build triggers import by uuid, not by name. Can be removed along with imports.tf once both environments are adopted."
+  description = "Free text on the trigger. Differs between environments; each is whatever was already set on the live trigger."
   type        = string
 }
 
