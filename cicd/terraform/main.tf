@@ -20,8 +20,7 @@ locals {
     arxiv-subsystem = "eust-modapi"
   }
 
-  service_account_id    = "mod-notification-handler"
-  service_account_email = "${local.service_account_id}@${var.project_id}.iam.gserviceaccount.com"
+  service_account_id = "mod-notification-handler"
 
   # Cloud Build overwrites this tag on every merge, and the job ignores changes to it afterwards.
   image = "gcr.io/${var.project_id}/${local.image_name}:latest"

@@ -13,7 +13,6 @@ environment-specific lives in the `.tf` files.
 main.tf          the resources
 variables.tf     variable declarations, no values
 versions.tf      provider pin, and the state prefix
-imports.tf       adoption of existing resources — delete once production is adopted
 envs/
   development.tfvars    the values
   production.tfvars
@@ -38,11 +37,26 @@ Configuration lives in GitHub Environments named `development` and `production`
 
 ## Running it by hand
 
+Syntax and schema only — no credentials, no state:
+
 ```bash
 cd cicd/terraform
-terraform init -backend-config=envs/development.backend.hcl -reconfigure
+terraform init -backend=false
+terraform validate
+```
+
+Against real state — needs `gcloud auth application-default login` first:
+
+```bash
+terraform init -reconfigure -backend-config="bucket=dev-arxiv-terraform-state"
 terraform plan -var-file=envs/development.tfvars
 ```
+
+Production is the same with `prod-arxiv-terraform-state` and `production.tfvars`.
+
+**`-reconfigure` on every switch.** One config serves both environments, and the only thing pointing
+
+Dont run apply locally! there are workflows for that
 
 ## What Terraform owns, and what it doesn't
 
