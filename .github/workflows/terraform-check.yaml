@@ -1,4 +1,5 @@
-name: Terraform
+name: Terraform Check
+
 on: push
 
 permissions:
