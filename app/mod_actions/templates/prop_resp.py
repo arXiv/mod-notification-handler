@@ -1,0 +1,18 @@
+from app.mod_actions.schema import SimplifiedNotification, PropRespData
+from app.shared.utils.formatting import fmt_time
+
+
+def render_prop_resp_block(change: SimplifiedNotification, user_name: str) -> tuple[str, str]:
+    data: PropRespData = change.data 
+    when = fmt_time(change.time)
+    text = (
+        f"[{when}] {user_name}:\n"
+        f"  {data.responses}\n"
+        f"  Change: {data.category_change}\n"
+    )
+    html_out = (
+        f"<p><strong>[{when}] {user_name}</strong>:<br>\n"
+        f"{data.responses}<br>\n"
+        f"Change: {data.category_change}</p>\n"
+    )
+    return text, html_out

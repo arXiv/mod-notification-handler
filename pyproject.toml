@@ -15,6 +15,11 @@ google-cloud-pubsub = "*"
 pytest = "*"
 coverage = "*"
 
+[tool.coverage.run]
+# Measure the app only. Without this, coverage also counts tests/, which are ~100% by
+# construction and inflate the total — 93% reported vs 86% actually covered.
+source = ["app"]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
