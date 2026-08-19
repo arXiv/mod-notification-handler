@@ -211,3 +211,18 @@ __marimo__/
 #manual additons
 tests/databases
 .claude/
+
+# Terraform
+#   .terraform/ is downloaded provider binaries — large and machine-specific.
+#   State should never be local (it lives in GCS), but a misconfigured backend writes
+#   it here, and state files can contain secrets.
+#   .terraform.lock.hcl is deliberately NOT ignored — it pins exact provider versions
+#   and must be committed so everyone resolves the same ones.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+*.auto.tfvars
+override.tf
+override.tf.json

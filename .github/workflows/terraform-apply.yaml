@@ -1,0 +1,90 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'cicd/terraform/**'
+      - '.github/workflows/terraform-apply.yaml'
+
+  # Manual runs: re-apply after a failure, or apply an environment without merging.
+  # The branch or tag to run from is chosen in the GitHub UI; commit_sha narrows it
+  # further to one commit on that branch.
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to apply
+        required: true
+        type: choice
+        options:
+          - development
+          - production
+      commit_sha:
+        description: Commit to apply (leave blank for the tip of the selected branch)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write # required for Workload Identity Federation
+
+# Never run two applies against the same environment at once, and never cancel one
+# midway — a half-applied change is worse than a queued one.
+concurrency:
+  group: tf-apply-${{ inputs.environment || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # develop applies development, main applies production. A manual run says which.
+    environment: ${{ inputs.environment || (github.ref_name == 'main' && 'production' || 'development') }}
+
+    env:
+      TF_ENVIRONMENT: ${{ inputs.environment || (github.ref_name == 'main' && 'production' || 'development') }}
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform-plugin-cache
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          # Empty ref means the branch that triggered this run.
+          ref: ${{ inputs.commit_sha || '' }}
+
+      - name: Report what is being applied
+        run: |
+          echo "Environment: $TF_ENVIRONMENT"
+          echo "Commit:      $(git rev-parse HEAD)"
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.13.5"
+          terraform_wrapper: false
+
+      - name: Cache providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: tf-providers-${{ hashFiles('cicd/terraform/.terraform.lock.hcl') }}
+
+      - run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.PROVIDER_NAME }}
+          service_account: ${{ vars.SERVICE_ACCOUNT }}
+
+      - name: Init
+        run: terraform init -backend-config="bucket=${{ vars.TERRAFORM_BUCKET }}"
+        working-directory: cicd/terraform
+
+      - name: Apply
+        run: |
+          terraform apply -auto-approve -input=false \
+            -var-file="envs/${TF_ENVIRONMENT}.tfvars"
+        working-directory: cicd/terraform

@@ -1,0 +1,158 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'cicd/terraform/**'
+      - '.github/workflows/terraform-plan.yaml'
+
+permissions:
+  contents: read
+  id-token: write # required for Workload Identity Federation
+  pull-requests: write # required to post the plan as a comment
+
+# A new push to the branch supersedes any plan still running for it.
+concurrency:
+  group: tf-plan-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    # Pull requests from forks get no OIDC token, so WIF cannot authenticate and this
+    # job would fail confusingly. Skip it instead. Fork contributions still get format
+    # and schema checks from terraform-check.yaml, which needs no credentials.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # A PR into main only concerns production — development is already applied by
+        # then. A PR into develop plans both, so production impact is visible early.
+        environment: ${{ github.base_ref == 'main'
+          && fromJSON('["production"]')
+          || fromJSON('["development","production"]') }}
+
+    # Supplies PROVIDER_NAME, SERVICE_ACCOUNT and TERRAFORM_BUCKET, scoped per
+    # environment. 
+    environment: ${{ matrix.environment }}
+
+    env:
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform-plugin-cache
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.13.5"
+          # The wrapper rewrites stdout to populate step outputs; this workflow captures
+          # output itself, so turn it off and keep the plan text verbatim.
+          terraform_wrapper: false
+
+      - name: Cache providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: tf-providers-${{ hashFiles('cicd/terraform/.terraform.lock.hcl') }}
+
+      - run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.PROVIDER_NAME }}
+          service_account: ${{ vars.SERVICE_ACCOUNT }}
+
+      - name: Init
+        run: terraform init -backend-config="bucket=${{ vars.TERRAFORM_BUCKET }}"
+        working-directory: cicd/terraform
+
+      # -lock=false keeps this workflow read-only: no lock object is written
+      - name: Plan
+        id: plan
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          terraform plan -lock=false -no-color -input=false \
+            -var-file=envs/${{ matrix.environment }}.tfvars 2>&1 \
+            | tee "$RUNNER_TEMP/plan-${{ matrix.environment }}.txt"
+        working-directory: cicd/terraform
+
+      - name: Comment plan on PR
+        uses: actions/github-script@v7
+        env:
+          TF_ENVIRONMENT: ${{ matrix.environment }}
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
+        with:
+          script: |
+            const fs = require('fs');
+            const env = process.env.TF_ENVIRONMENT;
+            const outcome = process.env.PLAN_OUTCOME;
+
+            // Hidden marker so each environment updates its own comment instead of stacking a new one on every push.
+            const marker = `<!-- tf-plan:${env} -->`;
+
+            // GitHub caps comment bodies at 65536 characters.
+            const MAX = 60000;
+            // Written to the runner's scratch space, not the checked-out repo.
+            const planFile = `${process.env.RUNNER_TEMP}/plan-${env}.txt`;
+            let plan = fs.readFileSync(planFile, 'utf8');
+
+            // Terraform's own one-line verdict, pulled out before any truncation so it
+            // survives even on a very long plan. Either a "Plan: ..." tally or the
+            // "No changes." line when nothing differs.
+            const summaryMatch = plan.match(/^(Plan: .*|No changes\..*)$/m);
+            const summary = summaryMatch
+              ? summaryMatch[0]
+              : (outcome === 'success' ? 'Plan produced no summary line.' : 'Plan failed — see the job log.');
+
+            let note = '';
+            if (plan.length > MAX) {
+              plan = plan.slice(-MAX);
+              note = '\n_Output truncated — showing the last 60,000 characters. Full plan in the job log._';
+            }
+
+            const body = [
+              marker,
+              `### Terraform plan · \`${env}\``,
+              '',
+              `**${summary}**`,
+              note,
+              '',
+              '<details><summary>Show full plan</summary>',
+              '',
+              '```terraform',
+              plan,
+              '```',
+              '',
+              '</details>',
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                ...context.repo, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: context.issue.number, body,
+              });
+            }
+
+      # The plan step is continue-on-error so the comment always gets posted. Fail the
+      # job afterwards so a broken plan still blocks the PR.
+      - name: Fail if the plan failed
+        if: steps.plan.outcome != 'success'
+        run: exit 1

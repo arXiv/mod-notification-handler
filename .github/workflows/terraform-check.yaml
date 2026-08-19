@@ -1,0 +1,47 @@
+name: Terraform Check
+
+on: push
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      # Providers are cached between runs rather than re-downloaded; the google
+      # provider is ~126MB.
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform-plugin-cache
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.13.5"
+
+      - name: Cache providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: tf-providers-${{ hashFiles('cicd/terraform/.terraform.lock.hcl') }}
+
+      - run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
+      - name: Format check
+        run: terraform fmt -check -recursive
+        working-directory: cicd/terraform
+
+      # -backend=false skips the GCS backend entirely: no state, no bucket, no GCP
+      # credentials. This job only checks that the config parses and matches the
+      # provider schema.
+      - name: Init without backend
+        run: terraform init -backend=false
+        working-directory: cicd/terraform
+
+      - name: Validate
+        run: terraform validate
+        working-directory: cicd/terraform
