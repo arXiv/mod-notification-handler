@@ -33,9 +33,6 @@ build_trigger_location    = "global"
 build_trigger_branch      = "^develop$"
 build_trigger_description = "Build and deploy a cloud run job for processing notifcations for moderators"
 
-# Only read by imports.tf. Goes away with it.
-build_trigger_id = "d21e6272-ba3a-4a97-acd1-0fc9ebdaeac4"
-
 # ---------------------------------------------------------------------------
 # Jobs
 # ---------------------------------------------------------------------------
