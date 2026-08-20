@@ -1,47 +1,86 @@
-name: Terraform Apply
+name: Deploy
+
+# Builds the container image, then applies Terraform with that image's tag.
 
 on:
   push:
     branches:
       - develop
       - main
-    paths:
-      - 'cicd/terraform/**'
-      - '.github/workflows/terraform-apply.yaml'
 
-  # Manual runs: re-apply after a failure, or apply an environment without merging.
-  # The branch or tag to run from is chosen in the GitHub UI; commit_sha narrows it
-  # further to one commit on that branch.
   workflow_dispatch:
     inputs:
       environment:
-        description: Environment to apply
+        description: Environment to deploy
         required: true
         type: choice
         options:
           - development
           - production
       commit_sha:
-        description: Commit to apply (leave blank for the tip of the selected branch)
+        description: Commit to deploy (blank = tip of the selected branch)
         required: false
         type: string
 
 permissions:
   contents: read
-  id-token: write # required for Workload Identity Federation
+  id-token: write
 
-# Never run two applies against the same environment at once, and never cancel one
-# midway — a half-applied change is worse than a queued one.
 concurrency:
-  group: tf-apply-${{ inputs.environment || github.ref_name }}
+  group: deploy-${{ inputs.environment || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.environment || (github.ref_name == 'main' && 'production' || 'development') }}
+
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha || '' }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.PROVIDER_NAME }}
+          service_account: ${{ vars.SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Configure Docker for gcr.io
+        run: gcloud auth configure-docker --quiet
+
+      - name: Build and push
+        id: build
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          REPO="gcr.io/${{ vars.PROJECT_ID }}/mod-notification-handler"
+
+          # Best-effort cache source; the first build in a fresh project has none.
+          docker pull "$REPO:latest" || true
+
+          docker build \
+            --cache-from "$REPO:latest" \
+            -t "$REPO:$SHA" \
+            -t "$REPO:latest" \
+            -f cicd/Dockerfile .
+
+          docker push --all-tags "$REPO"
+
+          echo "image=$REPO:$SHA" >> "$GITHUB_OUTPUT"
+          echo "Built $REPO:$SHA"
+
   apply:
+    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
-    # develop applies development, main applies production. A manual run says which.
     environment: ${{ inputs.environment || (github.ref_name == 'main' && 'production' || 'development') }}
 
     env:
@@ -52,13 +91,13 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
         with:
-          # Empty ref means the branch that triggered this run.
           ref: ${{ inputs.commit_sha || '' }}
 
       - name: Report what is being applied
         run: |
           echo "Environment: $TF_ENVIRONMENT"
           echo "Commit:      $(git rev-parse HEAD)"
+          echo "Image:       ${{ needs.build.outputs.image }}"
 
       - uses: hashicorp/setup-terraform@v4
         with:
@@ -86,5 +125,6 @@ jobs:
       - name: Apply
         run: |
           terraform apply -auto-approve -input=false \
-            -var-file="envs/${TF_ENVIRONMENT}.tfvars"
+            -var-file="envs/${TF_ENVIRONMENT}.tfvars" \
+            -var="image=${{ needs.build.outputs.image }}"
         working-directory: cicd/terraform

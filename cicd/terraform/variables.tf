@@ -49,27 +49,20 @@ variable "cloudsql_instance" {
 }
 
 # ---------------------------------------------------------------------------
-# Build trigger
-# ---------------------------------------------------------------------------
-
-variable "build_trigger_location" {
-  description = "Region the trigger lives in. Currently 'global' in dev and 'us-east1' in prod — consolidating these is a queued follow-up change, not part of the import."
-  type        = string
-}
-
-variable "build_trigger_branch" {
-  description = "Regex for the branch that deploys this environment."
-  type        = string
-}
-
-variable "build_trigger_description" {
-  description = "Free text on the trigger. Differs between environments; each is whatever was already set on the live trigger."
-  type        = string
-}
-
-# ---------------------------------------------------------------------------
 # Jobs
 # ---------------------------------------------------------------------------
+
+variable "image" {
+  description = <<-EOT
+    Full container image reference including tag, e.g.
+    gcr.io/arxiv-development/mod-notification-handler/<sha>.
+
+    Deliberately has no default. CI builds the image and passes the tag in, so Terraform
+    owns this field and `plan` reports what is actually deployed. A default would let a
+    hand-run apply silently retag a job to something stale.
+  EOT
+  type        = string
+}
 
 variable "jobs" {
   description = <<-EOT

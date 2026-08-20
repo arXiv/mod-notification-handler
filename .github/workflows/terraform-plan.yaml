@@ -70,6 +70,21 @@ jobs:
           workload_identity_provider: ${{ vars.PROVIDER_NAME }}
           service_account: ${{ vars.SERVICE_ACCOUNT }}
 
+      - uses: google-github-actions/setup-gcloud@v3
+
+      # var.image has no default — the deploy workflow supplies a freshly built tag. A
+      # plan isn't building anything, so it passes whatever is deployed right now, and
+      # the image therefore shows no diff unless the config genuinely changes it.
+      - name: Resolve the currently deployed image
+        id: image
+        run: |
+          set -uo pipefail
+          FALLBACK="gcr.io/${{ vars.PROJECT_ID }}/mod-notification-handler:latest"
+          IMAGE=$(gcloud run jobs describe mod-notification-handler \
+            --project="${{ vars.PROJECT_ID }}" --region=us-central1 \
+            --format="value(spec.template.spec.template.spec.containers[0].image)" 2>/dev/null) || IMAGE=""
+          echo "image=${IMAGE:-$FALLBACK}" >> "$GITHUB_OUTPUT"
+
       - name: Init
         run: terraform init -backend-config="bucket=${{ vars.TERRAFORM_BUCKET }}"
         working-directory: cicd/terraform
@@ -81,7 +96,8 @@ jobs:
         run: |
           set -o pipefail
           terraform plan -lock=false -no-color -input=false \
-            -var-file=envs/${{ matrix.environment }}.tfvars 2>&1 \
+            -var-file=envs/${{ matrix.environment }}.tfvars \
+            -var="image=${{ steps.image.outputs.image }}" 2>&1 \
             | tee "$RUNNER_TEMP/plan-${{ matrix.environment }}.txt"
         working-directory: cicd/terraform
 

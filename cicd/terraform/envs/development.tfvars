@@ -26,16 +26,10 @@ db_secret_name    = "modapi-dev-db-uri-for-cloudrun"
 cloudsql_instance = "arxiv-development:us-east4:arxiv-db-dev"
 
 # ---------------------------------------------------------------------------
-# Build trigger
-# ---------------------------------------------------------------------------
-
-build_trigger_location    = "global"
-build_trigger_branch      = "^develop$"
-build_trigger_description = "Build and deploy a cloud run job for processing notifcations for moderators"
-
-# ---------------------------------------------------------------------------
 # Jobs
 # ---------------------------------------------------------------------------
+#
+# `image` is not set here — CI passes it with -var on every apply.
 
 # Every job inherits the shared config above — database, mail server, reply-to. An
 # `env_vars` block on a job overrides individual keys for that job only, which is how a

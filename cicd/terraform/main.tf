@@ -6,10 +6,8 @@
 
 locals {
   # Facts about this service, identical in every environment.
-  topic_name                 = "mod-notify"
-  subscription_name          = "mod-notification-handler"
-  image_name                 = "mod-notification-handler"
-  cloudbuild_service_account = "cloudbuild-sa"
+  topic_name        = "mod-notify"
+  subscription_name = "mod-notification-handler"
 
   halon_secret_name     = "HALON_CREDS"
   archival_email_secret = "mod-notification-archival-email"
@@ -21,9 +19,6 @@ locals {
   }
 
   service_account_id = "mod-notification-handler"
-
-  # Cloud Build overwrites this tag on every merge, and the job ignores changes to it afterwards.
-  image = "gcr.io/${var.project_id}/${local.image_name}:latest"
 
   # Shared by all three jobs. Change the database here and every job picks it up.
   shared_env_vars = {
@@ -147,7 +142,7 @@ resource "google_cloud_run_v2_job" "jobs" {
         # Matches the name gcloud generated on the live jobs. Import will fail to
         # converge if this differs.
         name  = "${each.value.job_name}-1"
-        image = local.image
+        image = var.image
 
         # null, not [], so Terraform omits the field entirely and the container falls
         # through to the image's CMD — which is how mod_actions runs today.
@@ -195,12 +190,7 @@ resource "google_cloud_run_v2_job" "jobs" {
   }
 
   lifecycle {
-    # Cloud Build runs `gcloud run jobs update --image=...:$COMMIT_SHA` on every merge.
-    # Without this, Terraform would see that new tag as drift and revert it — the two
-    # would undo each other on every run. Terraform owns the job's shape; Cloud Build
-    # owns which image is in it.
     ignore_changes = [
-      template[0].template[0].containers[0].image,
       client,
       client_version,
     ]
@@ -245,44 +235,3 @@ resource "google_cloud_scheduler_job" "jobs" {
   }
 }
 
-# ---------------------------------------------------------------------------
-# Build
-# ---------------------------------------------------------------------------
-
-# Builds the image and runs `gcloud run jobs update` on merge. Terraform owns the
-# trigger's definition; Cloud Build still does the building.
-resource "google_cloudbuild_trigger" "deploy" {
-  name        = "mod-notification-handler"
-  project     = var.project_id
-  location    = var.build_trigger_location
-  description = var.build_trigger_description
-
-  filename        = "cicd/cloudbuild.yaml"
-  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloudbuild_service_account}@${var.project_id}.iam.gserviceaccount.com"
-
-  # Cloud Build triggers have no labels field; they use tags instead.
-  tags = ["mod-notify"]
-
-  github {
-    owner = "arXiv"
-    name  = "mod-notification-handler"
-    push {
-      branch = var.build_trigger_branch
-    }
-  }
-
-  substitutions = {
-    _DEPLOY_REGION = var.region
-    _JOB_NAME      = local.image_name
-
-    # Deliberately not setting _JOB_NAMES while there is only one job — cloudbuild.yaml
-    # declares a default that covers it. Add this line when a second job exists and the
-    # trigger needs to deploy more than one:
-    #
-    #   _JOB_NAMES = join(" ", [for job in var.jobs : job.job_name])
-    #
-    # Map iteration is ordered by key, so that value is stable across plans.
-  }
-
-  include_build_logs = "INCLUDE_BUILD_LOGS_WITH_STATUS"
-}

@@ -30,8 +30,12 @@ and posts the diff as a PR comment with Terraform's own summary line at the top.
 - A PR into `develop` plans both environments; a PR into `main` plans production only.
 - Fork PRs are skipped 
 
-**`terraform-apply.yaml`** — merges to `develop` (applies development) and `main` (applies production),
-plus a manual run from the Actions tab against either environment, optionally pinned to a commit.
+**`deploy.yaml`** — merges to `develop` (deploys development) and `main` (deploys production), plus a
+manual run from the Actions tab against either environment, optionally pinned to a commit. Two jobs:
+build the image and push it, then `terraform apply` with that image's tag.
+
+No `paths` filter, unlike the others — an app-code change must rebuild and a Terraform change must
+apply, so every merge runs both. 
 
 Configuration lives in GitHub Environments named `development` and `production`
 
@@ -61,15 +65,11 @@ Dont run apply locally! there are workflows for that
 ## What Terraform owns, and what it doesn't
 
 **Owned:** service account, its four project IAM bindings, Pub/Sub topic and subscription, Cloud Run
-jobs, schedulers, Cloud Build trigger.
+jobs, schedulers, responsibility for building an image.
 
 **Referenced:** the Cloud SQL instance and every Secret Manager secret. Terraform names
 a secret and mounts `:latest`; it never reads or writes a value, so no secret material reaches state.
 
-**Not owned at all:** the container image tag. Cloud Build sets it on every merge via
-`gcloud run jobs update`, and the job carries `ignore_changes` on that field so the two don't revert
-each other. Terraform owns the job's shape; Cloud Build owns what's running in it.
-TODO: switch building over to gha management
 
 
 ## Adding a job

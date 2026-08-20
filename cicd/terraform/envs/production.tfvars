@@ -29,18 +29,10 @@ db_secret_name    = "arxiv-production-rep11-db-readonly_URI"
 cloudsql_instance = "arxiv-production:us-central1:arxiv-production-rep11"
 
 # ---------------------------------------------------------------------------
-# Build trigger
-# ---------------------------------------------------------------------------
-
-# TODO dev's trigger is global and this one is us-east1. Consolidating them would be a
-# destroy-and-recreate, so make it its own change.
-build_trigger_location    = "us-east1"
-build_trigger_branch      = "^main$"
-build_trigger_description = "builds cloud run job that sends emails to mods"
-
-# ---------------------------------------------------------------------------
 # Jobs
 # ---------------------------------------------------------------------------
+#
+# `image` is not set here — CI passes it with -var on every apply.
 
 # Every job inherits the shared config above. A job may add its own `env_vars` block to
 # override individual keys, but in production that should be rare and deliberate — a
