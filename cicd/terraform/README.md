@@ -2,7 +2,7 @@
 
 Manages the GCP resources this service runs on in `arxiv-development` and `arxiv-production`: the
 service account and its IAM bindings, the Pub/Sub topic and subscription, the Cloud Run jobs, their
-Cloud Scheduler triggers, and the Cloud Build trigger.
+Cloud Scheduler triggers, and the container image each job runs.
 
 ## Layout
 

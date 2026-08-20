@@ -1,8 +1,8 @@
 # Everything this service owns, in whichever environment you point it at.
 #
-# One config serves both. The environment is chosen by two files at the command line:
-# envs/<env>.backend.hcl picks the state, envs/<env>.tfvars picks the values.
-# Nothing environment-specific belongs in this file.
+# One config serves both. The environment is chosen at the command line: the backend's
+# bucket picks the state, envs/<env>.tfvars picks the values. Nothing
+# environment-specific belongs in this file.
 
 locals {
   # Facts about this service, identical in every environment.
@@ -127,10 +127,10 @@ resource "google_cloud_run_v2_job" "jobs" {
       timeout               = "${each.value.timeout_seconds}s"
       execution_environment = "EXECUTION_ENVIRONMENT_GEN2"
 
-      # Attaches the existing Cloud SQL instance. 
-      # TODO verify against `terraform plan` during import. The live jobs were created
-      # with the v1 `run.googleapis.com/cloudsql-instances` annotation; this is the v2
-      # spelling of the same thing, and the provider may report it differently.
+      # Attaches the existing Cloud SQL instance, which another config owns. This is the
+      # v2 spelling; the live jobs were created with the v1
+      # `run.googleapis.com/cloudsql-instances` annotation, and the provider reports the
+      # two as equivalent — confirmed by a clean plan in both environments.
       volumes {
         name = "cloudsql"
         cloud_sql_instance {

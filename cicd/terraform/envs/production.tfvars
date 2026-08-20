@@ -1,6 +1,6 @@
 # Every value that makes production different from development.
 #
-#   terraform init -backend-config=envs/production.backend.hcl -reconfigure
+#   terraform init -reconfigure -backend-config="bucket=prod-arxiv-terraform-state"
 #   terraform plan -var-file=envs/production.tfvars
 
 project_id = "arxiv-production"

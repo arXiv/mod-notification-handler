@@ -35,18 +35,14 @@ poetry run coverage run -m pytest
 ```
 
 deploying:
-happens automatically on merge to major branches through GCP build triggers to a cloud run job
-(currently only setup in development)
-if cloud run job does not exist slightly different command (create rather than update) needs to be run for first build
+happens automatically on merge — `develop` deploys development, `main` deploys production, via
+`.github/workflows/deploy.yaml`. it builds the image, tags it with the commit sha, and passes that tag
+to terraform, which sets it on the cloud run jobs.
 
-the image's default `CMD` runs `mod_actions`. the other jobs are separate cloud run job resources
-pointing at the same image with a command override set at creation time:
-```
-gcloud run jobs create <job> --command=python --args=-m,app.new_subs.main ...
-```
-`gcloud run jobs update <job> --image=X` is a partial update, so the command override and env vars
-survive redeploys. `cicd/cloudbuild.yaml` currently deploys one job (`$_JOB_NAME`) — add a Deploy
-step per job as the other two become real
+all the infrastructure is terraform, in `cicd/terraform` — the jobs, their schedulers, pubsub, iam,
+and the env vars.
+the image is generic — it contains all three jobs and picks none of them. each job sets its own
+`command`/`args` in terraform
 
 additonal environment variables needed:
 CLASSIC_DB_URI
