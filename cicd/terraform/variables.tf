@@ -74,11 +74,9 @@ variable "jobs" {
     schedule        = string
     timeout_seconds = number
 
-    # Empty command and args mean the container uses the image's CMD. That is how
-    # mod_actions runs today; new_subs and daily_update override both to start their
-    # own entrypoint.
-    command = optional(list(string), [])
-    args    = optional(list(string), [])
+    # Both required. Every job states its own entrypoint
+    command = list(string)
+    args    = list(string)
 
     # Per-job overrides, merged over the shared values in main.tf. A key here wins.
     # Use this to run a new job against test settings while the others stay on the

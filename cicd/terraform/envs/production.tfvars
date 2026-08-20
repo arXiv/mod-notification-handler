@@ -41,10 +41,11 @@ cloudsql_instance = "arxiv-production:us-central1:arxiv-production-rep11"
 jobs = {
   mod_actions = {
     job_name = "mod-notification-handler"
+    command  = ["python"]
+    args     = ["-m", "app.mod_actions.main"]
     # Twice as often as dev, deliberately — production ships moderator mail faster.
     schedule        = "*/5 * * * *"
     timeout_seconds = 300
-    # No command/args: uses the image CMD, python -m app.mod_actions.main.
   }
 
   # Not yet provisioned. Only add these here once the job has proven itself in dev.

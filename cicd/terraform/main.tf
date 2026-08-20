@@ -144,10 +144,9 @@ resource "google_cloud_run_v2_job" "jobs" {
         name  = "${each.value.job_name}-1"
         image = var.image
 
-        # null, not [], so Terraform omits the field entirely and the container falls
-        # through to the image's CMD — which is how mod_actions runs today.
-        command = length(each.value.command) > 0 ? each.value.command : null
-        args    = length(each.value.args) > 0 ? each.value.args : null
+        # Always set explicitly — no job relies on the image's CMD.
+        command = each.value.command
+        args    = each.value.args
 
         # Two dynamic blocks of the same type concatenate — plain vars first, then the
         # secret-backed ones. In both, a job's own entry overrides the shared value for

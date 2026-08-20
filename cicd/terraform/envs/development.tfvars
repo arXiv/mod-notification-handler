@@ -38,9 +38,10 @@ cloudsql_instance = "arxiv-development:us-east4:arxiv-db-dev"
 jobs = {
   mod_actions = {
     job_name        = "mod-notification-handler"
+    command         = ["python"]
+    args            = ["-m", "app.mod_actions.main"]
     schedule        = "*/10 * * * *"
     timeout_seconds = 540
-    # No command/args: uses the image CMD, python -m app.mod_actions.main.
   }
 
   # Not yet provisioned. Uncomment when the job is ready to exist — nothing in

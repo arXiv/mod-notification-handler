@@ -75,7 +75,7 @@ a secret and mounts `:latest`; it never reads or writes a value, so no secret ma
 ## Adding a job
 
 All jobs share one container image and differ only by entrypoint. Adding one is an entry in each
-environment's `.tfvars` — `main.tf` doesn't change, and neither does `cloudbuild.yaml`:
+environment's `.tfvars` — `main.tf` doesn't change:
 
 ```hcl
 daily_update = {
@@ -96,6 +96,11 @@ which is how a new job runs against test settings while the others stay on the r
 ```
 
 Deleting the block puts the job back on shared config.
+
+`command` and `args` are **required** on every job. The image is deliberately generic — it contains all
+three jobs and picks none of them, and its `CMD` exits non-zero with a list of the valid entrypoints. A
+job missing its `command` fails immediately and visibly instead of quietly running whichever one
+happened to be the default.
 
 **Put each variable in exactly one of the two maps.** They render as separate blocks — `env_vars`
 becomes `env { value = ... }`, `secret_env_vars` becomes `env { value_source { secret_key_ref } }` — so
