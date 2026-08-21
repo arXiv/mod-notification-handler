@@ -11,10 +11,10 @@ terraform {
   }
 
   # Partial backend config: the prefix is fixed, the bucket is not. One config serves
-  # both environments, so the bucket is supplied at init time from
-  # envs/<env>.backend.hcl.
+  # both environments, so the bucket is supplied at init time — from a GitHub variable
+  # in CI, or inline when running by hand:
   #
-  #   terraform init -backend-config=envs/development.backend.hcl -reconfigure
+  #   terraform init -reconfigure -backend-config="bucket=dev-arxiv-terraform-state"
   #
   # This block cannot use variables — Terraform reads it before variables exist.
   backend "gcs" {

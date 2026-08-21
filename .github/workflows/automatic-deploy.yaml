@@ -1,0 +1,33 @@
+name: Automatic Deploy
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+# Must produce the same string as manual-deploy.yaml's group
+concurrency:
+  group: deploy-${{ github.ref_name == 'main' && 'production' || 'development' }}
+  cancel-in-progress: false
+
+jobs:
+  development:
+    if: github.ref_name == 'develop'
+    uses: ./.github/workflows/_deploy.yaml
+    with:
+      environment: development
+      commit_sha: ${{ github.sha }}
+    permissions:
+      contents: read
+      id-token: write  
+
+  production:
+    if: github.ref_name == 'main'
+    uses: ./.github/workflows/_deploy.yaml
+    with:
+      environment: production
+      commit_sha: ${{ github.sha }}
+    permissions:
+      contents: read
+      id-token: write
