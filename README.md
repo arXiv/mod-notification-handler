@@ -36,8 +36,9 @@ poetry run coverage run -m pytest
 
 deploying:
 happens automatically on merge — `develop` deploys development, `main` deploys production, via
-`.github/workflows/deploy.yaml`. it builds the image, tags it with the commit sha, and passes that tag
-to terraform, which sets it on the cloud run jobs.
+`.github/workflows/automatic-deploy.yaml`. `manual-deploy.yaml` does the same on demand for a chosen
+environment and commit. both call `_deploy.yaml`, which builds the image, tags it with the commit sha,
+and passes that tag to terraform, which sets it on the cloud run jobs.
 
 all the infrastructure is terraform, in `cicd/terraform` — the jobs, their schedulers, pubsub, iam,
 and the env vars.

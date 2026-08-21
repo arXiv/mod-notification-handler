@@ -1,0 +1,117 @@
+name: Deploy (called)
+
+# Builds the container image and applies Terraform. the target
+# environment and the exact commit both arrive as required inputs from the callers
+# Not directly runnable
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Target environment; must match an envs/<name>.tfvars
+        required: true
+        type: string
+      commit_sha:
+        description: Exact commit to build and apply
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.environment }}
+
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.PROVIDER_NAME }}
+          service_account: ${{ vars.SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Configure Docker for gcr.io
+        run: gcloud auth configure-docker --quiet
+
+      - name: Build and push
+        id: build
+        env:
+          SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          REPO="gcr.io/${{ vars.PROJECT_ID }}/mod-notification-handler"
+
+          # Best-effort cache source; the first build in a fresh project has none.
+          docker pull "$REPO:latest" || true
+
+          docker build \
+            --cache-from "$REPO:latest" \
+            -t "$REPO:$SHA" \
+            -t "$REPO:latest" \
+            -f cicd/Dockerfile .
+
+          docker push --all-tags "$REPO"
+
+          echo "image=$REPO:$SHA" >> "$GITHUB_OUTPUT"
+          echo "Built $REPO:$SHA"
+
+  apply:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+
+    env:
+      TF_ENVIRONMENT: ${{ inputs.environment }}
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform-plugin-cache
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+
+      - name: Report what is being applied
+        run: |
+          echo "Environment: $TF_ENVIRONMENT"
+          echo "Commit:      ${{ inputs.commit_sha }}"
+          echo "Image:       ${{ needs.build.outputs.image }}"
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.13.5"
+          terraform_wrapper: false
+
+      - name: Cache providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: tf-providers-${{ hashFiles('cicd/terraform/.terraform.lock.hcl') }}
+
+      - run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.PROVIDER_NAME }}
+          service_account: ${{ vars.SERVICE_ACCOUNT }}
+
+      - name: Init
+        run: terraform init -backend-config="bucket=${{ vars.TERRAFORM_BUCKET }}"
+        working-directory: cicd/terraform
+
+      - name: Apply
+        run: |
+          terraform apply -auto-approve -input=false \
+            -var-file="envs/${TF_ENVIRONMENT}.tfvars" \
+            -var="image=${{ needs.build.outputs.image }}"
+        working-directory: cicd/terraform
