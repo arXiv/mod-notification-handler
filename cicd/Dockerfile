@@ -14,5 +14,7 @@ RUN poetry config virtualenvs.create false && \
 
 COPY app/ app/
 
-#default entrypoint, the other jobs override this with --command/--args on their cloud run job
-CMD ["python", "-m", "app.mod_actions.main"]
+#the image is generic — it holds all three jobs and picks none of them. Every Cloud Run
+#job sets its own command/args in cicd/terraform. This default only runs when something
+#forgot to, and fails loudly rather than silently running the wrong job.
+CMD ["sh", "-c", "echo 'No entrypoint given. Set command/args on the Cloud Run job, or run: python -m app.<mod_actions|daily_update|new_subs>.main' >&2; exit 1"]

@@ -1,0 +1,31 @@
+name: Manual Deploy
+# Deploys a chosen environment at a chosen commit
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy
+        required: true
+        type: choice
+        options:
+          - development
+          - production
+      commit_sha:
+        description: Commit to deploy (blank = tip of the selected branch)
+        required: false
+        type: string
+
+# Same group as automatic-deploy.yaml
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy.yaml
+    with:
+      environment: ${{ inputs.environment }}
+      commit_sha: ${{ inputs.commit_sha || github.sha }}
+    permissions:
+      contents: read
+      id-token: write  

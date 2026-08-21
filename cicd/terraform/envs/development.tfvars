@@ -1,6 +1,6 @@
 # Every value that makes development different from production.
 #
-#   terraform init -backend-config=envs/development.backend.hcl -reconfigure
+#   terraform init -reconfigure -backend-config="bucket=dev-arxiv-terraform-state"
 #   terraform plan -var-file=envs/development.tfvars
 
 project_id = "arxiv-development"
@@ -26,16 +26,10 @@ db_secret_name    = "modapi-dev-db-uri-for-cloudrun"
 cloudsql_instance = "arxiv-development:us-east4:arxiv-db-dev"
 
 # ---------------------------------------------------------------------------
-# Build trigger
-# ---------------------------------------------------------------------------
-
-build_trigger_location    = "global"
-build_trigger_branch      = "^develop$"
-build_trigger_description = "Build and deploy a cloud run job for processing notifcations for moderators"
-
-# ---------------------------------------------------------------------------
 # Jobs
 # ---------------------------------------------------------------------------
+#
+# `image` is not set here — CI passes it with -var on every apply.
 
 # Every job inherits the shared config above — database, mail server, reply-to. An
 # `env_vars` block on a job overrides individual keys for that job only, which is how a
@@ -44,9 +38,10 @@ build_trigger_description = "Build and deploy a cloud run job for processing not
 jobs = {
   mod_actions = {
     job_name        = "mod-notification-handler"
+    command         = ["python"]
+    args            = ["-m", "app.mod_actions.main"]
     schedule        = "*/10 * * * *"
     timeout_seconds = 540
-    # No command/args: uses the image CMD, python -m app.mod_actions.main.
   }
 
   # Not yet provisioned. Uncomment when the job is ready to exist — nothing in
