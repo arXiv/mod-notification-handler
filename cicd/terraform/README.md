@@ -2,7 +2,7 @@
 
 Manages the GCP resources this service runs on in `arxiv-development` and `arxiv-production`: the
 service account and its IAM bindings, the Pub/Sub topic and subscription, the Cloud Run jobs, their
-Cloud Scheduler triggers, and the Cloud Build trigger.
+Cloud Scheduler triggers, and the container image each job runs.
 
 ## Layout
 
@@ -30,8 +30,12 @@ and posts the diff as a PR comment with Terraform's own summary line at the top.
 - A PR into `develop` plans both environments; a PR into `main` plans production only.
 - Fork PRs are skipped 
 
-**`terraform-apply.yaml`** — merges to `develop` (applies development) and `main` (applies production),
-plus a manual run from the Actions tab against either environment, optionally pinned to a commit.
+**`deploy.yaml`** — merges to `develop` (deploys development) and `main` (deploys production), plus a
+manual run from the Actions tab against either environment, optionally pinned to a commit. Two jobs:
+build the image and push it, then `terraform apply` with that image's tag.
+
+No `paths` filter, unlike the others — an app-code change must rebuild and a Terraform change must
+apply, so every merge runs both. 
 
 Configuration lives in GitHub Environments named `development` and `production`
 
@@ -61,21 +65,17 @@ Dont run apply locally! there are workflows for that
 ## What Terraform owns, and what it doesn't
 
 **Owned:** service account, its four project IAM bindings, Pub/Sub topic and subscription, Cloud Run
-jobs, schedulers, Cloud Build trigger.
+jobs, schedulers, responsibility for building an image.
 
 **Referenced:** the Cloud SQL instance and every Secret Manager secret. Terraform names
 a secret and mounts `:latest`; it never reads or writes a value, so no secret material reaches state.
 
-**Not owned at all:** the container image tag. Cloud Build sets it on every merge via
-`gcloud run jobs update`, and the job carries `ignore_changes` on that field so the two don't revert
-each other. Terraform owns the job's shape; Cloud Build owns what's running in it.
-TODO: switch building over to gha management
 
 
 ## Adding a job
 
 All jobs share one container image and differ only by entrypoint. Adding one is an entry in each
-environment's `.tfvars` — `main.tf` doesn't change, and neither does `cloudbuild.yaml`:
+environment's `.tfvars` — `main.tf` doesn't change:
 
 ```hcl
 daily_update = {
@@ -96,6 +96,11 @@ which is how a new job runs against test settings while the others stay on the r
 ```
 
 Deleting the block puts the job back on shared config.
+
+`command` and `args` are **required** on every job. The image is deliberately generic — it contains all
+three jobs and picks none of them, and its `CMD` exits non-zero with a list of the valid entrypoints. A
+job missing its `command` fails immediately and visibly instead of quietly running whichever one
+happened to be the default.
 
 **Put each variable in exactly one of the two maps.** They render as separate blocks — `env_vars`
 becomes `env { value = ... }`, `secret_env_vars` becomes `env { value_source { secret_key_ref } }` — so

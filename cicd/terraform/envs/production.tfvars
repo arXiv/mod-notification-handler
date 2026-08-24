@@ -1,6 +1,6 @@
 # Every value that makes production different from development.
 #
-#   terraform init -backend-config=envs/production.backend.hcl -reconfigure
+#   terraform init -reconfigure -backend-config="bucket=prod-arxiv-terraform-state"
 #   terraform plan -var-file=envs/production.tfvars
 
 project_id = "arxiv-production"
@@ -29,18 +29,10 @@ db_secret_name    = "arxiv-production-rep11-db-readonly_URI"
 cloudsql_instance = "arxiv-production:us-central1:arxiv-production-rep11"
 
 # ---------------------------------------------------------------------------
-# Build trigger
-# ---------------------------------------------------------------------------
-
-# TODO dev's trigger is global and this one is us-east1. Consolidating them would be a
-# destroy-and-recreate, so make it its own change.
-build_trigger_location    = "us-east1"
-build_trigger_branch      = "^main$"
-build_trigger_description = "builds cloud run job that sends emails to mods"
-
-# ---------------------------------------------------------------------------
 # Jobs
 # ---------------------------------------------------------------------------
+#
+# `image` is not set here — CI passes it with -var on every apply.
 
 # Every job inherits the shared config above. A job may add its own `env_vars` block to
 # override individual keys, but in production that should be rare and deliberate — a
@@ -49,10 +41,11 @@ build_trigger_description = "builds cloud run job that sends emails to mods"
 jobs = {
   mod_actions = {
     job_name = "mod-notification-handler"
+    command  = ["python"]
+    args     = ["-m", "app.mod_actions.main"]
     # Twice as often as dev, deliberately — production ships moderator mail faster.
     schedule        = "*/5 * * * *"
     timeout_seconds = 300
-    # No command/args: uses the image CMD, python -m app.mod_actions.main.
   }
 
   # Not yet provisioned. Only add these here once the job has proven itself in dev.
