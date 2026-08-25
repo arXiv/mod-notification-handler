@@ -30,9 +30,14 @@ and posts the diff as a PR comment with Terraform's own summary line at the top.
 - A PR into `develop` plans both environments; a PR into `main` plans production only.
 - Fork PRs are skipped 
 
-**`deploy.yaml`** — merges to `develop` (deploys development) and `main` (deploys production), plus a
-manual run from the Actions tab against either environment, optionally pinned to a commit. Two jobs:
-build the image and push it, then `terraform apply` with that image's tag.
+**`automatic-deploy.yaml`** — merges to `develop` (deploys development) and `main` (deploys
+production). 
+
+**`manual-deploy.yaml`** — a run from the Actions tab against either environment, optionally pinned to
+a commit.
+
+Both hand off to **`_deploy.yaml`**:
+the environment and commit arrive as required inputs. Two jobs: build the image and push it, then `terraform apply` with that image's tag.
 
 No `paths` filter, unlike the others — an app-code change must rebuild and a Terraform change must
 apply, so every merge runs both. 

@@ -54,13 +54,6 @@ jobs = {
   #   schedule        = "0 8 * * *"
   #   timeout_seconds = 540
   #
-  #   # While this job is still being tested: everything it sends comes to one inbox,
-  #   # and the other jobs are unaffected. Delete these two lines to put it back on
-  #   # the shared settings.
-  #   env_vars = {
-  #     REDIRECT_EMAILS    = "True"
-  #     REDIRECT_RECIPIENT = "TODO test email"
-  #   }
   # }
   #
   # new_subs = {

@@ -56,6 +56,7 @@ jobs = {
   #   args            = ["-m", "app.daily_update.main"]
   #   schedule        = "0 8 * * *"
   #   timeout_seconds = 300
+  #   env_vars = { REDIRECT_EMAILS = "True" } #remove once ready to go live
   # }
   #
   # new_subs = {

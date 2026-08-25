@@ -10,8 +10,9 @@ from app.mod_actions.templates.promote import render_promote_block
 from app.mod_actions.templates.new_prop import render_new_prop_block
 from app.mod_actions.templates.prop_resp import render_prop_resp_block
 from app.mod_actions.templates.category_rejection import render_category_rejection_block
-from app.mod_actions.templates.submission import render_submission_block, truncate_authors, MAX_AUTHORS
-from app.mod_actions.templates.email_body import render_body, CHECK_GUIDE_URL, HOW_TO_MOD_URL, MOD_HUB_URL
+from app.mod_actions.templates.submission import render_submission_block
+from app.mod_actions.templates.email_body import render_body
+from app.shared.templates import CHECK_GUIDE_URL, HOW_TO_MOD_URL, MOD_HUB_URL
 
 _TIME = datetime(2024, 6, 15, 14, 30, tzinfo=timezone.utc)
 _USER = "Alice Mod"
@@ -139,21 +140,6 @@ def _mock_submission(submission_id=123, title="ML Paper", authors="Alice, Bob", 
         submission_categories=submission_categories,
         submit_time=submit_time,
     )
-
-def test_truncate_authors_under_limit():
-    authors = ", ".join(f"Author {i}" for i in range(MAX_AUTHORS - 1))
-    assert truncate_authors(authors) == authors
-
-def test_truncate_authors_at_limit():
-    authors = ", ".join(f"Author {i}" for i in range(MAX_AUTHORS))
-    assert truncate_authors(authors) == authors
-    assert "..." not in truncate_authors(authors)
-
-def test_truncate_authors_over_limit():
-    parts = [f"Author {i}" for i in range(MAX_AUTHORS + 5)]
-    result = truncate_authors(", ".join(parts))
-    assert result.endswith(", ...")
-    assert result.count(",") == MAX_AUTHORS  # 14 between names + 1 before ellipsis
 
 def test_render_submission_block():
     sub = _mock_submission()

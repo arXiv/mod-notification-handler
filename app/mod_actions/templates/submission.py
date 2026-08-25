@@ -3,24 +3,15 @@ import html
 from arxiv.submission.statuses import STATUS_NAMES
 
 from app.shared.submission import SubEmailData
-from app.shared.utils.formatting import fmt_time
-
-CHECK_SUBMISSION_URL = "https://check.arxiv.org/submit/{submission_id}"
-MAX_AUTHORS = 15
-
-
-def truncate_authors(authors_str: str) -> str:
-    parts = [a.strip() for a in authors_str.split(",")]
-    if len(parts) > MAX_AUTHORS:
-        return ", ".join(parts[:MAX_AUTHORS]) + ", ..."
-    return ", ".join(parts)
+from app.shared.templates import check_submission_url
+from app.shared.utils.formatting import fmt_time, truncate_authors
 
 
 def render_submission_block(sub: SubEmailData) -> tuple[str, str]:
     status_label = STATUS_NAMES.get(sub.status, str(sub.status))
     raw = sub.submission_categories or "(none)"
     cat_list = "no primary" + raw[1:] if (raw == "-" or raw.startswith("- ")) else raw
-    check_url = CHECK_SUBMISSION_URL.format(submission_id=sub.submission_id)
+    check_url = check_submission_url(sub.submission_id)
     title = sub.title or "(no title)"
     authors = truncate_authors(sub.authors) if sub.authors else "(no authors)"
 
