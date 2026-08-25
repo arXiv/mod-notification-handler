@@ -9,8 +9,6 @@ from app.shared.utils.formatting import fmt_time, truncate_authors
 
 def render_submission_block(sub: SubEmailData) -> tuple[str, str]:
     status_label = STATUS_NAMES.get(sub.status, str(sub.status))
-    raw = sub.submission_categories or "(none)"
-    cat_list = "no primary" + raw[1:] if (raw == "-" or raw.startswith("- ")) else raw
     check_url = check_submission_url(sub.submission_id)
     title = sub.title or "(no title)"
     authors = truncate_authors(sub.authors) if sub.authors else "(no authors)"
@@ -22,7 +20,7 @@ def render_submission_block(sub: SubEmailData) -> tuple[str, str]:
         f"Title:      {title}\n"
         f"Authors:    {authors}\n"
         f"Status:     {status_label}\n"
-        f"Current Categories: {cat_list}\n"
+        f"Current Categories: {sub.submission_categories}\n"
     )
     if submit_time_str:
         text += f"Submitted:  {submit_time_str}\n"
@@ -32,7 +30,7 @@ def render_submission_block(sub: SubEmailData) -> tuple[str, str]:
         f"<strong>Title:</strong> {html.escape(title)}<br>\n"
         f"<strong>Authors:</strong> {html.escape(authors)}<br>\n"
         f"<strong>Status:</strong> {status_label}<br>\n"
-        f"<strong>Current Categories:</strong> {cat_list}"
+        f"<strong>Current Categories:</strong> {sub.submission_categories}"
     )
     if submit_time_str:
         html_out += f"<br>\n<strong>Submitted:</strong> {submit_time_str}"

@@ -129,7 +129,7 @@ def test_render_change_block_dispatches():
 # ── submission block ──────────────────────────────────────────────────────────
 
 def _mock_submission(submission_id=123, title="ML Paper", authors="Alice, Bob", status=1,
-                     submission_categories="cs.LG cs.AI", submit_time=_TIME):
+                     primary_category="cs.LG", secondary_categories=("cs.AI",), submit_time=_TIME):
     return SubEmailData(
         submission_id=submission_id,
         title=title,
@@ -137,8 +137,9 @@ def _mock_submission(submission_id=123, title="ML Paper", authors="Alice, Bob", 
         status=status,
         submitter_name="",
         submitter_id=0,
-        submission_categories=submission_categories,
         submit_time=submit_time,
+        primary_category=primary_category,
+        secondary_categories=list(secondary_categories),
     )
 
 def test_render_submission_block():
@@ -156,19 +157,19 @@ def test_render_submission_block_escapes_html():
     assert "&lt;b&gt;" in html_out
     assert "&amp;" in html_out
 
-def test_render_submission_block_no_primary():
-    sub = _mock_submission(submission_categories="-")
+def test_render_submission_block_no_categories_at_all():
+    sub = _mock_submission(primary_category=None, secondary_categories=[])
     text, html_out = render_submission_block(sub)
-    assert "no primary" in text and "no primary" in html_out
-    assert "-" not in text.split("Current Categories:")[1].split("\n")[0]
+    assert "Current Categories: no primary" in text
+    assert "no primary" in html_out
 
 def test_render_submission_block_no_primary_with_secondaries():
-    sub = _mock_submission(submission_categories="- cs.AI cs.LG")
+    sub = _mock_submission(primary_category=None, secondary_categories=["cs.AI", "cs.LG"])
     text, html_out = render_submission_block(sub)
     assert "no primary cs.AI cs.LG" in text and "no primary cs.AI cs.LG" in html_out
 
 def test_render_submission_block_dash_in_category_name():
-    sub = _mock_submission(submission_categories="math-ph cs.LG")
+    sub = _mock_submission(primary_category="math-ph", secondary_categories=["cs.LG"])
     text, html_out = render_submission_block(sub)
     assert "math-ph cs.LG" in text and "math-ph cs.LG" in html_out
     assert "no primary" not in text and "no primary" not in html_out

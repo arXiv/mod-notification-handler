@@ -41,8 +41,3 @@ def split_categories(cats: list[tuple[str, int]]) -> tuple[Optional[str], list[s
     return primary, sorted(secondaries)
 
 
-def build_category_string(cats: list[tuple[str, int]]) -> str:
-    """Format [(category, is_primary), ...] into 'cs.LG (primary), cs.AI'."""
-    primary, secondaries = split_categories(cats)
-    primary = primary or "-" #TODO change to no primary when more off of legacy system
-    return " ".join([primary] + secondaries)

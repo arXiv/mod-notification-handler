@@ -159,7 +159,7 @@ def _send_email_tasks(
         #send email — failure skips ack (will redeliver)
         try:
             submitter = sub.submitter_name or f"user {sub.submitter_id}"
-            subject = f"Action Required: arXiv submission submit/{task.submission_id} to {sub.submission_categories} by {submitter}"
+            subject = f"Action Required: arXiv submission submit/{task.submission_id} to {sub.subject_categories} by {submitter}"
             accepted = send_email(
                 to_emails=task.to_emails,
                 subject=subject,
