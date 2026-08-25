@@ -80,3 +80,29 @@ INSERT INTO `arXiv_submission_category` VALUES (124, 'cs.LG', 0, NULL);
 -- 125: no categories
 -- 126: math-ph primary (math.MP alias should also appear)
 INSERT INTO `arXiv_submission_category` VALUES (126, 'math-ph', 1, NULL);
+
+-- ══ daily_update digest ══════════════════════════════════════════════════════
+-- moderators: last column is daily_update
+-- (user_id, archive, subject_class, is_public, no_email, no_web_email, no_reply_to, daily_update)
+
+-- two moderators of the same category
+INSERT INTO `tapir_users` VALUES (55001,'Digest','CatMod','',1,1,'digest-cat@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);
+INSERT INTO `arXiv_moderators` VALUES (55001, 'cs', 'AI', 0, 0, 0, 0, 1);
+INSERT INTO `tapir_users` VALUES (55006,'Digest','CatModTwo','',1,1,'digest-cat2@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);
+INSERT INTO `arXiv_moderators` VALUES (55006, 'cs', 'AI', 0, 0, 0, 0, 1);
+
+-- whole-archive moderator
+INSERT INTO `tapir_users` VALUES (55002,'Digest','ArchiveMod','',1,1,'digest-archive@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);
+INSERT INTO `arXiv_moderators` VALUES (55002, 'astro-ph', '', 0, 0, 0, 0, 1);
+
+-- mods the canonical category econ.GN, so should also cover its q-fin.EC alias
+INSERT INTO `tapir_users` VALUES (55003,'Digest','AliasMod','',1,1,'digest-alias@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);
+INSERT INTO `arXiv_moderators` VALUES (55003, 'econ', 'GN', 0, 0, 0, 0, 1);
+
+-- no_email is set AND daily_update is set: the digest still goes out
+INSERT INTO `tapir_users` VALUES (55004,'Digest','NoEmailMod','',1,1,'digest-noemail@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);
+INSERT INTO `arXiv_moderators` VALUES (55004, 'nlin', 'AO', 0, 1, 0, 0, 1);
+
+-- mods an archive with no seeded submissions, for the empty-digest case
+INSERT INTO `tapir_users` VALUES (55005,'Digest','EmptyMod','',1,1,'digest-empty@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);
+INSERT INTO `arXiv_moderators` VALUES (55005, 'gr-qc', '', 0, 0, 0, 0, 1);
