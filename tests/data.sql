@@ -106,3 +106,64 @@ INSERT INTO `arXiv_moderators` VALUES (55004, 'nlin', 'AO', 0, 1, 0, 0, 1);
 -- mods an archive with no seeded submissions, for the empty-digest case
 INSERT INTO `tapir_users` VALUES (55005,'Digest','EmptyMod','',1,1,'digest-empty@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);
 INSERT INTO `arXiv_moderators` VALUES (55005, 'gr-qc', '', 0, 0, 0, 0, 1);
+
+-- ── submissions (200s). one per rule the digest applies ─────────────────────
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (201, 'A New Submission', 'New Author', 1, 'new', '2026-07-27 10:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+-- 203: cs.LG already announced, cs.AI is the cross being requested
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (203, 'A Cross Into cs.AI', 'Cross Author', 1, 'cross', '2026-07-27 12:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+-- 204: withdrawal, excluded by type even though it is on a mod hold
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (204, 'A Withdrawal On Hold', 'Wdr Author', 2, 'wdr', '2026-07-27 13:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+-- 206: no type at all. unverified that a submitted row can look like this — item K
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (206, 'A Legacy Submission', 'Odd Author', 1, NULL, '2026-07-27 15:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+-- 207: already announced, excluded by the open-status query
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (207, 'An Already Announced Paper', 'Done Author', 7, 'new', '2026-07-27 16:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+-- 209: on an ADMIN hold, excluded
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (209, 'On Admin Hold', 'Admin Hold Author', 2, 'new', '2026-07-27 18:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+-- 210: on a MOD hold, included and belongs in the HOLD section
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (210, 'On Mod Hold', 'Mod Hold Author', 2, 'rep', '2026-07-27 19:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+-- 211: test primary with a real secondary, excluded on the primary
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (211, 'A Test Category Paper', 'Test Author', 1, 'new', '2026-07-27 20:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+-- 212: journal reference, excluded by type
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (212, 'A Journal Reference', 'Jref Author', 1, 'jref', '2026-07-27 21:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+-- 213: has comments and unresolved proposals, for the entry line
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (213, 'A Discussed Paper', 'Talky Author', 1, 'new', '2026-07-27 22:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+-- 214: cross where cs.AI is ALREADY announced and cs.LG is the new one. a cs.AI mod must NOT see it
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (214, 'A Cross Out Of cs.AI', 'Other Cross Author', 1, 'cross', '2026-07-27 23:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+
+-- categories: (submission_id, category, is_primary, is_published)
+INSERT INTO `arXiv_submission_category` VALUES (201, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (203, 'cs.LG', 1, 1);
+INSERT INTO `arXiv_submission_category` VALUES (203, 'cs.AI', 0, 0);
+INSERT INTO `arXiv_submission_category` VALUES (204, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (206, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (207, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (209, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (210, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (211, 'test.dis-nn', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (211, 'cs.AI', 0, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (212, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (213, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (214, 'cs.AI', 1, 1);
+INSERT INTO `arXiv_submission_category` VALUES (214, 'cs.LG', 0, 0);
+
+-- holds: (reason_id, submission_id, user_id, reason, type, comment_id)
+INSERT INTO `arXiv_submission_hold_reason` VALUES (1, 209, 246231, 'scope', 'admin', NULL);
+INSERT INTO `arXiv_submission_hold_reason` VALUES (2, 210, 246231, 'discussion', 'mod', NULL);
+-- 204 is a wdr on a mod hold: excluded by type, not by hold
+INSERT INTO `arXiv_submission_hold_reason` VALUES (3, 204, 246231, 'discussion', 'mod', NULL);
+
+
+-- proposals: (proposal_id, submission_id, category, is_primary, proposal_status, user_id, ...)
+-- 0 = unresolved, 3 = rejected
+INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id) VALUES (1, 213, 'cs.CV', 1, 0, 246231);
+INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id) VALUES (2, 213, 'stat.ML', 0, 0, 246231);
+INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id) VALUES (3, 213, 'math.NA', 0, 3, 246231);
+
+-- 218: still WORKING, the submitter hasn't submitted it. never in the open queue
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (218, 'Still Being Written', 'Busy Author', 0, 'new', '2026-07-28 02:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+INSERT INTO `arXiv_submission_category` VALUES (218, 'cs.AI', 1, NULL);
+
+-- 217: legacy hold — on hold with no reason row. excluded, only mod holds are reported
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (217, 'On A Legacy Hold', 'Nobody Author', 2, 'new', '2026-07-28 01:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+INSERT INTO `arXiv_submission_category` VALUES (217, 'cs.AI', 1, NULL);
+

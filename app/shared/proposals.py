@@ -3,7 +3,6 @@ import logging
 from dataclasses import dataclass, field
 from sqlalchemy import select
 
-from arxiv.db import Session
 from arxiv.db.models import SubmissionCategoryProposal
 
 logger = logging.getLogger(__name__)
@@ -18,23 +17,22 @@ class Proposals:
         return bool(self.primary or self.secondary)
 
 
-def get_unresolved_proposals(submission_ids: set[int]) -> dict[int, Proposals]:
+def get_unresolved_proposals(session, submission_ids: set[int]) -> dict[int, Proposals]:
     """get unresolved proposals for submissions on the list"""
     if not submission_ids:
         return {}
 
     #fetch
-    with Session() as session:
-        rows = session.execute(
-            select(
-                SubmissionCategoryProposal.submission_id,
-                SubmissionCategoryProposal.category,
-                SubmissionCategoryProposal.is_primary,
-            ).where(
-                SubmissionCategoryProposal.submission_id.in_(submission_ids),
-                SubmissionCategoryProposal.proposal_status == 0, #unresolved
-            )
-        ).all()
+    rows = session.execute(
+        select(
+            SubmissionCategoryProposal.submission_id,
+            SubmissionCategoryProposal.category,
+            SubmissionCategoryProposal.is_primary,
+        ).where(
+            SubmissionCategoryProposal.submission_id.in_(submission_ids),
+            SubmissionCategoryProposal.proposal_status == 0, #unresolved
+        )
+    ).all()
 
     #collect into dictionary
     by_sub: dict[int, Proposals] = {}
