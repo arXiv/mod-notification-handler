@@ -7,7 +7,50 @@ from sqlalchemy import select
 from arxiv.db import Session
 from arxiv.db.models import Submission, SubmissionCategory
 
-from app.shared.utils.formatting import split_categories
+from app.shared.utils.taxonomy import ALIAS_BY_CANONICAL
+
+@dataclass(frozen=True)
+class SubmissionCat:
+    """one arXiv_submission_category row"""
+    category: str
+    is_published: bool #already announced under this category
+    is_primary: bool
+
+def fetch_categories(session, submission_ids: set[int]) -> dict[int, list[SubmissionCat]]:
+    """read arXiv_submission_category, one list of rows per submission"""
+    rows = session.execute(
+        select(
+            SubmissionCategory.submission_id,
+            SubmissionCategory.category,
+            SubmissionCategory.is_primary,
+            SubmissionCategory.is_published,
+        ).where(SubmissionCategory.submission_id.in_(submission_ids))
+    ).all()
+
+    cats_by_sub: dict[int, list[SubmissionCat]] = {}
+    for row in rows:
+        cats_by_sub.setdefault(row.submission_id, []).append(SubmissionCat(
+            category=row.category,
+            is_published=bool(row.is_published),
+            is_primary=bool(row.is_primary),
+        ))
+    return cats_by_sub
+
+
+def split_categories(cats: list[SubmissionCat]) -> tuple[Optional[str], list[str]]:
+    """Split category rows into (primary, sorted secondaries). primary is None when the
+    submission has no primary row."""
+    primary: Optional[str] = None
+    secondaries: set[str] = set()
+    for cat in cats:
+        if cat.is_primary:
+            primary = cat.category
+        else:
+            secondaries.add(cat.category)
+        #catch aliases
+        if cat.category in ALIAS_BY_CANONICAL:
+            secondaries.add(ALIAS_BY_CANONICAL[cat.category])
+    return primary, sorted(secondaries)
 
 
 @dataclass
@@ -20,8 +63,21 @@ class SubmissionBase:
     submitter_name: str
     submitter_id: int
     submit_time: Optional[datetime] = None
-    primary_category: Optional[str] = None 
-    secondary_categories: list[str] = field(default_factory=list) #alphabetized, aliases included
+    categories: list[SubmissionCat] = field(default_factory=list)
+
+    @property
+    def primary_category(self) -> Optional[str]:
+        """None when the submission has no primary row"""
+        return self._split[0]
+
+    @property
+    def secondary_categories(self) -> list[str]:
+        """alphabetized, aliases included"""
+        return self._split[1]
+
+    @property
+    def _split(self) -> tuple[Optional[str], list[str]]:
+        return split_categories(self.categories)
 
     @property
     def submission_categories(self) -> str:
@@ -57,18 +113,9 @@ def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
             ).where(Submission.submission_id.in_(submission_ids))
         ).all()
 
-        #get and consolidate category data
-        cat_rows = session.execute(
-            select(SubmissionCategory.submission_id, SubmissionCategory.category, SubmissionCategory.is_primary)
-            .where(SubmissionCategory.submission_id.in_(submission_ids))
-        ).all()
-
-        cats_by_sub: dict[int, list[tuple[str, int]]] = {}
-        for cr in cat_rows:
-            cats_by_sub.setdefault(cr.submission_id, []).append((cr.category, cr.is_primary))
+        cats_by_sub = fetch_categories(session, submission_ids)
 
         def build(row):
-            primary, secondaries = split_categories(cats_by_sub.get(row.submission_id, []))
             return SubEmailData(
                 submission_id=row.submission_id,
                 title=row.title or "",
@@ -77,8 +124,7 @@ def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
                 submitter_name=row.submitter_name or "",
                 submitter_id=row.submitter_id or 0,
                 submit_time=row.submit_time,
-                primary_category=primary,
-                secondary_categories=secondaries,
+                categories=cats_by_sub.get(row.submission_id, []),
             )
 
         return {row.submission_id: build(row) for row in rows}

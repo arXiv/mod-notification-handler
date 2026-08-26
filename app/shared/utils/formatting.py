@@ -1,11 +1,8 @@
 """formatting helpers shared by all jobs' email templates"""
 from datetime import datetime
-from typing import Optional
 from zoneinfo import ZoneInfo
 
 from arxiv.config import settings as arxiv_settings
-
-from app.shared.utils.taxonomy import ALIAS_BY_CANONICAL
 
 _ET = ZoneInfo(arxiv_settings.ARXIV_BUSINESS_TZ)
 
@@ -23,21 +20,5 @@ def truncate_authors(authors_str: str) -> str:
     if len(parts) > MAX_AUTHORS:
         return ", ".join(parts[:MAX_AUTHORS]) + ", ..."
     return ", ".join(parts)
-
-
-def split_categories(cats: list[tuple[str, int]]) -> tuple[Optional[str], list[str]]:
-    """Split [(category, is_primary), ...] into (primary, sorted secondaries). primary is
-    None when the submission has no primary row."""
-    primary: Optional[str] = None
-    secondaries: set[str] = set()
-    for cat_id, is_primary in cats:
-        if is_primary:
-            primary = cat_id
-        else:
-            secondaries.add(cat_id)
-        #catch aliases
-        if cat_id in ALIAS_BY_CANONICAL:
-            secondaries.add(ALIAS_BY_CANONICAL[cat_id])
-    return primary, sorted(secondaries)
 
 

@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 
 from app.mod_actions.schema import SimplifiedNotification, CommentData, PromoteData, NewPropData, PropRespData, CategoryRejectionData, NotificationType
-from app.shared.submission import SubEmailData
+from app.shared.submission import SubEmailData, SubmissionCat
 from app.mod_actions.email_content import render_change_block, render_email
 from app.mod_actions.schema import EmailTask, ConsolidatedNotifications
 from app.mod_actions.templates.comment import render_comment_block
@@ -128,6 +128,13 @@ def test_render_change_block_dispatches():
 
 # ── submission block ──────────────────────────────────────────────────────────
 
+def _cats(primary=None, secondaries=()) -> list[SubmissionCat]:
+    """category rows. mod_actions doesn't read is_published, so it's just True"""
+    rows = ([(primary, True)] if primary else []) + [(cat, False) for cat in secondaries]
+    return [SubmissionCat(category=cat, is_published=True, is_primary=is_primary)
+            for cat, is_primary in rows]
+
+
 def _mock_submission(submission_id=123, title="ML Paper", authors="Alice, Bob", status=1,
                      primary_category="cs.LG", secondary_categories=("cs.AI",), submit_time=_TIME):
     return SubEmailData(
@@ -138,8 +145,7 @@ def _mock_submission(submission_id=123, title="ML Paper", authors="Alice, Bob", 
         submitter_name="",
         submitter_id=0,
         submit_time=submit_time,
-        primary_category=primary_category,
-        secondary_categories=list(secondary_categories),
+        categories=_cats(primary_category, secondary_categories),
     )
 
 def test_render_submission_block():

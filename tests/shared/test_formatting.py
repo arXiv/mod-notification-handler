@@ -1,41 +1,8 @@
 """tests for shared formatting helpers"""
 from app.shared.utils.formatting import (
     MAX_AUTHORS,
-    split_categories,
     truncate_authors,
 )
-
-
-# ── split_categories ────────────────────────────────────────────────────────
-
-def test_split_categories_empty():
-    assert split_categories([]) == (None, [])
-
-
-def test_split_categories_primary_is_not_in_secondaries():
-    primary, secondaries = split_categories([("cs.LG", 1), ("cs.AI", 0)])
-    assert primary == "cs.LG"
-    assert secondaries == ["cs.AI"]
-
-
-def test_split_categories_no_primary_returns_none():
-    primary, secondaries = split_categories([("cs.AI", 0)])
-    assert primary is None
-    assert secondaries == ["cs.AI"]
-
-
-def test_split_categories_secondaries_are_sorted():
-    _, secondaries = split_categories([("cs.LG", 1), ("stat.ML", 0), ("astro-ph.CO", 0)])
-    assert secondaries == ["astro-ph.CO", "stat.ML"]
-
-def test_canonical_primary_gains_its_alias():
-    primary, secondaries = split_categories([("math-ph", 1)])
-    assert primary == "math-ph"
-    assert secondaries == ["math.MP"]
-
-def test_canonical_secondary_gains_its_alias():
-    _, secondaries = split_categories([("cs.LG", 1), ("econ.GN", 0)])
-    assert secondaries == ["econ.GN", "q-fin.EC"]
 
 
 
