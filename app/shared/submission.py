@@ -1,5 +1,6 @@
 """submission data fetching shared by all jobs"""
 from datetime import datetime
+from functools import cached_property
 from typing import Optional
 from dataclasses import dataclass, field
 from sqlalchemy import select
@@ -75,7 +76,7 @@ class SubmissionBase:
         """alphabetized, aliases included"""
         return self._split[1]
 
-    @property
+    @cached_property
     def _split(self) -> tuple[Optional[str], list[str]]:
         return split_categories(self.categories)
 

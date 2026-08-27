@@ -15,6 +15,8 @@ def email_config_ok() -> bool:
         if not settings.REDIRECT_EMAILS and settings.ENV != "PRODUCTION":
             logger.error("SEND_EMAILS=True and REDIRECT_EMAILS=False but ENV is not PRODUCTION — exiting")
             return False
+        if settings.REDIRECT_EMAILS:
+            logger.info(f"REDIRECT_EMAILS active — all emails → {settings.REDIRECT_RECIPIENT}")
     elif settings.ENV == "PRODUCTION":
         logger.warning("SEND_EMAILS=False in PRODUCTION — messages will be acked without sending email")
     return True

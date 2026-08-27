@@ -139,9 +139,6 @@ def _send_email_tasks(
 ) -> list[int]:
     """render and send emails, acking each submission only after its email sends"""
 
-    if settings.REDIRECT_EMAILS:
-        logger.info(f"REDIRECT_EMAILS active — all emails → {settings.REDIRECT_RECIPIENT}")
-
     sent_sub_ids: list[int] = []
     for task in email_tasks:
         sub = sub_infos.get(task.submission_id)
