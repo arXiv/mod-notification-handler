@@ -38,5 +38,6 @@ def send_daily_reports() -> None:
             sent += 1
 
     # report success
-    logger.info(
-        f"Done. {sent} emails sent to moderators.")
+    logger.info(f"Done. {sent} of {len(recipients)} emails sent to moderators.")
+    if sent != len(recipients):
+        logger.warning(f"{len(recipients) - sent} moderators did not get a digest today")

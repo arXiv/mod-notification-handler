@@ -1,6 +1,10 @@
 """tests for shared formatting helpers"""
+from datetime import datetime, timezone
+
 from app.shared.utils.formatting import (
+    ET,
     MAX_AUTHORS,
+    now_et,
     truncate_authors,
 )
 
@@ -35,3 +39,17 @@ def test_truncate_authors_one_over_limit():
 
 def test_truncate_authors_normalises_whitespace():
     assert truncate_authors("A ,  B , C") == "A, B, C"
+
+
+# ── now_et ──────────────────────────────────────────────────────────────────
+
+def test_now_et_is_arxiv_business_time():
+    assert str(ET) == "America/New_York"
+    assert now_et().tzinfo is ET
+
+
+def test_now_et_is_not_the_utc_date_late_in_the_evening():
+    #the case that makes this matter: after 20:00 ET the UTC date has already rolled over
+    late_evening_et = datetime(2026, 7, 28, 2, 0, tzinfo=timezone.utc).astimezone(ET)
+    assert late_evening_et.date().isoformat() == "2026-07-27"
+    assert late_evening_et.hour == 22

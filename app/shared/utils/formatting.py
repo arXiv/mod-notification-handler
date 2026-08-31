@@ -4,13 +4,19 @@ from zoneinfo import ZoneInfo
 
 from arxiv.config import settings as arxiv_settings
 
-_ET = ZoneInfo(arxiv_settings.ARXIV_BUSINESS_TZ)
+ET = ZoneInfo(arxiv_settings.ARXIV_BUSINESS_TZ)
 
 MAX_AUTHORS = 7
 
 
+def now_et() -> datetime:
+    """the current moment in arXiv business time. every date and time in this project is ET,
+    and the container has no TZ set, so never use date.today() or datetime.now() bare"""
+    return datetime.now(ET)
+
+
 def fmt_time(dt: datetime) -> str:
-    et = dt.astimezone(_ET)
+    et = dt.astimezone(ET)
     return et.strftime("%m-%d %H:%M %Z")
 
 

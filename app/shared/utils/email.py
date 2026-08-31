@@ -1,12 +1,13 @@
 """email sending via Halon SMTP relay"""
 import smtplib
 import email.message
-from email.utils import format_datetime, localtime, make_msgid
+from email.utils import format_datetime, make_msgid
 from urllib.parse import urlparse
 import logging
 from typing import Optional
 
 from app.shared.config import settings
+from app.shared.utils.formatting import now_et
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ def send_email(
 
     #build email
     msg = email.message.EmailMessage()
-    msg["Date"] = format_datetime(localtime())
+    msg["Date"] = format_datetime(now_et())
     msg["Message-ID"] = make_msgid()
     if submission_id is not None: #thread all the emails about one submission together
         thread_root = f"<moderation-submit-{submission_id}@arxiv.org>"
