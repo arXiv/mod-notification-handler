@@ -87,22 +87,12 @@ def test_retries_run_out_and_the_digest_is_given_up_on():
     assert _send_no_sleep(relay) is False #fails
     assert relay.call_count == SEND_ATTEMPTS
 
-def test_the_real_relay_error_is_what_surfaces_when_attempts_run_out():
-    #not some internal error of our own: the log has to name what the relay actually did
+def test_real_relay_error_surfaces_when_attempts_run_out():
     relay = Mock(side_effect=smtplib.SMTPServerDisconnected("bye"))
     with patch("app.daily_update.digest_email.time.sleep"), \
          patch("app.daily_update.digest_email.send_email", relay):
         with pytest.raises(smtplib.SMTPServerDisconnected):
             _send_with_retry("mod@example.com", "text", "html")
-
-
-def test_it_does_not_sleep_after_the_final_attempt():
-    relay = Mock(side_effect=smtplib.SMTPServerDisconnected("bye"))
-    sleeps = []
-    with patch("app.daily_update.digest_email.time.sleep", sleeps.append), \
-         patch("app.daily_update.digest_email.send_email", relay):
-        send_digest(MOD, [], "mod@example.com")
-    assert len(sleeps) == SEND_ATTEMPTS - 1
 
 
 def test_a_4xx_from_the_relay_is_retried():

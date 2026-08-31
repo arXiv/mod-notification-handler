@@ -52,7 +52,8 @@ jobs = {
   #   command         = ["python"]
   #   args            = ["-m", "app.daily_update.main"]
   #   schedule        = "0 8 * * *"
-  #   timeout_seconds = 540
+  #   timeout_seconds = 1200 
+  #   max_retries     = 5    # this job exits non-zero only when nothing was delivered
   #
   # }
   #

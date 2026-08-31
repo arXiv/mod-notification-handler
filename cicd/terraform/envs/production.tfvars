@@ -55,7 +55,8 @@ jobs = {
   #   command         = ["python"]
   #   args            = ["-m", "app.daily_update.main"]
   #   schedule        = "0 8 * * *"
-  #   timeout_seconds = 300
+  #   timeout_seconds = 1200 #5 failed sends x (3 attempts x 60s smtp timeout + 20s backoff)
+  #   max_retries     = 5    #safe: this job exits non-zero only when nothing was delivered
   #   env_vars = { REDIRECT_EMAILS = "True" } #remove once ready to go live
   # }
   #

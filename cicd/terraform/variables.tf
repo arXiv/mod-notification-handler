@@ -74,6 +74,9 @@ variable "jobs" {
     schedule        = string
     timeout_seconds = number
 
+    # Retries of a failed execution. Only worth raising for a job that exits non-zero
+    max_retries = optional(number, 1)
+
     # Both required. Every job states its own entrypoint
     command = list(string)
     args    = list(string)
