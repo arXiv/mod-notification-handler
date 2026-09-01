@@ -14,7 +14,7 @@ REPORTED_TYPES = frozenset({"new", "rep", "cross"})
 #the test archive isn't real content; test.* categories are not in the active taxonomy
 TEST_ARCHIVE = "test"
 
-def proposed_ids(sub: OpenSubmission) -> set[str]:
+def proposal_cats(sub: OpenSubmission) -> set[str]:
     """every category with an unresolved proposal on the submission, primary or secondary"""
     return set(sub.proposals.primary) | set(sub.proposals.secondary)
 
@@ -80,7 +80,7 @@ def get_subs_for_mod(
         else:
             notified_cats = _category_ids(sub)
         
-        notified_cats = notified_cats | proposed_ids(sub) #also notify proposed categories
+        notified_cats = notified_cats | proposal_cats(sub) #also notify proposed categories
 
         if notified_cats.intersection(categories): #find matches
             theirs.append(sub)

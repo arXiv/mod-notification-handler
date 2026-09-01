@@ -1,4 +1,4 @@
-from app.shared.templates import render_footer
+from app.shared.templates import Rendered, render_footer
 
 
 def render_body(
@@ -6,7 +6,7 @@ def render_body(
     sub_html: str,
     change_texts: list[str],
     change_htmls: list[str],
-) -> tuple[str, str]:
+) -> Rendered:
     footer_text, footer_html = render_footer()
     separator = "-" * 40 + "\n"
     body_text = (
@@ -23,4 +23,4 @@ def render_body(
         f"<hr>\n"
         f"{footer_html}"
     )
-    return body_text, body_html
+    return Rendered(body_text, body_html)

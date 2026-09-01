@@ -3,11 +3,11 @@ import html
 from arxiv.submission.statuses import STATUS_NAMES
 
 from app.shared.submission import SubEmailData
-from app.shared.templates import check_submission_url
+from app.shared.templates import Rendered, check_submission_url
 from app.shared.utils.formatting import fmt_time, truncate_authors
 
 
-def render_submission_block(sub: SubEmailData) -> tuple[str, str]:
+def render_submission_block(sub: SubEmailData) -> Rendered:
     status_label = STATUS_NAMES.get(sub.status, str(sub.status))
     check_url = check_submission_url(sub.submission_id)
     title = sub.title or "(no title)"
@@ -35,4 +35,4 @@ def render_submission_block(sub: SubEmailData) -> tuple[str, str]:
     if submit_time_str:
         html_out += f"<br>\n<strong>Submitted:</strong> {submit_time_str}"
     html_out += "</p>\n"
-    return text, html_out
+    return Rendered(text, html_out)

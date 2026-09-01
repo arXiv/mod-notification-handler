@@ -96,7 +96,7 @@ def test_submitter_falls_back_to_user_id():
 
 def test_entry_text_is_the_whole_product_layout():
     #the indentation is part of it, so this compares the block exactly
-    assert render_entry(_sub())[0] == (
+    assert render_entry(_sub()).text == (
         "  07-27 10:00 EDT   cs.AI cs.LG hep-lat   Frank Franky   submit/201\n"
         "    A New Submission\n"
         "    Review at: https://check.arxiv.org/submit/201\n"
@@ -107,7 +107,7 @@ def test_entry_text_is_the_whole_product_layout():
 
 def test_entry_html_is_the_whole_product_layout():
     #&nbsp; keeps the column gaps, which plain spaces would collapse
-    assert render_entry(_sub())[1] == (
+    assert render_entry(_sub()).html == (
         '<p>07-27 10:00 EDT &nbsp; <b>cs.AI</b> cs.LG hep-lat &nbsp; Frank Franky &nbsp; submit/201<br>\n'
         '<a href="https://check.arxiv.org/submit/201">A New Submission</a><br>\n'
         'Nami Cat, Teddy Dog<br>\n'

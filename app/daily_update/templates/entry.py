@@ -8,7 +8,7 @@
 import html
 
 from app.daily_update.submissions import OpenSubmission
-from app.shared.templates import check_submission_url
+from app.shared.templates import Rendered, check_submission_url
 from app.shared.utils.formatting import fmt_time, truncate_authors
 
 # FORMATTING HELPERS
@@ -16,7 +16,7 @@ from app.shared.utils.formatting import fmt_time, truncate_authors
 def format_timestamp(sub: OpenSubmission) -> str:
     return fmt_time(sub.submit_time) if sub.submit_time else "(no submit time)"
 
-def format_categories(sub: OpenSubmission) -> tuple[str, str]:
+def format_categories(sub: OpenSubmission) -> Rendered:
     """returns text, html """
     #highlight primary category
     primary = sub.primary_category
@@ -26,7 +26,7 @@ def format_categories(sub: OpenSubmission) -> tuple[str, str]:
         text_primary, html_primary = "no primary", "<b>no primary</b>"
 
     parts = sub.secondary_categories
-    return " ".join([text_primary] + parts), " ".join([html_primary] + parts)
+    return Rendered(" ".join([text_primary] + parts), " ".join([html_primary] + parts))
 
 def format_proposals(sub: OpenSubmission) -> str:
     """unresolved proposals, primary and secondary listed apart, alphabetical within each"""
@@ -47,7 +47,7 @@ def format_proposals(sub: OpenSubmission) -> str:
 
 #CREATE ENTRY
 
-def render_entry(sub: OpenSubmission) -> tuple[str, str]:
+def render_entry(sub: OpenSubmission) -> Rendered:
     """one submission's worth of the report, as (text, html)"""
     when = format_timestamp(sub)
     cats_text, cats_html = format_categories(sub)
@@ -74,4 +74,4 @@ def render_entry(sub: OpenSubmission) -> tuple[str, str]:
         f"{activity}</p>\n"
     )
 
-    return text, html_out
+    return Rendered(text, html_out)
