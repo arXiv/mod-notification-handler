@@ -7,7 +7,7 @@ from app.shared.utils.email import send_email
 from app.shared.utils.formatting import now_et
 
 from app.daily_update.report_content import render_report
-from app.daily_update.schema import DigestMod
+from app.daily_update.moderators import DigestMod
 from app.daily_update.submissions import OpenSubmission
 
 logger = logging.getLogger(__name__)

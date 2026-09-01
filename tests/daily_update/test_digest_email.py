@@ -8,7 +8,7 @@ import pytest
 from app.daily_update.digest_email import SEND_ATTEMPTS, _send_with_retry
 from app.shared.utils.formatting import ET
 from app.daily_update.digest_email import send_digest
-from app.daily_update.schema import DigestMod
+from app.daily_update.moderators import DigestMod
 
 MOD = DigestMod(user_id=1, labels={"cs.AI"}, categories={"cs.AI"})
 

@@ -1,13 +1,26 @@
 """decides who gets a daily digest, and which submissions belong in it"""
 import logging
+from dataclasses import dataclass, field
 
 from arxiv.taxonomy.category import Category
 from arxiv.taxonomy.definitions import ARCHIVES_ACTIVE, CATEGORIES_ACTIVE
 
 from app.shared.moderators import Moderator, fetch_moderators
-from app.daily_update.schema import DigestMod
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class DigestMod:
+    """one moderator and what they moderate"""
+    user_id: int
+    labels: set[str] = field(default_factory=set)     #'cs.AI', 'astro-ph' — for the email header
+    categories: set[str] = field(default_factory=set) #expanded ids, for matching submissions
+
+    @property
+    def header(self) -> str:
+        """what they moderate, for the top of the email"""
+        return " ".join(sorted(self.labels))
 
 
 def _covered_categories(mod: Moderator) -> set[str]:
