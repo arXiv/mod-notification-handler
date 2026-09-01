@@ -1,8 +1,6 @@
 """links and footer shared by every job's emails"""
 
 CHECK_SUBMISSION_URL = "https://check.arxiv.org/submit/{submission_id}"
-MOD_TODO_URL         = "https://check.arxiv.org/q/todo"
-MOD_TODO_TITLE       = "Your moderation todo queue"
 
 CHECK_GUIDE_URL   = "https://arxiv-org.atlassian.net/wiki/spaces/ModRes/pages/1312915466/arXiv+Check+Start+Guide"
 CHECK_GUIDE_TITLE = "How to use Check"
