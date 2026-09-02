@@ -1,16 +1,27 @@
 """assembles a whole digest: header, the sections, footer"""
+from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 from app.shared.templates import Rendered, render_footer
+from app.shared.utils.formatting import fmt_time
 
 MOD_TODO_URL = "https://check.arxiv.org/q/todo"
 MOD_TODO_TITLE = "Your moderation todo queue"
 
-ANNOUNCE_TIME = "(announce time not yet available)" #TODO calculate publish time
-ANNOUNCE_LINE = (
-    "If no further actions are taken, all submissions below not currently on hold "
-    f"will be announced at {ANNOUNCE_TIME}."
-)
+def next_announce_time() -> Optional[datetime]:
+    #TODO
+    return None
+
+
+def announce_line() -> str:
+    """the header line about when everything not on hold will be announced"""
+    when = next_announce_time()
+    shown = fmt_time(when) if when else "(announce time not yet available)"
+    return (
+        "If no further actions are taken, all submissions below not currently on hold "
+        f"will be announced at {shown}."
+    )
 
 
 class Section(str, Enum):
@@ -26,12 +37,12 @@ def render_header(what_they_moderate: str) -> Rendered:
     """who the report is for, and the link to their queue"""
     text = (
         f"Daily moderator report for {what_they_moderate}\n\n"
-        f"{ANNOUNCE_LINE}\n\n"
+        f"{announce_line()}\n\n"
         f"{MOD_TODO_TITLE}: {MOD_TODO_URL}\n"
     )
     html_out = (
         f"<p>Daily moderator report for {what_they_moderate}</p>\n"
-        f"<p>{ANNOUNCE_LINE}</p>\n"
+        f"<p>{announce_line()}</p>\n"
         f"<p><a href=\"{MOD_TODO_URL}\">{MOD_TODO_TITLE}</a></p>\n"
     )
     return Rendered(text, html_out)
@@ -46,6 +57,7 @@ def render_section(section: Section, entries: list[Rendered]) -> Rendered:
     else:
         body_text = f"  {EMPTY_SECTION}\n"
         body_html = f"<p>{EMPTY_SECTION}</p>\n"
+
     return Rendered(f"\n{title}:\n{body_text}", f"<h3>{title}:</h3>\n{body_html}")
 
 

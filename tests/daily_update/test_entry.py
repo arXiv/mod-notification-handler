@@ -52,7 +52,7 @@ def test_categories_put_primary_first_and_bold_it_in_html():
 
 
 def test_missing_primary_is_labelled():
-    only_secondary = [SubmissionCat(category="cs.LG", is_published=True, is_primary=False)]
+    only_secondary = [SubmissionCat(category="cs.LG", is_published=False, is_primary=False)]
     text, html_out = format_categories(_sub(categories=only_secondary))
     assert text == "no primary cs.LG"
     assert "<b>no primary</b> cs.LG" in html_out

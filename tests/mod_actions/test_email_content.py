@@ -129,9 +129,8 @@ def test_render_change_block_dispatches():
 # ── submission block ──────────────────────────────────────────────────────────
 
 def _cats(primary=None, secondaries=()) -> list[SubmissionCat]:
-    """category rows. mod_actions doesn't read is_published, so it's just True"""
     rows = ([(primary, True)] if primary else []) + [(cat, False) for cat in secondaries]
-    return [SubmissionCat(category=cat, is_published=True, is_primary=is_primary)
+    return [SubmissionCat(category=cat, is_published=False, is_primary=is_primary)
             for cat, is_primary in rows]
 
 
