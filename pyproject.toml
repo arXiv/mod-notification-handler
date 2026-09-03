@@ -8,7 +8,7 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
-arxiv-base = {git = "https://github.com/arXiv/arxiv-base.git", rev = "4c53f9bf6b77cceeb8ec71942e53a5b32ceb7cad"}
+arxiv-base = {git = "https://github.com/arXiv/arxiv-base.git", rev = "2d29bd72e496ebe2c18ee9879ebeda43c3abd875"}
 google-cloud-pubsub = "*"
 requests = "*"
 
