@@ -42,6 +42,7 @@ jobs = {
     args            = ["-m", "app.mod_actions.main"]
     schedule        = "*/10 * * * *"
     timeout_seconds = 540
+    max_retries     = 0
   }
 
   # Not yet provisioned. Uncomment when the job is ready to exist — nothing in
