@@ -54,7 +54,8 @@ jobs = {
   #   job_name        = "mod-notification-daily-update"
   #   command         = ["python"]
   #   args            = ["-m", "app.daily_update.main"]
-  #   schedule        = "0 8 * * *"
+  #   schedule        = "20 14 * * 1-5" #weekdays, 20 min after the daily freeze
+  #   time_zone       = "America/New_York" #needs to follow daylight savings
   #   timeout_seconds = 1200 #5 failed sends x (3 attempts x 60s smtp timeout + 20s backoff)
   #   max_retries     = 5    #safe: this job exits non-zero only when nothing was delivered
   #   env_vars = { REDIRECT_EMAILS = "True" } #remove once ready to go live

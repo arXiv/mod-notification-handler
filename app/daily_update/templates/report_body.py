@@ -1,23 +1,17 @@
 """assembles a whole digest: header, the sections, footer"""
-from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from app.shared.templates import Rendered, render_footer
 from app.shared.utils.formatting import fmt_time
+from app.daily_update import announce
 
 MOD_TODO_URL = "https://check.arxiv.org/q/todo"
 MOD_TODO_TITLE = "Your moderation todo queue"
 
-def next_announce_time() -> Optional[datetime]:
-    #TODO
-    return None
-
-
 def announce_line() -> str:
     """the header line about when everything not on hold will be announced"""
-    when = next_announce_time()
-    shown = fmt_time(when) if when else "(announce time not yet available)"
+    when = announce.next_announce_time()
+    shown = fmt_time(when) if when else "(time unavailable)"
     return (
         "If no further actions are taken, all submissions below not currently on hold "
         f"will be announced at {shown}."

@@ -77,6 +77,10 @@ variable "jobs" {
     # Retries of a failed execution. Only worth raising for a job that exits non-zero
     max_retries = optional(number, 1)
 
+    # Scheduler time zone. Leave it out for UTC. Set it when the schedule has to line up with
+    # something in arXiv business time, like the daily freeze, and follow DST with it.
+    time_zone = optional(string, "Etc/UTC")
+
     # Both required. Every job states its own entrypoint
     command = list(string)
     args    = list(string)

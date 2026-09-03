@@ -78,19 +78,19 @@ def test_header_html_is_the_whole_layout():
 def test_the_announce_line_uses_the_time_in_east_coast_terms():
     #20:00 EDT on the 30th is already the 31st in UTC, and moderators read ET
     at = datetime(2026, 7, 31, 0, 0, tzinfo=timezone.utc)
-    with patch("app.daily_update.templates.report_body.next_announce_time", return_value=at):
+    with patch("app.daily_update.announce.next_announce_time", return_value=at):
         assert announce_line() == (
             "If no further actions are taken, all submissions below not currently on hold "
             "will be announced at 07-30 20:00 EDT."
         )
 
 
-def test_the_announce_line_says_so_when_there_is_no_time_yet():
-    #no source for the publish time yet #TODO
-    assert announce_line() == (
-        "If no further actions are taken, all submissions below not currently on hold "
-        "will be announced at (announce time not yet available)."
-    )
+def test_the_announce_line_still_renders_when_arxiv_did_not_answer():
+    with patch("app.daily_update.announce.next_announce_time", return_value=None):
+        assert announce_line() == (
+            "If no further actions are taken, all submissions below not currently on hold "
+            "will be announced at (time unavailable)."
+        )
 
 
 def test_header_sorts_labels():

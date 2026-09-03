@@ -4,6 +4,7 @@ import logging
 from app.shared.config import settings
 from app.shared.moderators import get_mod_emails
 
+from app.daily_update import announce
 from app.daily_update.digest_email import send_digest
 from app.daily_update.filters import get_subs_for_mod, report_on
 from app.daily_update.moderators import get_digest_recipients
@@ -22,6 +23,9 @@ def send_daily_reports() -> None:
     if not recipients:
         logger.info("No moderators want a daily digest, nothing to send")
         return
+
+    #fetched once, up front: every digest reuses the cached value
+    announce.next_announce_time()
 
     all_open = get_open_submissions() #all submissions
     reportable = report_on(all_open) # all qualifying submissions
