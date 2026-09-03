@@ -124,7 +124,7 @@ INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, su
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (203, 'A Cross Into cs.AI', 'Cross Author', 1, 'cross', '2026-07-27 12:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
 -- 204: withdrawal, excluded by type even though it is on a mod hold
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (204, 'A Withdrawal On Hold', 'Wdr Author', 2, 'wdr', '2026-07-27 13:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
-INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (205, 'An Astro Paper', 'Astro Author', 1, 'new', '2026-07-27 14:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (205, 'An Astro Paper', 'Nami Cat, Teddy Dog, Waffles Hamster, Biscuit Gerbil, Pickle Ferret, Noodle Axolotl, Mango Parrot, Pebbles Tortoise, Clementine Newt', 1, 'new', '2026-07-27 14:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
 -- 207: already announced, excluded by the open-status query
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (207, 'An Already Announced Paper', 'Done Author', 7, 'new', '2026-07-27 16:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (208, 'An Economics Paper', 'Econ Author', 1, 'new', '2026-07-27 17:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
@@ -148,6 +148,8 @@ INSERT INTO `arXiv_submission_category` VALUES (203, 'cs.LG', 1, 1);
 INSERT INTO `arXiv_submission_category` VALUES (203, 'cs.AI', 0, 0);
 INSERT INTO `arXiv_submission_category` VALUES (204, 'cs.AI', 1, NULL);
 INSERT INTO `arXiv_submission_category` VALUES (205, 'astro-ph.HE', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (205, 'astro-ph.CO', 0, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (205, 'hep-th', 0, NULL);
 -- 220: a second astro-ph category, so the archive moderator provably gets more than one
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (220, 'A Cosmology Paper', 'Cosmo Author', 1, 'new', '2026-07-28 04:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
 INSERT INTO `arXiv_submission_category` VALUES (220, 'astro-ph.CO', 1, NULL);
