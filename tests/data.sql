@@ -1,3 +1,8 @@
+
+-- arXiv holidays
+INSERT INTO `arXiv_holidays` (freeze_skip_date, description, created_at, created_by) VALUES ('2026-09-07', '2026 Labor day', '2026-06-09 15:13:54', 48811);
+INSERT INTO `arXiv_holidays` (freeze_skip_date, description, created_at, created_by) VALUES ('2026-12-25', '2026 Christmas', '2026-06-09 15:13:54', 48811);
+
 -- Tapir Users
 
 -- admin users
