@@ -123,7 +123,7 @@ resource "google_cloud_run_v2_job" "jobs" {
 
     template {
       service_account       = google_service_account.job.email
-      max_retries           = 1
+      max_retries           = each.value.max_retries
       timeout               = "${each.value.timeout_seconds}s"
       execution_environment = "EXECUTION_ENVIRONMENT_GEN2"
 
