@@ -10,7 +10,7 @@ from app.daily_update.moderators import get_digest_recipients
 @pytest.mark.usefixtures("db_session")
 def test_only_moderators_who_asked_for_a_digest():
     recipients = get_digest_recipients()
-    assert set(recipients.keys()) == {55001, 55002, 55003, 55004, 55005, 55006}
+    assert set(recipients.keys()) == {55001, 55002, 55003, 55004, 55005, 55006, 55007, 55008}
     assert 50004 not in get_digest_recipients() #no daily_update    
 
 @pytest.mark.usefixtures("db_session")

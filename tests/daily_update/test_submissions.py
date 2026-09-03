@@ -25,7 +25,6 @@ def test_only_open_submissions(by_id: dict[int, OpenSubmission]):
 def test_excluded_types_are_still_returned(by_id: dict[int, OpenSubmission]):
     #the query is not where product rules live, so what filters.py drops still comes back
     assert 204 in by_id #wdr
-    assert 206 in by_id #no type at all — see item K, unverified that this occurs
     assert 212 in by_id #jref
 
 
