@@ -7,7 +7,7 @@ from arxiv.db.models import Submission, SubmissionHoldReason
 from arxiv.submission import statuses
 
 from app.shared.proposals import Proposals, get_unresolved_proposals
-from app.shared.submission import SubmissionBase, fetch_categories
+from app.shared.submission import SubmissionBase, as_utc, fetch_categories
 
 OPEN_STATUSES = (statuses.SUBMITTED, statuses.ON_HOLD)
 HOLD_MOD = "mod"
@@ -72,7 +72,7 @@ def get_open_submissions() -> list[OpenSubmission]:
             status=row.status,
             submitter_name=row.submitter_name or "",
             submitter_id=row.submitter_id or 0,
-            submit_time=row.submit_time,
+            submit_time=as_utc(row.submit_time),
             sub_type=row.type or "",
             categories=cats_by_sub.get(row.submission_id, []),
             mod_hold=row.submission_id in mod_holds,

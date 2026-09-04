@@ -1,5 +1,5 @@
 """submission data fetching shared by all jobs"""
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import cached_property
 from typing import Optional
 from dataclasses import dataclass, field
@@ -9,6 +9,17 @@ from arxiv.db import Session
 from arxiv.db.models import Submission, SubmissionCategory
 
 from app.shared.utils.taxonomy import ALIAS_BY_CANONICAL
+
+def as_utc(dt: Optional[datetime]) -> Optional[datetime]:
+    """attach the zone a submission timestamp is stored in
+
+    The columns are naive DATETIME holding UTC. Left naive, astimezone() downstream would read
+    them in whatever zone the machine happens to be in.
+    """
+    if dt is not None and dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
 
 @dataclass(frozen=True)
 class SubmissionCat:
@@ -124,7 +135,7 @@ def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
                 status=row.status,
                 submitter_name=row.submitter_name or "",
                 submitter_id=row.submitter_id or 0,
-                submit_time=row.submit_time,
+                submit_time=as_utc(row.submit_time),
                 categories=cats_by_sub.get(row.submission_id, []),
             )
 

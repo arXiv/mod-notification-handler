@@ -7,6 +7,7 @@ from app.shared.submission import (
     get_submission_info,
     split_categories,
 )
+from app.shared.utils.formatting import fmt_time
 
 
 @pytest.mark.usefixtures("db_session")
@@ -48,6 +49,15 @@ def _cats(primary=None, secondaries=()) -> list[SubmissionCat]:
     rows = ([(primary, True)] if primary else []) + [(cat, False) for cat in secondaries]
     return [SubmissionCat(category=cat, is_published=False, is_primary=is_primary)
             for cat, is_primary in rows]
+
+
+def test_submit_time_comes_back_aware(db_session):
+    #the column is naive utc. without the zone attached here, fmt_time would read it in the
+    #machine's own zone and the same row would render differently on a laptop than in prod
+    #201 is stored as '2026-07-27 10:00:00', naive
+    sub = get_submission_info({201})[201]
+    assert sub.submit_time.utcoffset().total_seconds() == 0
+    assert fmt_time(sub.submit_time) == "07-27 06:00 EDT"
 
 
 # ── split_categories ────────────────────────────────────────────────────────

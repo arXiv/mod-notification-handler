@@ -1,8 +1,11 @@
 """formatting helpers shared by all jobs' email templates"""
-from datetime import datetime
+import logging
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 from arxiv.config import settings as arxiv_settings
+
+logger = logging.getLogger(__name__)
 
 ET = ZoneInfo(arxiv_settings.ARXIV_BUSINESS_TZ)
 
@@ -16,8 +19,18 @@ def now_et() -> datetime:
 
 
 def fmt_time(dt: datetime) -> str:
-    et = dt.astimezone(ET)
-    return et.strftime("%m-%d %H:%M %Z")
+    """an aware time as arXiv business time
+
+    A naive one is assumed UTC and warned about. Assuming is not the same as knowing: whoever
+    read the value should attach its zone — see as_utc for database timestamps — because
+    astimezone() on a naive datetime reads it in whatever zone the machine is in, UTC on Cloud
+    Run and something else on a laptop.
+    """
+    if dt.tzinfo is None:
+        logger.warning(f"naive datetime {dt} given to fmt_time, assuming UTC")
+        dt = dt.replace(tzinfo=timezone.utc)
+
+    return dt.astimezone(ET).strftime("%m-%d %H:%M %Z")
 
 
 def truncate_authors(authors_str: str) -> str:

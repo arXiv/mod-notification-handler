@@ -1,9 +1,12 @@
 """tests for shared formatting helpers"""
 from datetime import datetime, timezone
 
+import pytest
+
 from app.shared.utils.formatting import (
     ET,
     MAX_AUTHORS,
+    fmt_time,
     now_et,
     truncate_authors,
 )
@@ -39,6 +42,18 @@ def test_truncate_authors_one_over_limit():
 
 def test_truncate_authors_normalises_whitespace():
     assert truncate_authors("A ,  B , C") == "A, B, C"
+
+
+def test_an_aware_time_is_converted_to_east_coast():
+    assert fmt_time(datetime(2026, 7, 27, 19, 0, tzinfo=timezone.utc)) == "07-27 15:00 EDT"
+
+
+def test_a_naive_time_is_assumed_utc_and_warned_about(caplog):
+    #assuming utc keeps the output the same everywhere. the warning is there because assuming
+    #is not knowing — whoever read the value should have attached its zone
+    with caplog.at_level("WARNING"):
+        assert fmt_time(datetime(2026, 7, 27, 19, 0)) == "07-27 15:00 EDT"
+    assert "assuming UTC" in caplog.text
 
 
 # ── now_et ──────────────────────────────────────────────────────────────────
