@@ -139,9 +139,6 @@ def _send_email_tasks(
 ) -> list[int]:
     """render and send emails, acking each submission only after its email sends"""
 
-    if settings.REDIRECT_EMAILS:
-        logger.info(f"REDIRECT_EMAILS active — all emails → {settings.REDIRECT_RECIPIENT}")
-
     sent_sub_ids: list[int] = []
     for task in email_tasks:
         sub = sub_infos.get(task.submission_id)
@@ -159,7 +156,7 @@ def _send_email_tasks(
         #send email — failure skips ack (will redeliver)
         try:
             submitter = sub.submitter_name or f"user {sub.submitter_id}"
-            subject = f"Action Required: arXiv submission submit/{task.submission_id} to {sub.submission_categories} by {submitter}"
+            subject = f"Action Required: arXiv submission submit/{task.submission_id} to {sub.subject_categories} by {submitter}"
             accepted = send_email(
                 to_emails=task.to_emails,
                 subject=subject,
