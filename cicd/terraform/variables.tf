@@ -85,8 +85,6 @@ variable "jobs" {
     command = list(string)
     args    = list(string)
 
-    max_retries = optional(number, 1)
-
     # Per-job overrides, merged over the shared values in main.tf. A key here wins.
     # Use this to run a new job against test settings while the others stay on the
     # real ones — e.g. env_vars = { REDIRECT_EMAILS = "True" }, with the address itself
