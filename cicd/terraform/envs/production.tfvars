@@ -52,7 +52,7 @@ jobs = {
   # Not yet provisioned. Only add these here once the job has proven itself in dev.
   #
   # daily_update = {
-  #   job_name        = "mod-notification-daily-update"
+  #   job_name        = "mod-daily-digest"
   #   command         = ["python"]
   #   args            = ["-m", "app.daily_update.main"]
   #   schedule        = "20 14 * * 1-5" #weekdays, 20 min after the daily freeze
