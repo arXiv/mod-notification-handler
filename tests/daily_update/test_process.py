@@ -153,9 +153,17 @@ def test_one_failed_send_does_not_stop_the_rest():
 @pytest.mark.usefixtures("db_session")
 def test_a_moderator_who_missed_out_is_warned_about(caplog):
     mock_send = Mock(side_effect=[RuntimeError("smtp down")] + [True] * 7)
-    with caplog.at_level("WARNING"):
+    with patch("app.daily_update.process.settings.SEND_EMAILS", True), caplog.at_level("WARNING"):
         _run(mock_send)
     assert "1 moderators did not get a digest today" in caplog.text
+
+
+@pytest.mark.usefixtures("db_session")
+def test_no_shortfall_warning_when_sending_is_off(caplog):
+    #every send reports False by design, which is not a shortfall
+    with patch("app.daily_update.process.settings.SEND_EMAILS", False), caplog.at_level("WARNING"):
+        _run(Mock(return_value=False))
+    assert "did not get a digest" not in caplog.text
 
 
 @pytest.mark.usefixtures("db_session")

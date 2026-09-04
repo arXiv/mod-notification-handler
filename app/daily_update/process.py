@@ -47,7 +47,7 @@ def send_daily_reports() -> None:
             sent += 1
         else:
             failed += 1
-            # if several fail at start give up and fail the job (potential db issue?)
+            # if several fail at start give up and fail the job 
             if settings.SEND_EMAILS and sent == 0 and failed >= GIVE_UP_AFTER:
                 raise RuntimeError(
                     f"{failed} digests failed and none have sent, giving up so the job retries"
@@ -59,5 +59,5 @@ def send_daily_reports() -> None:
 
     # report success
     logger.info(f"Done. {sent} of {len(recipients)} emails sent to moderators.")
-    if sent != len(recipients):
+    if settings.SEND_EMAILS and sent != len(recipients):
         logger.warning(f"{len(recipients) - sent} moderators did not get a digest today")
