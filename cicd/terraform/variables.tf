@@ -74,11 +74,16 @@ variable "jobs" {
     schedule        = string
     timeout_seconds = number
 
+    # Retries of a failed execution. Only worth raising for a job that exits non-zero
+    max_retries = optional(number, 1)
+
+    # Scheduler time zone. Leave it out for UTC. Set it when the schedule has to line up with
+    # something in arXiv business time, like the daily freeze, and follow DST with it.
+    time_zone = optional(string, "Etc/UTC")
+
     # Both required. Every job states its own entrypoint
     command = list(string)
     args    = list(string)
-
-    max_retries = optional(number, 1)
 
     # Per-job overrides, merged over the shared values in main.tf. A key here wins.
     # Use this to run a new job against test settings while the others stay on the

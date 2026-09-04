@@ -206,7 +206,7 @@ resource "google_cloud_scheduler_job" "jobs" {
   description = "Runs the ${each.value.job_name} Cloud Run job."
 
   schedule         = each.value.schedule
-  time_zone        = "Etc/UTC"
+  time_zone        = each.value.time_zone
   attempt_deadline = "180s"
 
   retry_config {
