@@ -46,6 +46,7 @@ jobs = {
     # Twice as often as dev, deliberately — production ships moderator mail faster.
     schedule        = "*/5 * * * *"
     timeout_seconds = 300
+    max_retries     = 0
   }
 
   # Not yet provisioned. Only add these here once the job has proven itself in dev.
