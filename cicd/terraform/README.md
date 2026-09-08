@@ -84,7 +84,7 @@ environment's `.tfvars` — `main.tf` doesn't change:
 
 ```hcl
 daily_update = {
-  job_name        = "mod-notification-daily-update"
+  job_name        = "mod-daily-digest"
   command         = ["python"]
   args            = ["-m", "app.daily_update.main"]
   schedule        = "0 8 * * *"
