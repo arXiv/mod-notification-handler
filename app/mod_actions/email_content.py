@@ -10,9 +10,10 @@ from app.mod_actions.templates.prop_resp import render_prop_resp_block
 from app.mod_actions.templates.category_rejection import render_category_rejection_block
 from app.mod_actions.templates.submission import render_submission_block
 from app.mod_actions.templates.email_body import render_body
+from app.shared.templates import Rendered
 
 
-def render_change_block(change: SimplifiedNotification, user_name: str) -> tuple[str, str]:
+def render_change_block(change: SimplifiedNotification, user_name: str) -> Rendered:
     """Dispatch to the correct per-change render function."""
     match change.data:
         case CommentData():
@@ -29,7 +30,7 @@ def render_change_block(change: SimplifiedNotification, user_name: str) -> tuple
             raise ValueError(f"unknown change data type: {type(change.data)}")
 
 
-def render_email(task: EmailTask, sub: SubEmailData, ids_to_contact: dict[int, UserContact]) -> tuple[str, str]:
+def render_email(task: EmailTask, sub: SubEmailData, ids_to_contact: dict[int, UserContact]) -> Rendered:
     sub_text, sub_html = render_submission_block(sub)
     change_texts, change_htmls = [], []
     for change in sorted(task.notifications.changes, key=lambda c: c.time):

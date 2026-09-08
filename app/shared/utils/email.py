@@ -1,12 +1,13 @@
 """email sending via Halon SMTP relay"""
 import smtplib
 import email.message
-from email.utils import format_datetime, localtime, make_msgid
+from email.utils import format_datetime, make_msgid
 from urllib.parse import urlparse
 import logging
 from typing import Optional
 
 from app.shared.config import settings
+from app.shared.utils.formatting import now_et
 
 logger = logging.getLogger(__name__)
 
@@ -16,10 +17,12 @@ def send_email(
     subject: str,
     body: str,
     html_body: str,
-    submission_id: int,
+    submission_id: Optional[int] = None,
     reply_to_emails: Optional[list[str]] = None,
 ) -> bool:
-    """Send a plain-text and HTML email via the Halon SMTP relay. Returns True if relay accepted."""
+    """Send a plain-text and HTML email via the Halon SMTP relay. Returns True if relay accepted.
+
+    submission_id only adds threading headers. Leave it out for email not about one submission."""
 
     reply_to_emails = (reply_to_emails or []) + ([settings.MOD_REPLY_TO] if settings.MOD_REPLY_TO else [])
     bcc_emails: list[str] = [settings.ARCHIVAL_EMAIL] if settings.ARCHIVAL_EMAIL else []
@@ -40,12 +43,13 @@ def send_email(
         bcc_emails = []
 
     #build email
-    thread_root = f"<moderation-submit-{submission_id}@arxiv.org>"
     msg = email.message.EmailMessage()
-    msg["Date"] = format_datetime(localtime())
+    msg["Date"] = format_datetime(now_et())
     msg["Message-ID"] = make_msgid()
-    msg["In-Reply-To"] = thread_root
-    msg["References"] = thread_root
+    if submission_id is not None: #thread all the emails about one submission together
+        thread_root = f"<moderation-submit-{submission_id}@arxiv.org>"
+        msg["In-Reply-To"] = thread_root
+        msg["References"] = thread_root
     msg["From"] = settings.MAIL_FROM
     msg["To"] = ", ".join(to_emails)
     msg["Subject"] = subject

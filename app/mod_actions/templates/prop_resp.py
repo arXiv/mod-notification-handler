@@ -1,8 +1,9 @@
 from app.mod_actions.schema import SimplifiedNotification, PropRespData
 from app.shared.utils.formatting import fmt_time
+from app.shared.templates import Rendered
 
 
-def render_prop_resp_block(change: SimplifiedNotification, user_name: str) -> tuple[str, str]:
+def render_prop_resp_block(change: SimplifiedNotification, user_name: str) -> Rendered:
     data: PropRespData = change.data 
     when = fmt_time(change.time)
     text = (
@@ -15,4 +16,4 @@ def render_prop_resp_block(change: SimplifiedNotification, user_name: str) -> tu
         f"{data.responses}<br>\n"
         f"Change: {data.category_change}</p>\n"
     )
-    return text, html_out
+    return Rendered(text, html_out)

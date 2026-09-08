@@ -52,16 +52,11 @@ jobs = {
   #   job_name        = "mod-notification-daily-update"
   #   command         = ["python"]
   #   args            = ["-m", "app.daily_update.main"]
-  #   schedule        = "0 8 * * *"
-  #   timeout_seconds = 540
+  #   schedule        = "20 14 * * 1-5" #weekdays, 20 min after the daily freeze
+  #   time_zone       = "America/New_York" #needs to follow daylight savings
+  #   timeout_seconds = 1200 
+  #   max_retries     = 5    # this job exits non-zero only when nothing was delivered
   #
-  #   # While this job is still being tested: everything it sends comes to one inbox,
-  #   # and the other jobs are unaffected. Delete these two lines to put it back on
-  #   # the shared settings.
-  #   env_vars = {
-  #     REDIRECT_EMAILS    = "True"
-  #     REDIRECT_RECIPIENT = "TODO test email"
-  #   }
   # }
   #
   # new_subs = {
