@@ -52,7 +52,7 @@ def _mod(labels=("cs.AI",), categories=("cs.AI",)) -> DigestMod:
 # literals, so a reorder, a retitle or a dropped section fails here
 
 def test_sections_are_in_this_order_with_these_headings():
-    assert [section.value for section in Section] == ["On Hold", "New", "Cross Lists"]
+    assert [section.value for section in Section] == ["On Hold", "Scheduled for announcement", "Cross Lists"]
 
 
 # ── header ──────────────────────────────────────────────────────────────────
@@ -132,7 +132,7 @@ def test_a_section_with_content_still_shows_none_under_the_empty_ones():
         "On Hold:\n"
         f"  none\n"
         "\n"
-        "New:\n"
+        "Scheduled for announcement:\n"
         "a new one\n"
         "\n"
         "Cross Lists:\n"
@@ -144,7 +144,7 @@ def test_a_section_with_content_still_shows_none_under_the_empty_ones():
     assert body_html == (
         "<h3>On Hold:</h3>\n"
         f"<p>none</p>\n"
-        "<h3>New:</h3>\n"
+        "<h3>Scheduled for announcement:</h3>\n"
         "<p>a new one</p>\n"
         "<h3>Cross Lists:</h3>\n"
         f"<p>none</p>\n"
@@ -154,7 +154,7 @@ def test_a_section_with_content_still_shows_none_under_the_empty_ones():
 def test_sections_appear_in_this_order():
     entries = {section: [Rendered(f"{section.value} entry\n", "\n")] for section in Section}
     text, _ = render_body("cs.AI", entries)
-    positions = [text.index(t) for t in ("On Hold:", "New:", "Cross Lists:")]
+    positions = [text.index(t) for t in ("On Hold:", "Scheduled for announcement:", "Cross Lists:")]
     assert positions == sorted(positions)
 
 

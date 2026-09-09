@@ -21,7 +21,7 @@ def announce_line() -> str:
 class Section(str, Enum):
     """the parts of the report, listed in the order they appear. the value is the heading used in the email."""
     HOLD = "On Hold"
-    NEW = "New"
+    NEW = "Scheduled for announcement"
     CROSS = "Cross Lists"
 
 NOTHING_TO_REPORT = "You have no new activity or submissions on Hold today!"
