@@ -125,7 +125,7 @@ def test_cross_does_not_reach_a_category_it_already_lives_in(sends):
 
 def test_mod_hold_lands_in_the_hold_section(sends):
     body = sends["digest-cat@example.com"]["body"]
-    hold_part = body.split("New:")[0]
+    hold_part = body.split("Scheduled for announcement:")[0]
     assert "submit/210" in hold_part #a rep on hold — the only way a replacement appears at all
 
 
@@ -251,13 +251,13 @@ def test_the_whole_html_digest_for_one_moderator(sends):
     assert sends["digest-cat@example.com"]["html_body"] == (
         '<p>Daily moderator report for cs.AI</p>\n'
         '<p>If no further actions are taken, all submissions below not currently on hold will be announced at 09-03 20:00 EDT.</p>\n'
-        '<p><a href="https://check.arxiv.org/q/todo">Your moderation todo queue</a></p>\n'
+        '<p><a href="https://check.arxiv.org/q/todo">Your moderation to-do queue</a></p>\n'
         '<h3>On Hold:</h3>\n'
         '<p>07-27 15:00 EDT &nbsp; <b>cs.AI</b> &nbsp; Frank Franky &nbsp; submit/210<br>\n'
         '<a href="https://check.arxiv.org/submit/210">On Mod Hold</a><br>\n'
         'Mod Hold Author<br>\n'
         'Proposals: none</p>\n'
-        '<h3>New:</h3>\n'
+        '<h3>Scheduled for announcement:</h3>\n'
         '<p>07-27 18:00 EDT &nbsp; <b>cs.AI</b> &nbsp; Frank Franky &nbsp; submit/213<br>\n'
         '<a href="https://check.arxiv.org/submit/213">A Discussed Paper</a><br>\n'
         'Talky Author<br>\n'
