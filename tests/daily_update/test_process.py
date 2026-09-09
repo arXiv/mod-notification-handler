@@ -251,7 +251,7 @@ def test_the_whole_html_digest_for_one_moderator(sends):
     assert sends["digest-cat@example.com"]["html_body"] == (
         '<p>Daily moderator report for cs.AI</p>\n'
         '<p>If no further actions are taken, all submissions below not currently on hold will be announced at 09-03 20:00 EDT.</p>\n'
-        '<p><a href="https://check.arxiv.org/q/todo">Your moderation todo queue</a></p>\n'
+        '<p><a href="https://check.arxiv.org/q/todo">Your moderation to-do queue</a></p>\n'
         '<h3>On Hold:</h3>\n'
         '<p>07-27 15:00 EDT &nbsp; <b>cs.AI</b> &nbsp; Frank Franky &nbsp; submit/210<br>\n'
         '<a href="https://check.arxiv.org/submit/210">On Mod Hold</a><br>\n'

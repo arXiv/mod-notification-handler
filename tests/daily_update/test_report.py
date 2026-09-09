@@ -63,7 +63,7 @@ def test_header_text_is_the_whole_layout():
         "\n"
         f"{announce_line()}\n"
         "\n"
-        "Your moderation todo queue: https://check.arxiv.org/q/todo\n"
+        "Your moderation to-do queue: https://check.arxiv.org/q/todo\n"
     )
 
 
@@ -71,7 +71,7 @@ def test_header_html_is_the_whole_layout():
     assert render_header("cs.AI").html == (
         "<p>Daily moderator report for cs.AI</p>\n"
         f"<p>{announce_line()}</p>\n"
-        '<p><a href="https://check.arxiv.org/q/todo">Your moderation todo queue</a></p>\n'
+        '<p><a href="https://check.arxiv.org/q/todo">Your moderation to-do queue</a></p>\n'
     )
 
 

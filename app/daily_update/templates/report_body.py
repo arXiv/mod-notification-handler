@@ -6,7 +6,7 @@ from app.shared.utils.formatting import fmt_time
 from app.daily_update import announce
 
 MOD_TODO_URL = "https://check.arxiv.org/q/todo"
-MOD_TODO_TITLE = "Your moderation todo queue"
+MOD_TODO_TITLE = "Your moderation to-do queue"
 
 def announce_line() -> str:
     """the header line about when everything not on hold will be announced"""
