@@ -29,8 +29,8 @@ def next_announce_time() -> Optional[datetime]:
             LOCALTIME_URL, headers={"Accept": "application/json"}, timeout=TIMEOUT_SEC
         )
         response.raise_for_status()
-        times = response.json()
-
+        times = response.json() #the times come back ISO 8601 with a UTC offset
+    
         return datetime.fromisoformat(times["next_mail"])
 
     except Exception:

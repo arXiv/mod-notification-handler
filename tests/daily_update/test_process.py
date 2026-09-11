@@ -212,6 +212,18 @@ def test_one_failed_render_does_not_stop_the_rest():
 
 
 @pytest.mark.usefixtures("db_session")
+def test_reports_that_cannot_be_built_exit_cleanly_rather_than_retrying():
+    #every render is broken, so nothing is sent. rerunning the job renders the same thing again,
+    #so it exits zero and the logged exception is the signal, not a failed execution
+    mock_send = Mock(return_value=True)
+    with patch("app.daily_update.process.settings.SEND_EMAILS", True), \
+         patch("app.daily_update.digest_email.render_report", side_effect=ValueError("bad template")), \
+         patch("app.daily_update.digest_email.send_email", mock_send):
+        send_daily_reports()
+    mock_send.assert_not_called()
+
+
+@pytest.mark.usefixtures("db_session")
 def test_no_digest_moderators_sends_nothing():
     mock_send = Mock(return_value=True)
     with patch("app.daily_update.process.get_digest_recipients", return_value={}), \
