@@ -47,6 +47,14 @@ def test_reads_the_next_mail_time():
         assert announce.next_announce_time() == datetime(2026, 9, 4, tzinfo=timezone.utc)
 
 
+def test_a_time_with_no_timezone_is_read_as_utc(caplog):
+    #arxiv.org has always sent an offset. if that ever changes the time set to utc
+    naive = dict(LOCALTIME, next_mail="2026-09-04T00:00:00")
+    with patch("app.daily_update.announce.requests.get", _responds(naive)), \
+         caplog.at_level("ERROR"):
+        assert announce.next_announce_time() == datetime(2026, 9, 4, tzinfo=timezone.utc)
+
+
 def test_one_request_per_run_however_many_emails():
     getter = _responds(LOCALTIME)
     with patch("app.daily_update.announce.requests.get", getter):
