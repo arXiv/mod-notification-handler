@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from app.daily_update.digest_email import SEND_ATTEMPTS, _send_with_retry
+from app.daily_update.digest_email import SEND_ATTEMPTS, ReportRenderError, _send_with_retry
 from app.shared.utils.formatting import ET
 from app.daily_update.digest_email import send_digest
 from app.daily_update.moderators import DigestMod
@@ -62,11 +62,21 @@ def test_a_raising_relay_is_swallowed():
 
 
 def test_a_failed_render_never_reaches_the_relay():
+    #raised rather than reported False: a broken report is a bug the caller must not retry
     relay = Mock(return_value=True)
     with patch("app.daily_update.digest_email.render_report", side_effect=ValueError("bad template")), \
          patch("app.daily_update.digest_email.send_email", relay):
-        assert send_digest(MOD, [], "mod@example.com") is False
+        with pytest.raises(ReportRenderError):
+            send_digest(MOD, [], "mod@example.com")
     relay.assert_not_called()
+
+
+def test_a_failed_render_keeps_the_original_error():
+    broken = ValueError("bad template")
+    with patch("app.daily_update.digest_email.render_report", side_effect=broken):
+        with pytest.raises(ReportRenderError) as raised:
+            send_digest(MOD, [], "mod@example.com")
+    assert raised.value.__cause__ is broken
 
 
 # ── retrying the relay ──────────────────────────────────────────────────────
@@ -81,6 +91,15 @@ def test_a_dropped_connection_is_retried_and_can_succeed():
     relay = Mock(side_effect=[smtplib.SMTPServerDisconnected("bye"), True])
     assert _send_no_sleep(relay) is True #succeed
     assert relay.call_count == 2
+
+def test_the_first_attempt_is_not_delayed():
+    #one wait per retry, none before the first try
+    relay = Mock(side_effect=smtplib.SMTPServerDisconnected("bye"))
+    with patch("app.daily_update.digest_email.time.sleep") as slept, \
+         patch("app.daily_update.digest_email.send_email", relay):
+        send_digest(MOD, [], "mod@example.com")
+    assert slept.call_count == SEND_ATTEMPTS - 1
+
 
 def test_retries_run_out_and_the_digest_is_given_up_on():
     relay = Mock(side_effect=smtplib.SMTPServerDisconnected("bye"))

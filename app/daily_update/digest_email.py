@@ -17,17 +17,23 @@ SEND_ATTEMPTS = 3
 RETRY_WAIT_SEC = 10
 
 
+class ReportRenderError(Exception):
+    """the digest could not be built. a bug in the report, so rerunning hits it again"""
+
+
 def _subject() -> str:
     return f"Daily arXiv Moderator report {now_et().date().isoformat()}"
 
 
 def send_digest(mod: DigestMod, submissions: list[OpenSubmission], to_email: str) -> bool:
-    """render and send one moderator's digest. returns whether the relay accepted it"""
+    """render and send one moderator's digest. returns whether the relay accepted it
+
+    Raises ReportRenderError when the report cannot be built, which no retry will fix.
+    """
     try:
         body_text, body_html = render_report(mod, submissions)
-    except Exception:
-        logger.exception(f"failed to render digest for {mod.header} to {to_email}, skipping")
-        return False
+    except Exception as exc:
+        raise ReportRenderError(f"could not render the digest for {mod.header}") from exc
 
     try:
         return _send_with_retry(to_email, body_text, body_html)
@@ -40,14 +46,7 @@ def _send_with_retry(to_email: str, body_text: str, body_html: str) -> bool:
     """send one digest, retrying potential transient relay failures
     Raises once the attempts are used up, or straight away for a failure retrying cannot fix.
     """
-    last_failure = None
-    for _ in range(SEND_ATTEMPTS):
-        if last_failure is not None: #dont wait the first time
-            logger.warning(
-                f"relay problem sending to {to_email} ({last_failure}), retrying"
-            )
-            time.sleep(RETRY_WAIT_SEC)
-
+    for attempt in range(1, SEND_ATTEMPTS + 1):
         try:
             #no submission_id: a digest isn't about one submission, so no threading headers
             return send_email(
@@ -61,8 +60,11 @@ def _send_with_retry(to_email: str, body_text: str, body_html: str) -> bool:
         except smtplib.SMTPResponseException as exc:
             if not 400 <= exc.smtp_code < 500:
                 raise #5xx is the relay saying no permanently
-            last_failure = exc
+            failure = exc
         except (smtplib.SMTPServerDisconnected, OSError) as exc:
-            last_failure = exc
+            failure = exc
 
-    raise last_failure #give up on attempts
+        if attempt == SEND_ATTEMPTS:
+            raise failure #out of attempts, the last error is the one worth seeing
+        logger.warning(f"relay problem sending to {to_email} ({failure}), retrying")
+        time.sleep(RETRY_WAIT_SEC)
