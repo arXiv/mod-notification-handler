@@ -19,7 +19,7 @@ def main():
 
     #weekends are the scheduler's job — it runs weekdays only, as the legacy perl cron did
     if is_holiday_today():
-        logger.info("today is an arXiv holiday,no digest is sent")
+        logger.info("today is an arXiv holiday, no digest is sent")
         return
 
     send_daily_reports()

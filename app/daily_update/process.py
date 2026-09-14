@@ -5,7 +5,7 @@ from app.shared.config import settings
 from app.shared.moderators import get_mod_emails
 
 from app.daily_update import announce
-from app.daily_update.digest_email import send_digest
+from app.daily_update.digest_email import ReportRenderError, send_digest
 from app.daily_update.filters import get_subs_for_mod, report_on
 from app.daily_update.moderators import get_digest_recipients
 from app.daily_update.submissions import get_open_submissions
@@ -43,7 +43,14 @@ def send_daily_reports() -> None:
         theirs = get_subs_for_mod(mod.categories, reportable)
 
         #send even when empty
-        if send_digest(mod, theirs, contact.email):
+        try:
+            delivered = send_digest(mod, theirs, contact.email)
+        except ReportRenderError:
+            #a rerun renders the same broken report, so this one is dropped rather than retried
+            logger.exception(f"moderator {mod.user_id}: digest could not be built, skipping")
+            continue
+
+        if delivered:
             sent += 1
         else:
             failed += 1
@@ -53,8 +60,8 @@ def send_daily_reports() -> None:
                     f"{failed} digests failed and none have sent, giving up so the job retries"
                 )
 
-    #catch complete failure but few attempts
-    if settings.SEND_EMAILS and sent == 0:
+    #catch complete failure but few attempts. only a relay failure is worth rerunning for
+    if settings.SEND_EMAILS and sent == 0 and failed:
         raise RuntimeError(f"no digests reached any of {len(recipients)} moderators")
 
     # report success
