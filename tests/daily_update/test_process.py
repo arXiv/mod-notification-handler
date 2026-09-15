@@ -125,7 +125,7 @@ def test_cross_does_not_reach_a_category_it_already_lives_in(sends):
 
 def test_mod_hold_lands_in_the_hold_section(sends):
     body = sends["digest-cat@example.com"]["body"]
-    hold_part = body.split("New:")[0]
+    hold_part = body.split("Scheduled for announcement:")[0]
     assert "submit/210" in hold_part #a rep on hold — the only way a replacement appears at all
 
 
@@ -212,6 +212,18 @@ def test_one_failed_render_does_not_stop_the_rest():
 
 
 @pytest.mark.usefixtures("db_session")
+def test_reports_that_cannot_be_built_exit_cleanly_rather_than_retrying():
+    #every render is broken, so nothing is sent. rerunning the job renders the same thing again,
+    #so it exits zero and the logged exception is the signal, not a failed execution
+    mock_send = Mock(return_value=True)
+    with patch("app.daily_update.process.settings.SEND_EMAILS", True), \
+         patch("app.daily_update.digest_email.render_report", side_effect=ValueError("bad template")), \
+         patch("app.daily_update.digest_email.send_email", mock_send):
+        send_daily_reports()
+    mock_send.assert_not_called()
+
+
+@pytest.mark.usefixtures("db_session")
 def test_no_digest_moderators_sends_nothing():
     mock_send = Mock(return_value=True)
     with patch("app.daily_update.process.get_digest_recipients", return_value={}), \
@@ -251,13 +263,13 @@ def test_the_whole_html_digest_for_one_moderator(sends):
     assert sends["digest-cat@example.com"]["html_body"] == (
         '<p>Daily moderator report for cs.AI</p>\n'
         '<p>If no further actions are taken, all submissions below not currently on hold will be announced at 09-03 20:00 EDT.</p>\n'
-        '<p><a href="https://check.arxiv.org/q/todo">Your moderation todo queue</a></p>\n'
+        '<p><a href="https://check.arxiv.org/q/todo">Your moderation to-do queue</a></p>\n'
         '<h3>On Hold:</h3>\n'
         '<p>07-27 15:00 EDT &nbsp; <b>cs.AI</b> &nbsp; Frank Franky &nbsp; submit/210<br>\n'
         '<a href="https://check.arxiv.org/submit/210">On Mod Hold</a><br>\n'
         'Mod Hold Author<br>\n'
         'Proposals: none</p>\n'
-        '<h3>New:</h3>\n'
+        '<h3>Scheduled for announcement:</h3>\n'
         '<p>07-27 18:00 EDT &nbsp; <b>cs.AI</b> &nbsp; Frank Franky &nbsp; submit/213<br>\n'
         '<a href="https://check.arxiv.org/submit/213">A Discussed Paper</a><br>\n'
         'Talky Author<br>\n'

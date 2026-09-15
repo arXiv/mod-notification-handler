@@ -45,19 +45,18 @@ jobs = {
     max_retries     = 0
   }
 
+  daily_update = {
+    job_name        = "mod-daily-digest"
+    command         = ["python"]
+    args            = ["-m", "app.daily_update.main"]
+    schedule        = "20 14 * * 1-5"    #weekdays, 20 min after the daily freeze
+    time_zone       = "America/New_York" #needs to follow daylight savings
+    timeout_seconds = 1200
+    max_retries     = 5 # this job exits non-zero only when nothing was delivered
+  }
+
   # Not yet provisioned. Uncomment when the job is ready to exist — nothing in
   # main.tf needs to change.
-  #
-  # daily_update = {
-  #   job_name        = "mod-notification-daily-update"
-  #   command         = ["python"]
-  #   args            = ["-m", "app.daily_update.main"]
-  #   schedule        = "20 14 * * 1-5" #weekdays, 20 min after the daily freeze
-  #   time_zone       = "America/New_York" #needs to follow daylight savings
-  #   timeout_seconds = 1200 
-  #   max_retries     = 5    # this job exits non-zero only when nothing was delivered
-  #
-  # }
   #
   # new_subs = {
   #   job_name        = "mod-notification-new-subs"

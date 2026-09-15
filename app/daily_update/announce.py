@@ -1,6 +1,6 @@
 """when arXiv announces: the next mail time, and the days it skips entirely"""
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Optional
 import requests
@@ -29,9 +29,13 @@ def next_announce_time() -> Optional[datetime]:
             LOCALTIME_URL, headers={"Accept": "application/json"}, timeout=TIMEOUT_SEC
         )
         response.raise_for_status()
-        times = response.json()
-
-        return datetime.fromisoformat(times["next_mail"])
+        times = response.json() #the times come back ISO 8601 with a UTC offset
+    
+        when = datetime.fromisoformat(times["next_mail"])
+        if when.tzinfo is None:
+            logger.error(f"announce time missing timezone, assuming UTC")
+            when = when.replace(tzinfo=timezone.utc)
+        return when
 
     except Exception:
         logger.exception(f"could not get the announce time from {LOCALTIME_URL}")
