@@ -1,29 +1,47 @@
 """entrypoint for the new_subs job: emails moderators about new submissions
 
-STUB — not implemented. see app/mod_actions/main.py for the shape of a working pubsub job.
+A Pub/Sub **push** subscription delivers one message here per new submission — this job runs
+as a Cloud Run service. Returning acks the message; raising
+leaves it unacked and Pub/Sub redelivers.
 """
-
+import base64
+import json
 import logging
+import functions_framework
+from cloudevents.http import CloudEvent
+from pydantic import BaseModel
 
-from app.shared.config import settings
 from app.shared.utils.log import setup_logging
 from app.shared.utils.startup import email_config_ok
 
+from app.new_subs.process import process_new_submission
+
+# do onetime setup for the container before start serving
 setup_logging()
 logger = logging.getLogger(__name__)
 
-
-def main():
-
-    #fail fast on email misconfiguration before touching the queue
-    if not email_config_ok():
-        return
-
-    logger.info(f"hello world from new_subs — subscription: {settings.PUBSUB_SUBSCRIPTION_ID_NEW_SUBS}")
-
-    #TODO pull from PUBSUB_SUBSCRIPTION_ID_NEW_SUBS with app.shared.pubsub.get_messages, parse into
-    #this job's own schema, then build and send emails. moderator lookup comes from app.shared.moderators
+if not email_config_ok():
+    raise RuntimeError("email configuration is invalid — refusing to start")
 
 
-if __name__ == "__main__":
-    main()
+class NewSubParams(BaseModel):
+    """one new-submission message
+    """
+    submission_id: int
+    #TODO confirm whats in payload
+
+
+#handle individual submissions
+@functions_framework.cloud_event
+def handle_new_submission(cloud_event: CloudEvent) -> None:
+    """one message, one submission"""
+
+    try:
+        payload = json.loads(base64.b64decode(cloud_event.data["message"]["data"]))
+        submission_id = NewSubParams.model_validate(payload).submission_id
+    except Exception:
+        logger.exception(f"[PARSE FAILURE] data: {cloud_event.data}")
+        return  # ack — redelivery will not make it parse
+
+    
+    process_new_submission(submission_id)
