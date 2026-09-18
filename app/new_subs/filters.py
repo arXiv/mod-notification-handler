@@ -2,12 +2,12 @@
 """
 import logging
 
-from app.shared.submission import SubEmailData
+from app.shared.submission import SubmissionBase
 
 logger = logging.getLogger(__name__)
 
 
-def notify_about(sub: SubEmailData) -> bool:
+def notify_about(sub: SubmissionBase) -> bool:
     """should moderators be emailed about this submission at all"""
     #TODO the rules. candidates, by analogy with daily_update:
     #  - test categories

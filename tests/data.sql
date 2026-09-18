@@ -78,14 +78,14 @@ INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, su
 
 -- submission categories for get_submission_info tests
 -- 123: cs.LG primary + cs.AI cross-list
-INSERT INTO `arXiv_submission_category` VALUES (123, 'cs.LG', 1, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (123, 'cs.AI', 0, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (123, 'cs.LG', 1, 0);
+INSERT INTO `arXiv_submission_category` VALUES (123, 'cs.AI', 0, 0);
 -- 124: no primary, two cross-list
-INSERT INTO `arXiv_submission_category` VALUES (124, 'cs.AI', 0, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (124, 'cs.LG', 0, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (124, 'cs.AI', 0, 0);
+INSERT INTO `arXiv_submission_category` VALUES (124, 'cs.LG', 0, 0);
 -- 125: no categories
 -- 126: math-ph primary (math.MP alias should also appear)
-INSERT INTO `arXiv_submission_category` VALUES (126, 'math-ph', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (126, 'math-ph', 1, 0);
 
 -- ══ daily_update digest ══════════════════════════════════════════════════════
 -- moderators: last column is daily_update
@@ -148,29 +148,29 @@ INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, su
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (214, 'A Cross Out Of cs.AI', 'Other Cross Author', 1, 'cross', '2026-07-27 23:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
 
 -- categories: (submission_id, category, is_primary, is_published)
-INSERT INTO `arXiv_submission_category` VALUES (201, 'cs.AI', 1, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (202, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (201, 'cs.AI', 1, 0);
+INSERT INTO `arXiv_submission_category` VALUES (202, 'cs.AI', 1, 1);
 INSERT INTO `arXiv_submission_category` VALUES (203, 'cs.LG', 1, 1);
 INSERT INTO `arXiv_submission_category` VALUES (203, 'cs.AI', 0, 0);
-INSERT INTO `arXiv_submission_category` VALUES (204, 'cs.AI', 1, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (205, 'astro-ph.HE', 1, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (205, 'astro-ph.CO', 0, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (205, 'hep-th', 0, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (204, 'cs.AI', 1, 1);
+INSERT INTO `arXiv_submission_category` VALUES (205, 'astro-ph.HE', 1, 0);
+INSERT INTO `arXiv_submission_category` VALUES (205, 'astro-ph.CO', 0, 0);
+INSERT INTO `arXiv_submission_category` VALUES (205, 'hep-th', 0, 0);
 -- 220: a second astro-ph category, so the archive moderator provably gets more than one
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (220, 'A Cosmology Paper', 'Cosmo Author', 1, 'new', '2026-07-28 04:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
-INSERT INTO `arXiv_submission_category` VALUES (220, 'astro-ph.CO', 1, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (207, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (220, 'astro-ph.CO', 1, 0);
+INSERT INTO `arXiv_submission_category` VALUES (207, 'cs.AI', 1, 0);
 -- stored under the alias; moderator 55003's row says the canonical econ.GN
-INSERT INTO `arXiv_submission_category` VALUES (208, 'q-fin.EC', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (208, 'q-fin.EC', 1, 0);
 -- 221 is the mirror of 208: stored canonical, so an alias-row moderator must still see it
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (221, 'Another Economics Paper', 'Econ Author Two', 1, 'new', '2026-07-28 05:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
-INSERT INTO `arXiv_submission_category` VALUES (221, 'econ.GN', 1, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (209, 'cs.AI', 1, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (210, 'cs.AI', 1, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (211, 'test.dis-nn', 1, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (211, 'cs.AI', 0, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (212, 'cs.AI', 1, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (213, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (221, 'econ.GN', 1, 0);
+INSERT INTO `arXiv_submission_category` VALUES (209, 'cs.AI', 1, 0);
+INSERT INTO `arXiv_submission_category` VALUES (210, 'cs.AI', 1, 1);
+INSERT INTO `arXiv_submission_category` VALUES (211, 'test.dis-nn', 1, 0);
+INSERT INTO `arXiv_submission_category` VALUES (211, 'cs.AI', 0, 0);
+INSERT INTO `arXiv_submission_category` VALUES (212, 'cs.AI', 1, 1);
+INSERT INTO `arXiv_submission_category` VALUES (213, 'cs.AI', 1, 0);
 INSERT INTO `arXiv_submission_category` VALUES (214, 'cs.AI', 1, 1);
 INSERT INTO `arXiv_submission_category` VALUES (214, 'cs.LG', 0, 0);
 
@@ -193,24 +193,24 @@ INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, ca
 
 -- 218: still WORKING, the submitter hasn't submitted it. never in the open queue
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (218, 'Still Being Written', 'Busy Author', 0, 'new', '2026-07-28 02:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
-INSERT INTO `arXiv_submission_category` VALUES (218, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (218, 'cs.AI', 1, 0);
 
 
 -- 215: unexpected type, logged as a data problem and excluded
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (215, 'A Nonsense Type', 'Bad Data Author', 1, 'bogus', '2026-07-27 23:30:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
-INSERT INTO `arXiv_submission_category` VALUES (215, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (215, 'cs.AI', 1, 0);
 
 -- 216: real primary with a TEST secondary — excluded, a real category does not rescue it
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (216, 'A Real Primary With Test Secondary', 'Mixed Author', 1, 'new', '2026-07-28 00:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
-INSERT INTO `arXiv_submission_category` VALUES (216, 'cs.AI', 1, NULL);
-INSERT INTO `arXiv_submission_category` VALUES (216, 'test.soft', 0, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (216, 'cs.AI', 1, 0);
+INSERT INTO `arXiv_submission_category` VALUES (216, 'test.soft', 0, 0);
 
 -- 219: astro-ph.HE, with an unresolved proposal for cs.AI. only the proposal reaches a cs.AI mod
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (219, 'Proposed Into cs.AI', 'Proposal Author', 1, 'new', '2026-07-28 03:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
-INSERT INTO `arXiv_submission_category` VALUES (219, 'astro-ph.HE', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (219, 'astro-ph.HE', 1, 0);
 INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id) VALUES (4, 219, 'cs.AI', 0, 0, 246231);
 
 -- 217: legacy hold — on hold with no reason row. excluded, only mod holds are reported
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (217, 'On A Legacy Hold', 'Nobody Author', 2, 'new', '2026-07-28 01:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
-INSERT INTO `arXiv_submission_category` VALUES (217, 'cs.AI', 1, NULL);
+INSERT INTO `arXiv_submission_category` VALUES (217, 'cs.AI', 1, 0);
 
