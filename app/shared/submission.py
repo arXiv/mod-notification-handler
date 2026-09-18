@@ -75,6 +75,8 @@ class SubmissionBase:
     submitter_name: str
     submitter_id: int
     submit_time: Optional[datetime] = None
+    sub_type: str = "" #new/rep/cross/wdr/jref
+    auto_hold: bool = False #the arXiv_submissions column, not a hold reason row
     categories: list[SubmissionCat] = field(default_factory=list)
 
     @property
@@ -122,6 +124,8 @@ def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
                 Submission.submitter_name,
                 Submission.submitter_id,
                 Submission.submit_time,
+                Submission.type,
+                Submission.auto_hold,
             ).where(Submission.submission_id.in_(submission_ids))
         ).all()
 
@@ -136,6 +140,8 @@ def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
                 submitter_name=row.submitter_name or "",
                 submitter_id=row.submitter_id or 0,
                 submit_time=as_utc(row.submit_time),
+                sub_type=row.type or "",
+                auto_hold=bool(row.auto_hold),
                 categories=cats_by_sub.get(row.submission_id, []),
             )
 

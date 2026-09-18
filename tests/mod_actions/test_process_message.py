@@ -472,7 +472,7 @@ def test_changes_ordered_oldest_first():
 
 @pytest.mark.usefixtures("db_session")
 def test_subject_uses_paper_categories():
-    # submission 123: cs.LG (primary) + cs.AI (cross), no submitter name in DB
+    # submission 123: cs.LG (primary) + cs.AI (cross)
     msg = _make_pubsub_message("ack-1", GOOD_COMMENT)
 
     mock_send = Mock()
@@ -480,7 +480,7 @@ def test_subject_uses_paper_categories():
         process_messages([msg], ack_fn=Mock())
 
     assert mock_send.call_args.kwargs["subject"] == \
-        "Action Required: arXiv submission submit/123 to cs.LG cs.AI by user 0"
+        "Action Required: arXiv submission submit/123 to cs.LG cs.AI by Pippin Otter"
 
 @pytest.mark.usefixtures("db_session")
 def test_subject_no_primary_category():
@@ -493,7 +493,7 @@ def test_subject_no_primary_category():
         process_messages([msg], ack_fn=Mock())
 
     assert mock_send.call_args.kwargs["subject"] == \
-        "Action Required: arXiv submission submit/124 to - cs.AI cs.LG by user 0"
+        "Action Required: arXiv submission submit/124 to - cs.AI cs.LG by Pippin Otter"
 
 @pytest.mark.usefixtures("db_session")
 def test_subject_alias_category_expands():
@@ -506,4 +506,4 @@ def test_subject_alias_category_expands():
         process_messages([msg], ack_fn=Mock())
 
     assert mock_send.call_args.kwargs["subject"] == \
-        "Action Required: arXiv submission submit/126 to math-ph math.MP by user 0"
+        "Action Required: arXiv submission submit/126 to math-ph math.MP by Pippin Otter"

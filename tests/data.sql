@@ -24,6 +24,7 @@ INSERT INTO `arXiv_moderators` VALUES (246232,'q-fin','','0','0','0','0','0');
 
 INSERT INTO `tapir_users` VALUES (246233,'Frank','Franky','',1,1,'no-mailx234@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'cpe-24-59.res.rr.com.1372902602452690',0,0);
 INSERT INTO `arXiv_moderators` VALUES (246233,'hep-ph', '','0','0','0','0','0');
+INSERT INTO `tapir_users` VALUES (246234,'Pippin','Otter','',1,1,'no-mail-otter@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'cpe-24-59.res.rr.com.1372902602452690',0,0);
 INSERT INTO `tapir_nicknames` VALUES (246210,'ffrky',246233,1,1,0,0,1);
 
 INSERT INTO `tapir_users` VALUES (9999,'Ralf','W','',1,1,'no-mail-rw@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);
@@ -70,10 +71,10 @@ INSERT INTO `tapir_nicknames` VALUES (10004,'testeditor',1,1,1,0,0,1);
 INSERT INTO `tapir_nicknames` VALUES (10005,'jsmith',2,1,1,0,0,1);
 
 -- test submissions used in integration tests
-INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, remote_addr, remote_host, package) VALUES (123, 'A Test Paper on Machine Learning', 'Author One, Author Two', 1, '127.0.0.1', 'localhost', '');
-INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, remote_addr, remote_host, package) VALUES (124, 'Another Test Paper on Category Promotion', 'Author Three', 1, '127.0.0.1', 'localhost', '');
-INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, remote_addr, remote_host, package) VALUES (125, 'Paper With No Categories', 'Some Author', 1, '127.0.0.1', 'localhost', '');
-INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, remote_addr, remote_host, package) VALUES (126, 'A Math-Physics Paper', 'Author Math', 1, '127.0.0.1', 'localhost', '');
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, auto_hold, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (123, 'A Test Paper on Machine Learning', 'Author One, Author Two', 1, 'new', 1, '2026-07-26 12:00:00', 246234, 'Pippin Otter', '127.0.0.1', 'localhost', '');
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (124, 'Another Test Paper on Category Promotion', 'Author Three', 1, 'new', '2026-07-26 11:00:00', 246234, 'Pippin Otter', '127.0.0.1', 'localhost', '');
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (125, 'Paper With No Categories', 'Some Author', 1, 'new', '2026-07-26 10:00:00', 246234, 'Pippin Otter', '127.0.0.1', 'localhost', '');
+INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (126, 'A Math-Physics Paper', 'Author Math', 1, 'new', '2026-07-26 09:00:00', 246234, 'Pippin Otter', '127.0.0.1', 'localhost', '');
 
 -- submission categories for get_submission_info tests
 -- 123: cs.LG primary + cs.AI cross-list
