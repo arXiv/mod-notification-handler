@@ -57,9 +57,6 @@ jobs = {
     time_zone       = "America/New_York" #needs to follow daylight savings
     timeout_seconds = 1200
     max_retries     = 5 # this job exits non-zero only when nothing was delivered
-
-    # Production data, test address. Remove this line to go live to real moderators.
-    env_vars = { REDIRECT_EMAILS = "True" }
   }
 
   # Not yet provisioned. Only add these here once the job has proven itself in dev.
