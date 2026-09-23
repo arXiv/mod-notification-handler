@@ -327,7 +327,7 @@ resource "google_cloud_run_v2_service" "new_subs" {
           cpu    = "1000m"
           memory = "256Mi"
         }
-        
+
         cpu_idle = true
       }
     }
