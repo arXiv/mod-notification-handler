@@ -25,6 +25,9 @@ redirect_recipient_secret = "test-email-group-address"
 db_secret_name    = "modapi-dev-db-uri-for-cloudrun"
 cloudsql_instance = "arxiv-development:us-east4:arxiv-db-dev"
 
+# The submission-snapshot topic. Not owned by this repo
+new_subs_topic = "projects/arxiv-development/topics/submit-info"
+
 # ---------------------------------------------------------------------------
 # Jobs
 # ---------------------------------------------------------------------------
@@ -55,14 +58,5 @@ jobs = {
     max_retries     = 5 # this job exits non-zero only when nothing was delivered
   }
 
-  # Not yet provisioned. Uncomment when the job is ready to exist — nothing in
-  # main.tf needs to change.
-  #
-  # new_subs = {
-  #   job_name        = "mod-notification-new-subs"
-  #   command         = ["python"]
-  #   args            = ["-m", "app.new_subs.main"]
-  #   schedule        = "*/10 * * * *"
-  #   timeout_seconds = 540
-  # }
+  # new_subs is not here on purpose. It is pushed to by Pub/Sub rather than scheduled
 }

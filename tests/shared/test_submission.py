@@ -35,6 +35,14 @@ def test_get_submission_info_no_categories():
 
 
 @pytest.mark.usefixtures("db_session")
+def test_get_submission_info_reads_type_and_auto_hold():
+    """auto_hold is nullable, so a NULL has to read as False rather than stay unset"""
+    result = get_submission_info({123, 204})
+    assert (result[123].sub_type, result[123].auto_hold) == ("new", True)
+    assert (result[204].sub_type, result[204].auto_hold) == ("wdr", False)
+
+
+@pytest.mark.usefixtures("db_session")
 def test_get_submission_info_multiple_ids():
     result = get_submission_info({123, 124, 125})
     assert set(result.keys()) == {123, 124, 125}

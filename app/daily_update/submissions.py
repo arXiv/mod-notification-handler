@@ -15,8 +15,7 @@ HOLD_MOD = "mod"
 @dataclass
 class OpenSubmission(SubmissionBase):
     """one submission awaiting moderation, with everything a queue report needs"""
-    sub_type: str = "" #new/rep/cross/wdr/jref
-    mod_hold: bool = False #indicates if submission is on (mod) hold
+    mod_hold: bool = False #on a moderator hold, from arXiv_submission_hold_reason
     proposals: Proposals = field(default_factory=Proposals)
 
     @property
@@ -50,6 +49,7 @@ def get_open_submissions() -> list[OpenSubmission]:
                 Submission.submitter_id,
                 Submission.submit_time,
                 Submission.type,
+                Submission.auto_hold,
             )
             .where(Submission.status.in_(OPEN_STATUSES))
             .order_by(Submission.submit_time.desc())
@@ -74,6 +74,7 @@ def get_open_submissions() -> list[OpenSubmission]:
             submitter_id=row.submitter_id or 0,
             submit_time=as_utc(row.submit_time),
             sub_type=row.type or "",
+            auto_hold=bool(row.auto_hold),
             categories=cats_by_sub.get(row.submission_id, []),
             mod_hold=row.submission_id in mod_holds,
             proposals=proposals.get(row.submission_id, Proposals()),
