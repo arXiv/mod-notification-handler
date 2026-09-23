@@ -3,6 +3,9 @@
 A Pub/Sub **push** subscription delivers one message here per new submission — this job runs
 as a Cloud Run service. Returning acks the message; raising
 leaves it unacked and Pub/Sub redelivers.
+
+**Currently a scouting build**: it parses a real message, logs what it found, and stops. Nothing
+is emailed and every message is acked. See handle_new_submission for how to turn it back on.
 """
 import base64
 import json
@@ -18,7 +21,7 @@ from app.shared.submission import SubmissionBase, SubmissionCat, as_utc
 from app.shared.utils.log import setup_logging
 from app.shared.utils.startup import email_config_ok
 
-from app.new_subs.process import process_new_submission
+#from app.new_subs.process import process_new_submission 
 
 # do onetime setup for the container before start serving
 setup_logging()
@@ -74,9 +77,28 @@ def handle_new_submission(cloud_event: CloudEvent) -> None:
     #read the pubsub data
     try:
         payload = json.loads(base64.b64decode(cloud_event.data["message"]["data"]))
+    except Exception:
+        logger.exception(f"Could not decode message, envelope: {cloud_event.data}")
+        return
+
+    try:
         params = NewSubParams.model_validate(payload)
     except Exception:
-        logger.exception(f"[PARSE FAILURE] data: {cloud_event.data}")
-        return  # ack — redelivery will not make it parse
+        #the top-level keys go out separately in case the full payload is too big to keep
+        logger.exception(f"Payload did not match NewSubParams. top-level keys: {list(payload)}")
+        logger.error(f"Full payload: {json.dumps(payload, default=str)}")
+        return
 
-    process_new_submission(_build_submission(params))
+    sub = _build_submission(params)
+    logger.info(
+        f"Result: parsed submit/{sub.submission_id}: type={sub.sub_type!r} status={sub.status} "
+        f"auto_hold={sub.auto_hold} submit_time={sub.submit_time} "
+        f"submitter={sub.submitter_name!r} ({sub.submitter_id}) title={sub.title!r} "
+        f"authors={sub.authors!r} categories={sub.submission_categories!r} "
+        f"rows={[(c.category, c.is_primary, c.is_published) for c in sub.categories]}"
+    )
+
+    return #exit regarless while verifying message shape
+
+    #dont process yet
+    # process_new_submission(sub)

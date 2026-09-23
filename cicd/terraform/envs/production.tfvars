@@ -28,6 +28,8 @@ redirect_recipient_secret = "test-email-group-address"
 db_secret_name    = "arxiv-production-rep11-db-readonly_URI"
 cloudsql_instance = "arxiv-production:us-central1:arxiv-production-rep11"
 
+# new_subs_topic is deliberately unset: the service runs in development only 
+
 # ---------------------------------------------------------------------------
 # Jobs
 # ---------------------------------------------------------------------------
@@ -62,13 +64,5 @@ jobs = {
     env_vars = { REDIRECT_EMAILS = "True" }
   }
 
-  # Not yet provisioned. Only add these here once the job has proven itself in dev.
-  #
-  # new_subs = {
-  #   job_name        = "mod-notification-new-subs"
-  #   command         = ["python"]
-  #   args            = ["-m", "app.new_subs.main"]
-  #   schedule        = "*/5 * * * *"
-  #   timeout_seconds = 300
-  # }
+  # new_subs is not here on purpose. It is pushed to by Pub/Sub rather than scheduled
 }

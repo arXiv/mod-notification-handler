@@ -58,6 +58,7 @@ resource "google_project_iam_member" "job" {
     "roles/pubsub.subscriber",            # pull from the subscription
     "roles/run.invoker",                  # Cloud Scheduler invokes the job as this SA
     "roles/secretmanager.secretAccessor", # read the DB URI and SMTP creds
+    "roles/eventarc.eventReceiver",       # new_subs: receive events from the Eventarc trigger
   ])
 
   project = var.project_id
@@ -234,3 +235,140 @@ resource "google_cloud_scheduler_job" "jobs" {
   }
 }
 
+
+# ---------------------------------------------------------------------------
+# new_subs — a Cloud Run service, not a job
+# ---------------------------------------------------------------------------
+# Pub/Sub delivers one message per new submission, so this one is pushed to rather than
+# woken on a schedule.
+
+# Created only where var.new_subs_topic is set, so production stays unprovisioned.
+
+locals {
+  new_subs_count = var.new_subs_topic == null ? 0 : 1
+  new_subs_name  = "mod-notify-new-submission"
+}
+
+data "google_project" "this" {
+  project_id = var.project_id
+}
+
+resource "google_cloud_run_v2_service" "new_subs" {
+  count = local.new_subs_count
+
+  name     = local.new_subs_name
+  project  = var.project_id
+  location = var.region
+  labels   = local.labels
+
+  ingress = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+
+  deletion_protection = false
+
+  template {
+    service_account = google_service_account.job.email
+    labels          = local.labels
+
+    scaling {
+      min_instance_count = 0
+      max_instance_count = 5
+    }
+
+    volumes {
+      name = "cloudsql"
+      cloud_sql_instance {
+        instances = [var.cloudsql_instance]
+      }
+    }
+
+    containers {
+      image = var.image
+
+      # functions-framework serves the handler. No --port: it reads PORT from the
+      # environment, which Cloud Run sets.
+      command = ["functions-framework"]
+      args = [
+        "--target=handle_new_submission",
+        "--source=app/new_subs/main.py",
+        "--signature-type=cloudevent",
+      ]
+
+      # PYTHONPATH is required, not decoration: --source loads main.py by path and does
+      # not put the working directory on sys.path, so `import app.shared...` fails without it.
+      dynamic "env" {
+        for_each = merge(local.shared_env_vars, { PYTHONPATH = "/app" })
+        content {
+          name  = env.key
+          value = env.value
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.shared_secret_env_vars
+        content {
+          name = env.key
+          value_source {
+            secret_key_ref {
+              secret  = env.value
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      volume_mounts {
+        name       = "cloudsql"
+        mount_path = "/cloudsql"
+      }
+
+      # Measured 2026-09-23: 72 MB resident after imports, and a request adds almost nothing.
+      resources {
+        limits = {
+          cpu    = "1000m"
+          memory = "256Mi"
+        }
+      }
+    }
+  }
+}
+
+# Eventarc creates and owns the subscription on the topic, and deletes it with the trigger.
+resource "google_eventarc_trigger" "new_subs" {
+  count = local.new_subs_count
+
+  name     = "${local.new_subs_name}-trigger"
+  project  = var.project_id
+  location = var.region
+  labels   = local.labels
+
+  matching_criteria {
+    attribute = "type"
+    value     = "google.cloud.pubsub.topic.v1.messagePublished"
+  }
+
+  transport {
+    pubsub {
+      topic = var.new_subs_topic
+    }
+  }
+
+  destination {
+    cloud_run_service {
+      service = google_cloud_run_v2_service.new_subs[0].name
+      region  = var.region
+      path    = "/"
+    }
+  }
+
+  service_account = google_service_account.job.email
+}
+
+# Eventarc's Pub/Sub transport mints OIDC tokens as the trigger's service account, so the
+# Pub/Sub service agent has to be allowed to impersonate it.
+resource "google_service_account_iam_member" "pubsub_token_creator" {
+  count = local.new_subs_count
+
+  service_account_id = google_service_account.job.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
