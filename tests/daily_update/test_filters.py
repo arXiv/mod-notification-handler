@@ -8,7 +8,6 @@ from app.daily_update.submissions import OpenSubmission
 from app.shared.submission import SubmissionCat
 from app.shared.proposals import Proposals
 from app.daily_update.filters import (
-    has_test_category,
     is_non_mod_hold,
     is_reported_type,
     is_unheld_replacement,
@@ -86,12 +85,6 @@ def test_remove_non_mod_holds():
     assert is_non_mod_hold(_sub(status=statuses.ON_HOLD, mod_hold=False))
     assert not is_non_mod_hold(_sub(status=statuses.SUBMITTED, mod_hold=False))
 
-
-def test_test_category_is_excluded():
-    assert has_test_category(_sub(primary="test.dis-nn"))
-    assert has_test_category(_sub(primary="cs.AI", secondaries=["test.soft"]))
-    assert not has_test_category(_sub(primary="cs.AI", secondaries=["cs.LG"]))
-    assert not has_test_category(_sub(primary=None, secondaries=["cs.LG"]))
 
 def test_report_on_keeps_only_reportable_submissions():
     subs = [

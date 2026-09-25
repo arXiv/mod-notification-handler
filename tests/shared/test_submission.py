@@ -5,6 +5,7 @@ from app.shared.submission import (
     SubEmailData,
     SubmissionCat,
     get_submission_info,
+    has_test_category,
     split_categories,
 )
 from app.shared.utils.formatting import fmt_time
@@ -141,3 +142,27 @@ def test_subject_categories_nothing_at_all():
 def test_subject_categories_matches_body_when_there_is_a_primary():
     sub = _sub("cs.LG", ["cs.AI"])
     assert sub.subject_categories == sub.submission_categories == "cs.LG cs.AI"
+
+
+# ── has_test_category ───────────────────────────────────────────────────────
+
+def test_test_primary_is_a_test_category():
+    assert has_test_category(_sub("test.dis-nn")) is True
+
+
+def test_test_secondary_is_a_test_category():
+    """a real primary does not rescue a submission carrying a test category"""
+    assert has_test_category(_sub("cs.AI", ["test.soft"])) is True
+
+
+def test_real_categories_are_not_test_categories():
+    assert has_test_category(_sub("cs.AI", ["cs.LG", "math.ST"])) is False
+
+
+def test_a_submission_with_no_categories_has_no_test_category():
+    assert has_test_category(_sub()) is False
+
+
+def test_a_category_outside_the_taxonomy_is_not_a_test_category():
+    """unknown ids match no moderator anyway, so they are left to pass"""
+    assert has_test_category(_sub("not.real")) is False
