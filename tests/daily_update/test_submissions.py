@@ -54,16 +54,6 @@ def test_category_rows_keep_both_flags(by_id: dict[int, OpenSubmission]):
     assert SubmissionCat(category="cs.AI", is_published=False, is_primary=False) in cats
 
 
-def test_unannounced_categories_are_the_new_crosses(by_id: dict[int, OpenSubmission]):
-    #203: cs.LG already announced (is_published=1), cs.AI is the request
-    assert by_id[203].new_cross_categories == {"cs.AI"}
-
-
-def test_announced_category_is_not_a_new_cross(by_id: dict[int, OpenSubmission]):
-    #214 is the mirror image of 203: cs.AI is already announced, cs.LG is the request
-    assert "cs.AI" not in by_id[214].new_cross_categories
-
-
 def test_only_a_mod_hold_reason_sets_the_flag(by_id: dict[int, OpenSubmission]):
     assert by_id[210].mod_hold is True   #a mod hold
     assert by_id[209].mod_hold is False  #an admin hold

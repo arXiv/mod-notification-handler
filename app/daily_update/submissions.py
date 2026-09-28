@@ -18,11 +18,6 @@ class OpenSubmission(SubmissionBase):
     mod_hold: bool = False #on a moderator hold, from arXiv_submission_hold_reason
     proposals: Proposals = field(default_factory=Proposals)
 
-    @property
-    def new_cross_categories(self) -> set[str]:
-        #rows not yet announced. On a cross these are the categories being requested
-        return {cat.category for cat in self.categories if not cat.is_published}
-
 
 def _fetch_mod_holds(session, submission_ids: set[int]) -> set[int]:
     """read arXiv_submission_hold_reason, keeping only the submissions on a moderator hold"""

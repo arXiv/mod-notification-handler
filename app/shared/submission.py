@@ -106,6 +106,11 @@ class SubmissionBase:
         return ids
 
     @property
+    def new_cross_categories(self) -> set[str]:
+        #rows not yet announced. On a cross these are the categories being requested
+        return {cat.category for cat in self.categories if not cat.is_published}
+
+    @property
     def submission_categories(self) -> str:
         """primary then secondaries as one string, 'no primary' standing in for a missing one"""
         return " ".join([self.primary_category or "no primary"] + self.secondary_categories)
