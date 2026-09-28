@@ -5,6 +5,7 @@ from app.shared.submission import (
     SubEmailData,
     SubmissionCat,
     get_submission_info,
+    has_test_category,
     split_categories,
 )
 from app.shared.utils.formatting import fmt_time
@@ -53,9 +54,10 @@ def test_get_submission_info_multiple_ids():
 
 # ── submission_categories ───────────────────────────────────────────────────
 
-def _cats(primary=None, secondaries=()) -> list[SubmissionCat]:
+def _cats(primary=None, secondaries=(), announced=()) -> list[SubmissionCat]:
+    """`announced` names the categories an already-published version carried"""
     rows = ([(primary, True)] if primary else []) + [(cat, False) for cat in secondaries]
-    return [SubmissionCat(category=cat, is_published=False, is_primary=is_primary)
+    return [SubmissionCat(category=cat, is_published=cat in announced, is_primary=is_primary)
             for cat, is_primary in rows]
 
 
@@ -104,11 +106,11 @@ def test_canonical_secondary_gains_its_alias():
 
 # ── submission_categories ───────────────────────────────────────────────────
 
-def _sub(primary=None, secondaries=None): #dummy submission creation
+def _sub(primary=None, secondaries=None, announced=()): #dummy submission creation
     return SubEmailData(
         submission_id=1, title="t", authors="a", status=1,
         submitter_name="n", submitter_id=2,
-        categories=_cats(primary, secondaries or []),
+        categories=_cats(primary, secondaries or [], announced),
     )
 
 def test_category_string_primary_and_secondaries():
@@ -141,3 +143,47 @@ def test_subject_categories_nothing_at_all():
 def test_subject_categories_matches_body_when_there_is_a_primary():
     sub = _sub("cs.LG", ["cs.AI"])
     assert sub.subject_categories == sub.submission_categories == "cs.LG cs.AI"
+
+
+# ── has_test_category ───────────────────────────────────────────────────────
+
+def test_test_primary_is_a_test_category():
+    assert has_test_category(_sub("test.dis-nn")) is True
+
+
+def test_test_secondary_is_a_test_category():
+    """a real primary does not rescue a submission carrying a test category"""
+    assert has_test_category(_sub("cs.AI", ["test.soft"])) is True
+
+
+def test_real_categories_are_not_test_categories():
+    assert has_test_category(_sub("cs.AI", ["cs.LG", "math.ST"])) is False
+
+
+def test_a_submission_with_no_categories_has_no_test_category():
+    assert has_test_category(_sub()) is False
+
+
+def test_a_category_outside_the_taxonomy_is_not_a_test_category():
+    """unknown ids match no moderator anyway, so they are left to pass"""
+    assert has_test_category(_sub("not.real")) is False
+
+
+# ── new_cross_categories ────────────────────────────────────────────────────
+
+def test_the_categories_an_earlier_version_lacked_are_the_new_crosses():
+    """cs.LG came with a published version; cs.AI is what this submission adds"""
+    assert _sub("cs.LG", ["cs.AI"], announced=("cs.LG",)).new_cross_categories == {"cs.AI"}
+
+
+def test_an_announced_category_is_not_a_new_cross():
+    """the mirror: whichever one is already carried drops out"""
+    assert _sub("cs.AI", ["cs.LG"], announced=("cs.AI",)).new_cross_categories == {"cs.LG"}
+
+
+def test_with_nothing_announced_every_category_is_new():
+    assert _sub("cs.LG", ["cs.AI"]).new_cross_categories == {"cs.LG", "cs.AI"}
+
+
+def test_no_categories_means_no_new_crosses():
+    assert _sub().new_cross_categories == set()

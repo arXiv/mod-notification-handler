@@ -3,9 +3,6 @@
 A Pub/Sub **push** subscription delivers one message here per new submission — this job runs
 as a Cloud Run service. Returning acks the message; raising
 leaves it unacked and Pub/Sub redelivers.
-
-**Currently a scouting build**: it parses a real message, logs what it found, and stops. Nothing
-is emailed and every message is acked. See handle_new_submission for how to turn it back on.
 """
 import base64
 import json
@@ -21,7 +18,11 @@ from app.shared.submission import SubmissionBase, SubmissionCat, as_utc
 from app.shared.utils.log import setup_logging
 from app.shared.utils.startup import email_config_ok
 
-#from app.new_subs.process import process_new_submission 
+from app.new_subs.process import process_new_submission
+
+#SCOUTING: log every message in full, ack it, and send nothing. 
+SCOUT_ONLY = True
+SCOUT_CHUNK_CHARS = 90_000
 
 # do onetime setup for the container before start serving
 setup_logging()
@@ -69,6 +70,18 @@ def _build_submission(params: NewSubParams) -> SubmissionBase:
     )
 
 
+def _log_whole_payload(payload) -> None:
+    """the entire message, so we can see what there is to work on
+
+    Split because Cloud Logging drops an entry over 256KB, in case it is large.
+    """
+    text = json.dumps(payload, indent=2, sort_keys=True, default=str)
+    parts = [text[i:i + SCOUT_CHUNK_CHARS] for i in range(0, len(text), SCOUT_CHUNK_CHARS)]
+    logger.info(f"[SCOUT] payload is {len(text)} chars, top-level keys {sorted(payload)}")
+    for number, part in enumerate(parts, start=1):
+        logger.info(f"[SCOUT] payload part {number}/{len(parts)}\n{part}")
+
+
 #handle individual submissions
 @functions_framework.cloud_event
 def handle_new_submission(cloud_event: CloudEvent) -> None:
@@ -81,6 +94,9 @@ def handle_new_submission(cloud_event: CloudEvent) -> None:
         logger.exception(f"Could not decode message, envelope: {cloud_event.data}")
         return
 
+    if SCOUT_ONLY:
+        _log_whole_payload(payload)
+
     try:
         params = NewSubParams.model_validate(payload)
     except Exception:
@@ -89,16 +105,8 @@ def handle_new_submission(cloud_event: CloudEvent) -> None:
         logger.error(f"Full payload: {json.dumps(payload, default=str)}")
         return
 
-    sub = _build_submission(params)
-    logger.info(
-        f"Result: parsed submit/{sub.submission_id}: type={sub.sub_type!r} status={sub.status} "
-        f"auto_hold={sub.auto_hold} submit_time={sub.submit_time} "
-        f"submitter={sub.submitter_name!r} ({sub.submitter_id}) title={sub.title!r} "
-        f"authors={sub.authors!r} categories={sub.submission_categories!r} "
-        f"rows={[(c.category, c.is_primary, c.is_published) for c in sub.categories]}"
-    )
+    if SCOUT_ONLY:
+        logger.info(f"[SCOUT] parses cleanly: {_build_submission(params)}")
+        return #ack without sending anything
 
-    return #exit regarless while verifying message shape
-
-    #dont process yet
-    # process_new_submission(sub)
+    process_new_submission(_build_submission(params))
