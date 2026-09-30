@@ -12,7 +12,8 @@ from cloudevents.http import CloudEvent
 from pydantic import ValidationError
 
 from app.new_subs.main import NewSubParams, _build_submission, handle_new_submission
-from app.shared.submission import SubmissionBase, SubmissionCat
+from app.new_subs.submission import NewSubmission
+from app.shared.submission import SubmissionCat
 
 SUB_ID = 7850001
 USER_ID = 246234
@@ -53,14 +54,14 @@ def _cloud_event(payload) -> CloudEvent:
     )
 
 
-def _built(**overrides) -> SubmissionBase:
+def _built(**overrides) -> NewSubmission:
     return _build_submission(NewSubParams.model_validate(_message(**overrides)))
 
 
 # ── the whole conversion ────────────────────────────────────────────────────
 
 def test_a_message_becomes_a_submission():
-    assert _built() == SubmissionBase(
+    assert _built() == NewSubmission(
         submission_id=7850001,
         title="A Submission For A Test",
         authors="Pippin Otter, Waffles Hamster",
@@ -79,7 +80,9 @@ def test_a_message_becomes_a_submission():
 def test_the_rest_of_the_snapshot_is_dropped():
     """the publisher sends urls, checksums, classifier data and more — bonus_key here"""
     params = NewSubParams.model_validate(_message())
-    assert set(params.model_dump()) == {"arXiv_submissions", "arXiv_submission_category"}
+    assert set(params.model_dump()) == {
+        "arXiv_submissions", "arXiv_submission_category", "arXiv_submission_abs_classifier_data",
+    }
 
 
 # ── submit_time ─────────────────────────────────────────────────────────────

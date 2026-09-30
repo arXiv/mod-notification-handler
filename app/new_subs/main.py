@@ -1,9 +1,4 @@
-"""entrypoint for the new_subs job: emails moderators about new submissions
-
-A Pub/Sub **push** subscription delivers one message here per new submission — this job runs
-as a Cloud Run service. Returning acks the message; raising
-leaves it unacked and Pub/Sub redelivers.
-"""
+"""entrypoint for the new_subs job: emails moderators about new submissions"""
 import base64
 import json
 import logging
@@ -12,13 +7,14 @@ from typing import Optional
 
 import functions_framework
 from cloudevents.http import CloudEvent
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from app.shared.submission import SubmissionBase, SubmissionCat, as_utc
+from app.shared.submission import SubmissionCat, as_utc
 from app.shared.utils.log import setup_logging
 from app.shared.utils.startup import email_config_ok
 
 from app.new_subs.process import process_new_submission
+from app.new_subs.submission import NewSubmission
 
 #SCOUTING: log every message in full, ack it, and send nothing. 
 SCOUT_ONLY = True
@@ -44,18 +40,23 @@ class MessageSubmission(BaseModel):
     submitter_name: Optional[str] = None
     submitter_id: Optional[int] = None
     submit_time: Optional[datetime] = None
+    comments: Optional[str] = None
+    journal_ref: Optional[str] = None
+    doi: Optional[str] = None
+    abstract: Optional[str] = None
 
 
 class NewSubParams(BaseModel):
     #the shape of the incoming message payload
     arXiv_submissions: MessageSubmission
     arXiv_submission_category: list[SubmissionCat]
+    arXiv_submission_abs_classifier_data: dict = Field(default_factory=dict)
 
 
-def _build_submission(params: NewSubParams) -> SubmissionBase:
+def _build_submission(params: NewSubParams) -> NewSubmission:
     """the message as the object the rest of the job works on"""
     sub = params.arXiv_submissions
-    return SubmissionBase(
+    return NewSubmission(
         submission_id=sub.submission_id,
         title=sub.title or "",
         authors=sub.authors or "",
@@ -67,14 +68,16 @@ def _build_submission(params: NewSubParams) -> SubmissionBase:
         categories=list(params.arXiv_submission_category),
         sub_type=sub.type or "",
         auto_hold=bool(sub.auto_hold),
+        comments=sub.comments,
+        journal_ref=sub.journal_ref,
+        doi=sub.doi,
+        abstract=sub.abstract,
+        system_proposed_primary=params.arXiv_submission_abs_classifier_data.get("autoproposal_primary"),
     )
 
 
 def _log_whole_payload(payload) -> None:
-    """the entire message, so we can see what there is to work on
-
-    Split because Cloud Logging drops an entry over 256KB, in case it is large.
-    """
+    """the entire message, split to stay under the Cloud Logging entry size cap"""
     text = json.dumps(payload, indent=2, sort_keys=True, default=str)
     parts = [text[i:i + SCOUT_CHUNK_CHARS] for i in range(0, len(text), SCOUT_CHUNK_CHARS)]
     logger.info(f"[SCOUT] payload is {len(text)} chars, top-level keys {sorted(payload)}")
@@ -100,7 +103,6 @@ def handle_new_submission(cloud_event: CloudEvent) -> None:
     try:
         params = NewSubParams.model_validate(payload)
     except Exception:
-        #the top-level keys go out separately in case the full payload is too big to keep
         logger.exception(f"Payload did not match NewSubParams. top-level keys: {list(payload)}")
         logger.error(f"Full payload: {json.dumps(payload, default=str)}")
         return
