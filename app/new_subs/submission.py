@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from app.shared.submission import SubmissionBase
+from app.new_subs.submitter import SubmitterData
 
 @dataclass
 class NewSubmission(SubmissionBase):
@@ -17,6 +18,5 @@ class NewSubmission(SubmissionBase):
     #TODO no source yet
     system_proposed_primary: Optional[str] = None
 
-    #TODO no source yet
-    first_time_submitter: bool = False
-    flagged_submitter: bool = False
+    #from the message when it has it. None until process_new_submission fetches it
+    submitter_data: Optional[SubmitterData] = None

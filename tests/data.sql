@@ -25,6 +25,8 @@ INSERT INTO `arXiv_moderators` VALUES (246232,'q-fin','','0','0','0','0','0');
 INSERT INTO `tapir_users` VALUES (246233,'Frank','Franky','',1,1,'no-mailx234@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'cpe-24-59.res.rr.com.1372902602452690',0,0);
 INSERT INTO `arXiv_moderators` VALUES (246233,'hep-ph', '','0','0','0','0','0');
 INSERT INTO `tapir_users` VALUES (246234,'Pippin','Otter','',1,1,'no-mail-otter@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'cpe-24-59.res.rr.com.1372902602452690',0,0);
+INSERT INTO `arXiv_demographics` (user_id, country, affiliation, url, original_subject_classes, flag_suspect) VALUES (246234, 'US', '', '', '', 0);
+INSERT INTO `arXiv_demographics` (user_id, country, affiliation, url, original_subject_classes, flag_suspect) VALUES (246233, 'US', '', '', '', 1);
 INSERT INTO `tapir_nicknames` VALUES (246210,'ffrky',246233,1,1,0,0,1);
 
 INSERT INTO `tapir_users` VALUES (9999,'Ralf','W','',1,1,'no-mail-rw@example.com',8,0,2,1384185389,'dedicated','',0,0,0,1,1,0,0,0,0,'',0,0);

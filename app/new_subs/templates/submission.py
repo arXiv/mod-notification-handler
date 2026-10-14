@@ -26,9 +26,9 @@ def format_warnings(sub: NewSubmission) -> Rendered:
     FIRST_TIME_WARNING = "Note: First submission from this submitter"
     FLAGGED_WARNING = "Warning: This submitter is flagged"
     warnings = []
-    if sub.first_time_submitter:
+    if sub.submitter_data.first_time_submitter:
         warnings.append(FIRST_TIME_WARNING)
-    if sub.flagged_submitter:
+    if sub.submitter_data.is_suspect:
         warnings.append(FLAGGED_WARNING)
     if not warnings:
         return Rendered("", "")

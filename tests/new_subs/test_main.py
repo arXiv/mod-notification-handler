@@ -13,6 +13,7 @@ from pydantic import ValidationError
 
 from app.new_subs.main import NewSubParams, _build_submission, handle_new_submission
 from app.new_subs.submission import NewSubmission
+from app.new_subs.submitter import SubmitterData
 from app.shared.submission import SubmissionCat
 
 SUB_ID = 7850001
@@ -82,7 +83,28 @@ def test_the_rest_of_the_snapshot_is_dropped():
     params = NewSubParams.model_validate(_message())
     assert set(params.model_dump()) == {
         "arXiv_submissions", "arXiv_submission_category", "arXiv_submission_abs_classifier_data",
+        "submitter_data",
     }
+
+
+# ── submitter_data ──────────────────────────────────────────────────────────
+
+def test_submitter_data_on_the_message_fills_the_submission():
+    message = dict(_message(), submitter_data={"is_suspect": True, "first_time_submitter": False})
+    built = _build_submission(NewSubParams.model_validate(message))
+    assert built.submitter_data == SubmitterData(is_suspect=True, first_time_submitter=False)
+
+
+def test_submitter_data_is_none_when_not_sent():
+    built = _built()
+    assert built.submitter_data is None
+
+
+def test_half_the_submitter_data_is_rejected():
+    """the two fields come together or not at all"""
+    message = dict(_message(), submitter_data={"is_suspect": True})
+    with pytest.raises(ValidationError):
+        NewSubParams.model_validate(message)
 
 
 # ── submit_time ─────────────────────────────────────────────────────────────

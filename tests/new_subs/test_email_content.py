@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 from app.new_subs.email_content import render_email
 from app.new_subs.submission import NewSubmission
+from app.new_subs.submitter import SubmitterData
 from app.new_subs.templates.submission import render_submission
 from app.shared.submission import SubmissionCat
 
@@ -31,8 +32,7 @@ def _sub(**overrides) -> NewSubmission:
         doi="10.1000/test.2026.1234",
         abstract="Physics is a cool science",
         system_proposed_primary="physics.hist-ph",
-        first_time_submitter=True,
-        flagged_submitter=True,
+        submitter_data=SubmitterData(is_suspect=True, first_time_submitter=True),
     )
     fields.update(overrides)
     return NewSubmission(**fields)
@@ -41,8 +41,9 @@ def _sub(**overrides) -> NewSubmission:
 def _bare(**overrides) -> NewSubmission:
     """the same submission with everything optional left out"""
     return _sub(comments=None, journal_ref=None, doi=None, abstract=None,
-                system_proposed_primary=None, first_time_submitter=False,
-                flagged_submitter=False, **overrides)
+                system_proposed_primary=None,
+                submitter_data=SubmitterData(is_suspect=False, first_time_submitter=False),
+                **overrides)
 
 
 # ── the whole body, every field ─────────────────────────────────────────────

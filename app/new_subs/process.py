@@ -6,17 +6,18 @@ either finishes or raises, and Pub/Sub redelivers what wasn't acked.
 import logging
 
 from app.shared.config import settings
-from app.shared.submission import SubmissionBase
 from app.shared.utils.email import send_email
 
 from app.new_subs.email_content import render_email
 from app.new_subs.filters import notify_about
 from app.new_subs.moderators import get_recipients
+from app.new_subs.submission import NewSubmission
+from app.new_subs.submitter import fetch_submitter_data
 
 logger = logging.getLogger(__name__)
 
 
-def process_new_submission(sub: SubmissionBase) -> None:
+def process_new_submission(sub: NewSubmission) -> None:
     """check, build, send. returning means the message is done with, however it ended.
     Raises instead of returning when the work should be tried again on redelivery.
     """
@@ -31,6 +32,10 @@ def process_new_submission(sub: SubmissionBase) -> None:
     if not to_emails:
         logger.info(f"submission {sub.submission_id}: no moderators to email")
         return #ack, nobody to email
+
+    #additional submitter warning data
+    if sub.submitter_data is None:
+        sub.submitter_data = fetch_submitter_data(sub.submitter_id)
 
     #build and send
     body_text, body_html = render_email(sub)

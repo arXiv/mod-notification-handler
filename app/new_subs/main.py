@@ -15,6 +15,7 @@ from app.shared.utils.startup import email_config_ok
 
 from app.new_subs.process import process_new_submission
 from app.new_subs.submission import NewSubmission
+from app.new_subs.submitter import SubmitterData
 
 #SCOUTING: log every message in full, ack it, and send nothing. 
 SCOUT_ONLY = True
@@ -51,6 +52,7 @@ class NewSubParams(BaseModel):
     arXiv_submissions: MessageSubmission
     arXiv_submission_category: list[SubmissionCat]
     arXiv_submission_abs_classifier_data: dict = Field(default_factory=dict)
+    submitter_data: Optional[SubmitterData] = None #could be sent by modapi. fetched from the db when absent
 
 
 def _build_submission(params: NewSubParams) -> NewSubmission:
@@ -73,6 +75,7 @@ def _build_submission(params: NewSubParams) -> NewSubmission:
         doi=sub.doi,
         abstract=sub.abstract,
         system_proposed_primary=params.arXiv_submission_abs_classifier_data.get("autoproposal_primary"),
+        submitter_data=params.submitter_data,
     )
 
 
