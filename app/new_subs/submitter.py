@@ -1,9 +1,10 @@
 """whether the submitter is flagged, and whether this is their first submission"""
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import exists, select
 
 from arxiv.db import Session
-from arxiv.db.models import Demographic
+from arxiv.db.models import Demographic, Submission
+from arxiv.submission.statuses import DELETED_ON_HOLD, DELETED_PUBLISHED, DELETED_REMOVED, PUBLISHED, PUBLISHING, REMOVED
 
 
 class SubmitterData(BaseModel):
@@ -12,18 +13,24 @@ class SubmitterData(BaseModel):
     first_time_submitter: bool
 
 
-def _fetch_is_suspect(user_id: int) -> bool:
-    """flag_suspect from arXiv_demographics. a user with no row there is not flagged"""
-    with Session() as session:
-        flag = session.scalar(
-            select(Demographic.flag_suspect).where(Demographic.user_id == user_id)
-        )
-    return bool(flag)
-
-
 def fetch_submitter_data(user_id: int) -> SubmitterData:
-    """the submitter data for user_id, from the db"""
-    return SubmitterData(
-        is_suspect=_fetch_is_suspect(user_id),
-        first_time_submitter=False, #TODO query not written yet
+    """the submitter data for user_id"""
+    flag_suspect = (
+        select(Demographic.flag_suspect)
+        .where(Demographic.user_id == user_id)
+        .scalar_subquery()
     )
+    #follows same reules as modapi
+    submitted_before = exists().where(
+        Submission.submitter_id == user_id,
+        Submission.type.in_(["new", "rep"]),
+        Submission.status.in_([
+            PUBLISHED, PUBLISHING, REMOVED, DELETED_ON_HOLD, DELETED_PUBLISHED, DELETED_REMOVED,
+        ]),
+    )
+
+    with Session() as session:
+        row = session.execute(select(flag_suspect, submitted_before)).one()
+
+    #a user with no demographics row is not flagged
+    return SubmitterData(is_suspect=bool(row[0]), first_time_submitter=not row[1])
