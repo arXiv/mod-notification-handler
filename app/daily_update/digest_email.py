@@ -46,6 +46,7 @@ def _send_with_retry(to_email: str, body_text: str, body_html: str) -> bool:
     """send one digest, retrying potential transient relay failures
     Raises once the attempts are used up, or straight away for a failure retrying cannot fix.
     """
+    failure: Exception
     for attempt in range(1, SEND_ATTEMPTS + 1):
         try:
             #no submission_id: a digest isn't about one submission, so no threading headers

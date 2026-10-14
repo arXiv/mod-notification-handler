@@ -13,6 +13,7 @@
     Abstract
 """
 import html
+from typing import Optional
 
 from arxiv.submission.statuses import STATUS_NAMES
 
@@ -25,6 +26,7 @@ def format_warnings(sub: NewSubmission) -> Rendered:
     """the things a moderator should see before anything else. empty when there are none"""
     FIRST_TIME_WARNING = "Note: First submission from this submitter"
     FLAGGED_WARNING = "Warning: This submitter is flagged"
+    assert sub.submitter_data is not None #for the type checker. process_new_submission fills it in
     warnings = []
     if sub.submitter_data.first_time_submitter:
         warnings.append(FIRST_TIME_WARNING)
@@ -49,7 +51,7 @@ def format_header(sub: NewSubmission) -> Rendered:
     return Rendered(f"{lead} by {submitter}", f"{lead} by {html.escape(submitter)}")
 
 
-def _line(label: str, value: str) -> Rendered:
+def _line(label: str, value: Optional[str]) -> Rendered:
     """one labelled line, empty when the submission has no value for it"""
     if not value:
         return Rendered("", "")

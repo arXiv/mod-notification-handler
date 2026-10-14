@@ -2,7 +2,7 @@
 import logging
 import json
 from collections import Counter
-from typing import Callable
+from typing import Callable, Union
 
 from google.pubsub import ReceivedMessage
 
@@ -24,6 +24,7 @@ def _parse_message(payload)-> tuple[NotificationParams, SimplifiedNotification]:
     """turn pubsub payload insto structured data, raises an error if data is badly formed"""
     full_note = NotificationParams.model_validate(payload)
 
+    data: Union[CommentData, PromoteData, PropRespData, NewPropData, CategoryRejectionData]
     match full_note.action:
         case NotificationType.COMMENT:
             data = CommentData.model_validate(full_note.data)
