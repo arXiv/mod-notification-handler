@@ -26,9 +26,12 @@ def get_moderators() -> tuple[dict[str, ToEmail], dict[str, ToEmail]]:
 
     for mod in fetch_moderators():
         # is this a category or archive entry
-        is_category = bool(mod.category)
-        store = all_cats if is_category else all_archives
-        key = mod.category if is_category else mod.archive
+        if mod.category:
+            store = all_cats
+            key = mod.category
+        else:
+            store = all_archives
+            key = mod.archive
 
         entry: ToEmail = store.get(key, ToEmail())
 

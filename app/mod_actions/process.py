@@ -56,7 +56,7 @@ def _convert_messages(messages: list[ReceivedMessage], ack_fn: Callable[[list[st
             payload = json.loads(msg.message.data.decode("utf-8"))
             full_note, simple_note = _parse_message(payload)
         except Exception as e:
-            logger.error(f"[PARSE FAILURE] {e} — msg: {msg.message.data}")
+            logger.error(f"[PARSE FAILURE] {e} — msg: {msg.message.data!r}")
             ack_fn([msg.ack_id]) #ack immediately — won't be fixed on retry
             continue
 

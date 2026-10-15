@@ -69,3 +69,4 @@ def _send_with_retry(to_email: str, body_text: str, body_html: str) -> bool:
             raise failure #out of attempts, the last error is the one worth seeing
         logger.warning(f"relay problem sending to {to_email} ({failure}), retrying")
         time.sleep(RETRY_WAIT_SEC)
+    raise AssertionError("unreachable") # mypy
