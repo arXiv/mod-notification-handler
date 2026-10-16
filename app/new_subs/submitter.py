@@ -20,7 +20,7 @@ def fetch_submitter_data(user_id: int) -> SubmitterData:
         .where(Demographic.user_id == user_id)
         .scalar_subquery()
     )
-    #follows same reules as modapi
+    #follows same rules as modapi
     submitted_before = exists().where(
         Submission.submitter_id == user_id,
         Submission.type.in_(["new", "rep"]),
