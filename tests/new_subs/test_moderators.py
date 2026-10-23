@@ -1,8 +1,11 @@
 """tests for who gets a new_subs email
 """
+from unittest.mock import patch
+
 import pytest
 
-from app.new_subs.moderators import get_recipients
+from app.new_subs import moderators
+from app.new_subs.moderators import get_moderators, get_recipients
 from app.new_subs.submission import NewSubmission
 from app.shared.proposals import Proposals
 from app.shared.submission import SubmissionCat
@@ -167,3 +170,23 @@ def test_a_proposal_reaches_its_moderators_on_a_cross_too():
         "cs.AI", "cs.LG", sub_type="cross", announced=("cs.AI",), unresolved_proposals=Proposals(primary=["gr-qc"])
     )
     assert "digest-empty@example.com" in to_emails
+
+
+# ── the moderators cache ────────────────────────────────────────────────────
+
+def test_the_moderators_are_fetched_once_within_an_hour():
+    moderators._moderators_cache = None
+    with patch("app.new_subs.moderators.fetch_moderators", return_value=[]) as fetch, \
+         patch("app.new_subs.moderators.time.monotonic", side_effect=[1000.0, 4600.0]):
+        get_moderators()
+        get_moderators()
+    assert fetch.call_count == 1
+
+
+def test_the_moderators_are_fetched_again_after_an_hour():
+    moderators._moderators_cache = None
+    with patch("app.new_subs.moderators.fetch_moderators", return_value=[]) as fetch, \
+         patch("app.new_subs.moderators.time.monotonic", side_effect=[1000.0, 4601.0]):
+        get_moderators()
+        get_moderators()
+    assert fetch.call_count == 2

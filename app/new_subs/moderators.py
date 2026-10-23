@@ -3,6 +3,8 @@ Job-specific flag rules: `no_email` blocks a send, and `no_reply_to` keeps a mod
 Reply-To.
 """
 import logging
+import time
+from typing import Optional
 
 from arxiv.taxonomy.category import Category
 from arxiv.taxonomy.definitions import CATEGORIES_ACTIVE
@@ -17,8 +19,20 @@ from app.new_subs.submission import NewSubmission
 
 logger = logging.getLogger(__name__)
 
+#(time fetched, result). new_subs is a long-lived service, so this survives between messages
+_moderators_cache: Optional[tuple[float, tuple[dict[str, ToEmail], dict[str, ToEmail]]]] = None
+
 
 def get_moderators() -> tuple[dict[str, ToEmail], dict[str, ToEmail]]:
+    """mod data processed into who to email for categories. refetched from the db after an hour"""
+    global _moderators_cache
+    now = time.monotonic()
+    if _moderators_cache is None or now - _moderators_cache[0] > 3600:
+        _moderators_cache = (now, _fetch_moderators())
+    return _moderators_cache[1]
+
+
+def _fetch_moderators() -> tuple[dict[str, ToEmail], dict[str, ToEmail]]:
     """fetch mod data from db. process into who to email for categories"""
 
     all_cats: dict[str, ToEmail] = {}
