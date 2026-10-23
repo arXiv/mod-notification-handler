@@ -39,3 +39,11 @@ def test_the_system_primary_is_read_from_the_db():
     _process(sub)
     assert sub.system_proposed_primary == "cs.CL"
 
+
+
+@pytest.mark.usefixtures("db_session")
+def test_the_subject_is_the_legacy_subject():
+    with patch("app.new_subs.process.get_recipients", return_value=(["mod@example.com"], [])), \
+         patch("app.new_subs.process.send_email", return_value=True) as send:
+        process_new_submission(_sub())
+    assert send.call_args.kwargs["subject"] == "arXiv submission submit/8242408 to cs.CL by Pippin Otter"

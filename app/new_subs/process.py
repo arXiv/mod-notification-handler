@@ -42,9 +42,9 @@ def process_new_submission(sub: NewSubmission) -> None:
 
     #build and send
     body_text, body_html = render_email(sub)
-    #TODO subject line not decided
+    #same as legacy, TODO adjust to match updates when taken over
     submitter = sub.submitter_name or f"user {sub.submitter_id}"
-    subject = f"New arXiv submission submit/{sub.submission_id} to {sub.subject_categories} by {submitter}"
+    subject = f"arXiv submission submit/{sub.submission_id} to {sub.subject_categories} by {submitter}"
     accepted = send_email(
         to_emails=to_emails,
         subject=subject,
