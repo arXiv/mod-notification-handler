@@ -191,3 +191,12 @@ def test_the_moderators_are_fetched_again_after_an_hour():
         get_moderators()
         get_moderators()
     assert fetch.call_count == 2
+
+
+@pytest.mark.usefixtures("db_session")
+def test_the_moderators_contacts_are_fetched_once_for_many_submissions():
+    with patch.object(moderators, "_moderators_cache", None), \
+         patch("app.new_subs.moderators.get_mod_emails", wraps=moderators.get_mod_emails) as fetch_contacts:
+        _recipients("cs.AI")
+        _recipients("astro-ph.HE")
+    assert fetch_contacts.call_count == 1
