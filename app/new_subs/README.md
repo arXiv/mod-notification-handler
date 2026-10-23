@@ -3,8 +3,8 @@
 Emails moderators about new submissions. One Pub/Sub message per submission, one email per
 submission.
 
-**Scaffold, not finished.** The flow and the ack contract are real; the inclusion checks, the
-recipient rules and the email itself are placeholders.
+**Built, not sending.** `SCOUT_ONLY` in `main.py` is on: every message is logged and acked, and
+no email goes out.
 
 ## Push, not pull
 
@@ -15,12 +15,12 @@ The image is still the shared one — this is a normal Cloud Run service, not
 a buildpack-deployed Cloud Run function, so `mysqlclient` keeps the Dockerfile's build deps.
 
 The message carries the whole `arXiv_submissions` row and its categories, so this job never reads
-the submission back from the database. `main.NewSubParams.to_submission` turns it into a
-`SubmissionBase`, and everything downstream works on that.
+the submission back from the database. `main._build_submission` turns it into a
+`NewSubmission`, and everything downstream works on that.
 
 ```
 submit_info → Pub/Sub topic → Eventarc trigger → main.handle_new_submission
-    → NewSubParams.to_submission               the message carries the whole row
+    → _build_submission                        the message carries the whole row
     → process.process_new_submission
         → filters.notify_about                 is this worth an email
         → moderators.get_recipients            who gets it

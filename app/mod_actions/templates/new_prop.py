@@ -5,6 +5,7 @@ from app.shared.templates import Rendered
 
 
 def render_new_prop_block(change: SimplifiedNotification, user_name: str) -> Rendered:
+    assert isinstance(change.data, NewPropData) # mypy
     data: NewPropData = change.data  
     when = fmt_time(change.time)
     text = (

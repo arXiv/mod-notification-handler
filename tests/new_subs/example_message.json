@@ -1,0 +1,26 @@
+{
+  "arXiv_submissions": {
+    "submission_id": 7853055,
+    "status": 1,
+    "type": "new",
+    "auto_hold": 0,
+    "title": "Scaling Laws for Sparse Attention in Small Transformers",
+    "authors": "Pippin Otter, Nami Cat",
+    "submitter_name": "Nami Cat",
+    "submitter_id": 906580,
+    "submit_time": "2026-09-28T17:20:16",
+    "comments": "12 pages, 4 figures",
+    "journal_ref": "Proc. Test. Conf. 42 (2026) 1234",
+    "doi": "10.1000/test.2026.1234",
+    "abstract": "We fit scaling laws to sparse attention in small transformers. The exponents match dense attention."
+  },
+  "arXiv_submission_category": [
+    {"submission_id": 7853055, "category": "cs.LG", "is_primary": 1, "is_published": 0},
+    {"submission_id": 7853055, "category": "cs.AI", "is_primary": 0, "is_published": 0},
+    {"submission_id": 7853055, "category": "stat.ML", "is_primary": 0, "is_published": 0}
+  ],
+  "submitter_data": {
+    "is_suspect": false,
+    "first_time_submitter": true
+  }
+}
