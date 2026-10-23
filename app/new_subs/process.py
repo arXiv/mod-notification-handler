@@ -27,7 +27,7 @@ def process_new_submission(sub: NewSubmission) -> None:
         logger.info(f"submission {sub.submission_id}: no notification needed")
         return #ack, no email should be sent
 
-    #fetch rpoposal data
+    #fetch proposal data
     fill_proposal_fields(sub)
 
     #who hears about it

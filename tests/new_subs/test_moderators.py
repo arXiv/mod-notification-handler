@@ -1,5 +1,6 @@
 """tests for who gets a new_subs email
 """
+from typing import Optional
 from unittest.mock import patch
 
 import pytest
@@ -12,7 +13,7 @@ from app.shared.submission import SubmissionCat
 
 
 def _sub(
-    *categories: str, sub_type: str = "new", announced: tuple[str, ...] = (), unresolved_proposals: Proposals = Proposals()
+    *categories: str, sub_type: str = "new", announced: tuple[str, ...] = (), unresolved_proposals: Optional[Proposals] = None
 ) -> NewSubmission:
     return NewSubmission(
         submission_id=1,
@@ -26,7 +27,7 @@ def _sub(
             SubmissionCat(category=cat, is_published=cat in announced, is_primary=(i == 0))
             for i, cat in enumerate(categories)
         ],
-        unresolved_proposals=unresolved_proposals,
+        unresolved_proposals=unresolved_proposals or Proposals(),
     )
 
 
@@ -175,8 +176,8 @@ def test_a_proposal_reaches_its_moderators_on_a_cross_too():
 # ── the moderators cache ────────────────────────────────────────────────────
 
 def test_the_moderators_are_fetched_once_within_an_hour():
-    moderators._moderators_cache = None
-    with patch("app.new_subs.moderators.fetch_moderators", return_value=[]) as fetch, \
+    with patch.object(moderators, "_moderators_cache", None), \
+         patch("app.new_subs.moderators.fetch_moderators", return_value=[]) as fetch, \
          patch("app.new_subs.moderators.time.monotonic", side_effect=[1000.0, 4600.0]):
         get_moderators()
         get_moderators()
@@ -184,8 +185,8 @@ def test_the_moderators_are_fetched_once_within_an_hour():
 
 
 def test_the_moderators_are_fetched_again_after_an_hour():
-    moderators._moderators_cache = None
-    with patch("app.new_subs.moderators.fetch_moderators", return_value=[]) as fetch, \
+    with patch.object(moderators, "_moderators_cache", None), \
+         patch("app.new_subs.moderators.fetch_moderators", return_value=[]) as fetch, \
          patch("app.new_subs.moderators.time.monotonic", side_effect=[1000.0, 4601.0]):
         get_moderators()
         get_moderators()

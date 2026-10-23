@@ -55,3 +55,18 @@ def test_the_unresolved_proposals_are_read_from_the_db():
     sub = _sub()
     _process(sub)
     assert sub.unresolved_proposals == Proposals(primary=["cs.CL"], secondary=[])
+
+
+@pytest.mark.usefixtures("db_session")
+def test_missing_submitter_data_is_read_from_the_db():
+    sub = _sub(submitter_data=None)
+    _process(sub)
+    assert sub.submitter_data == SubmitterData(is_suspect=False, first_time_submitter=True)
+
+
+@pytest.mark.usefixtures("db_session")
+def test_submitter_data_from_the_message_is_kept():
+    """246234 is not flagged and is first time in the db, so a different value shows the db was not used"""
+    sub = _sub(submitter_data=SubmitterData(is_suspect=True, first_time_submitter=False))
+    _process(sub)
+    assert sub.submitter_data == SubmitterData(is_suspect=True, first_time_submitter=False)
