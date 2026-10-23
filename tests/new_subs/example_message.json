@@ -19,9 +19,6 @@
     {"submission_id": 7853055, "category": "cs.AI", "is_primary": 0, "is_published": 0},
     {"submission_id": 7853055, "category": "stat.ML", "is_primary": 0, "is_published": 0}
   ],
-  "arXiv_submission_abs_classifier_data": {
-    "autoproposal_primary": "cs.CL"
-  },
   "submitter_data": {
     "is_suspect": false,
     "first_time_submitter": true

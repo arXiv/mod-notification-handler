@@ -7,7 +7,7 @@ from typing import Optional
 
 import functions_framework
 from cloudevents.http import CloudEvent
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.shared.submission import SubmissionCat, as_utc
 from app.shared.utils.log import setup_logging
@@ -51,7 +51,6 @@ class NewSubParams(BaseModel):
     #the shape of the incoming message payload
     arXiv_submissions: MessageSubmission
     arXiv_submission_category: list[SubmissionCat]
-    arXiv_submission_abs_classifier_data: dict = Field(default_factory=dict)
     submitter_data: Optional[SubmitterData] = None #could be sent by modapi. fetched from the db when absent
 
 
@@ -74,7 +73,6 @@ def _build_submission(params: NewSubParams) -> NewSubmission:
         journal_ref=sub.journal_ref,
         doi=sub.doi,
         abstract=sub.abstract,
-        system_proposed_primary=params.arXiv_submission_abs_classifier_data.get("autoproposal_primary"),
         submitter_data=params.submitter_data,
     )
 

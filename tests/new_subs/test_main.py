@@ -14,7 +14,7 @@ from pydantic import ValidationError
 
 from app.new_subs.email_content import render_email
 from app.new_subs.main import NewSubParams, _build_submission, handle_new_submission
-from app.new_subs.submission import NewSubmission
+from app.new_subs.submission import NewSubmission, fetch_auto_proposed_primary
 from app.new_subs.submitter import SubmitterData
 from app.shared.submission import SubmissionCat
 
@@ -78,11 +78,14 @@ def test_a_message_becomes_a_submission():
     )
 
 
+@pytest.mark.usefixtures("db_session")
 def test_a_full_message_becomes_the_whole_email():
     """example_message.json is the reference for every field of the message we read"""
     with open(Path(__file__).parent / "example_message.json") as f:
         message = json.load(f)
-    text, html = render_email(_build_submission(NewSubParams.model_validate(message)))
+    sub = _build_submission(NewSubParams.model_validate(message))
+    sub.system_proposed_primary = fetch_auto_proposed_primary(sub.submission_id)
+    text, html = render_email(sub)
     assert text == (
         "** Note: First submission from this submitter **\n"
         "\n"
@@ -141,8 +144,7 @@ def test_the_rest_of_the_snapshot_is_dropped():
     """the publisher sends urls, checksums, classifier data and more — bonus_key here"""
     params = NewSubParams.model_validate(_message())
     assert set(params.model_dump()) == {
-        "arXiv_submissions", "arXiv_submission_category", "arXiv_submission_abs_classifier_data",
-        "submitter_data",
+        "arXiv_submissions", "arXiv_submission_category", "submitter_data",
     }
 
 

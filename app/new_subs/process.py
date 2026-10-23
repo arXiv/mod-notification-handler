@@ -11,7 +11,7 @@ from app.shared.utils.email import send_email
 from app.new_subs.email_content import render_email
 from app.new_subs.filters import notify_about
 from app.new_subs.moderators import get_recipients
-from app.new_subs.submission import NewSubmission
+from app.new_subs.submission import NewSubmission, fetch_auto_proposed_primary
 from app.new_subs.submitter import fetch_submitter_data
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,9 @@ def process_new_submission(sub: NewSubmission) -> None:
     #additional submitter warning data
     if sub.submitter_data is None:
         sub.submitter_data = fetch_submitter_data(sub.submitter_id)
+
+    #system-proposed primary. only the db knows it
+    sub.system_proposed_primary = fetch_auto_proposed_primary(sub.submission_id)
 
     #build and send
     body_text, body_html = render_email(sub)

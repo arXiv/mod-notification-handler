@@ -216,3 +216,30 @@ INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, ca
 INSERT INTO `arXiv_submissions` (submission_id, title, authors, status, type, submit_time, submitter_id, submitter_name, remote_addr, remote_host, package) VALUES (217, 'On A Legacy Hold', 'Nobody Author', 2, 'new', '2026-07-28 01:00:00', 246233, 'Frank Franky', '127.0.0.1', 'localhost', '');
 INSERT INTO `arXiv_submission_category` VALUES (217, 'cs.AI', 1, 0);
 
+
+-- auto-proposed primary, for new_subs.
+-- 8242408: the system's own proposal
+INSERT INTO `arXiv_admin_log` (id, created, username, program, command, logtext, submission_id, notify, old_created, updated) VALUES (52659357, '2026-10-16 17:25:06', 'system', 'Submission', 'admin comment', 'Auto Proposed: cs.CL as primary: selected primary cs.CY not found in classifier scores', 8242408, 0, '2026-10-16 17:25:06', '2026-10-16 17:25:06');
+INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id, updated, proposal_comment_id) VALUES (735525, 8242408, 'cs.CL', 1, 0, 246231, '2026-10-16 17:25:06', 52659357);
+-- 1459718: a moderator's proposal, resolved.
+INSERT INTO `arXiv_admin_log` (id, created, paper_id, username, program, command, logtext, document_id, submission_id, notify, old_created, updated) VALUES (7482429, '2016-01-20 20:28:08', 'submit/1459718', 'Moderator_Mara', 'Admin::Queue', 'admin comment', 'Proposal: propose astro-ph.GA as primary: Kenyon: .GA primary? or cross-list?', 0, 1459718, 1, '2016-01-20 20:28:08', '2016-01-20 20:28:08');
+INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id, updated, proposal_comment_id, response_comment_id) VALUES (6, 1459718, 'astro-ph.GA', 1, 1, 246231, '2016-02-24 20:02:44', 7482429, 7648224);
+-- 8242410: written by system, logtext is not an auto proposal
+INSERT INTO `arXiv_admin_log` (id, created, username, program, command, logtext, submission_id, notify, old_created, updated) VALUES (52659360, '2026-10-16 17:25:06', 'system', 'Submission', 'admin comment', 'Proposal: propose cs.CL as primary', 8242410, 0, '2026-10-16 17:25:06', '2026-10-16 17:25:06');
+INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id, updated, proposal_comment_id) VALUES (735530, 8242410, 'cs.CL', 1, 0, 246231, '2026-10-16 17:25:06', 52659360);
+-- 8242411: auto-proposal logtext, written by a moderator
+INSERT INTO `arXiv_admin_log` (id, created, username, program, command, logtext, submission_id, notify, old_created, updated) VALUES (52659361, '2026-10-16 17:25:06', 'Moderator_Mara', 'Admin::Queue', 'admin comment', 'Auto Proposed: cs.CL as primary: selected primary cs.CY not found in classifier scores', 8242411, 0, '2026-10-16 17:25:06', '2026-10-16 17:25:06');
+INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id, updated, proposal_comment_id) VALUES (735531, 8242411, 'cs.CL', 1, 0, 246231, '2026-10-16 17:25:06', 52659361);
+-- 8242412: a primary proposal with no log comment id
+INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id, updated) VALUES (735532, 8242412, 'cs.CL', 1, 0, 246231, '2026-10-16 17:25:06');
+-- 8242413: two auto proposals, the later one (higher proposal_id) is cs.CL
+INSERT INTO `arXiv_admin_log` (id, created, username, program, command, logtext, submission_id, notify, old_created, updated) VALUES (52659362, '2026-10-16 17:25:06', 'system', 'Submission', 'admin comment', 'Auto Proposed: cs.CY as primary: selected primary cs.CY not found in classifier scores', 8242413, 0, '2026-10-16 17:25:06', '2026-10-16 17:25:06');
+INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id, updated, proposal_comment_id) VALUES (735533, 8242413, 'cs.CY', 1, 1, 246231, '2026-10-16 17:25:06', 52659362);
+INSERT INTO `arXiv_admin_log` (id, created, username, program, command, logtext, submission_id, notify, old_created, updated) VALUES (52659363, '2026-10-16 17:26:06', 'system', 'Submission', 'admin comment', 'Auto Proposed: cs.CL as primary: selected primary cs.CY not found in classifier scores', 8242413, 0, '2026-10-16 17:26:06', '2026-10-16 17:26:06');
+INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id, updated, proposal_comment_id) VALUES (735534, 8242413, 'cs.CL', 1, 0, 246231, '2026-10-16 17:26:06', 52659363);
+-- 8242414: auto-proposal logtext on a secondary proposal
+INSERT INTO `arXiv_admin_log` (id, created, username, program, command, logtext, submission_id, notify, old_created, updated) VALUES (52659364, '2026-10-16 17:25:06', 'system', 'Submission', 'admin comment', 'Auto Proposed: cs.CL as primary: selected primary cs.CY not found in classifier scores', 8242414, 0, '2026-10-16 17:25:06', '2026-10-16 17:25:06');
+INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id, updated, proposal_comment_id) VALUES (735535, 8242414, 'cs.CL', 0, 0, 246231, '2026-10-16 17:25:06', 52659364);
+-- 7853055: new_subs' example_message.json submission, with a system proposal like 8242408's
+INSERT INTO `arXiv_admin_log` (id, created, username, program, command, logtext, submission_id, notify, old_created, updated) VALUES (52659365, '2026-09-28 17:20:20', 'system', 'Submission', 'admin comment', 'Auto Proposed: cs.CL as primary: selected primary cs.CY not found in classifier scores', 7853055, 0, '2026-09-28 17:20:20', '2026-09-28 17:20:20');
+INSERT INTO `arXiv_submission_category_proposal` (proposal_id, submission_id, category, is_primary, proposal_status, user_id, updated, proposal_comment_id) VALUES (735536, 7853055, 'cs.CL', 1, 0, 246231, '2026-09-28 17:20:20', 52659365);
