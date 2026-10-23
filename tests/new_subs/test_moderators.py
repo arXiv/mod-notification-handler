@@ -3,11 +3,15 @@
 import pytest
 
 from app.new_subs.moderators import get_recipients
-from app.shared.submission import SubmissionBase, SubmissionCat
+from app.new_subs.submission import NewSubmission
+from app.shared.proposals import Proposals
+from app.shared.submission import SubmissionCat
 
 
-def _sub(*categories: str, sub_type: str = "new", announced: tuple[str, ...] = ()) -> SubmissionBase:
-    return SubmissionBase(
+def _sub(
+    *categories: str, sub_type: str = "new", announced: tuple[str, ...] = (), unresolved_proposals: Proposals = Proposals()
+) -> NewSubmission:
+    return NewSubmission(
         submission_id=1,
         title="A Title",
         authors="An Author",
@@ -19,6 +23,7 @@ def _sub(*categories: str, sub_type: str = "new", announced: tuple[str, ...] = (
             SubmissionCat(category=cat, is_published=cat in announced, is_primary=(i == 0))
             for i, cat in enumerate(categories)
         ],
+        unresolved_proposals=unresolved_proposals,
     )
 
 
@@ -143,4 +148,22 @@ def test_a_non_cross_reaches_every_category_it_carries():
     assert "normal@example.com" in to_emails
 
 
+# ── unresolved proposals ────────────────────────────────────────────────────
 
+@pytest.mark.usefixtures("db_session")
+def test_the_moderators_of_a_proposed_category_are_added():
+    """55005 moderates gr-qc, which is only proposed. A primary or a secondary proposal both count"""
+    for proposals in (Proposals(primary=["gr-qc"]), Proposals(secondary=["gr-qc"])):
+        to_emails, reply_to = _recipients("cs.AI", unresolved_proposals=proposals)
+        assert "digest-empty@example.com" in to_emails
+        assert "digest-empty@example.com" in reply_to
+        assert "normal@example.com" in to_emails
+
+
+@pytest.mark.usefixtures("db_session")
+def test_a_proposal_reaches_its_moderators_on_a_cross_too():
+    """the cross only narrows the submission's own categories, not the proposed ones"""
+    to_emails, _ = _recipients(
+        "cs.AI", "cs.LG", sub_type="cross", announced=("cs.AI",), unresolved_proposals=Proposals(primary=["gr-qc"])
+    )
+    assert "digest-empty@example.com" in to_emails

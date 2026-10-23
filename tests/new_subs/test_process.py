@@ -7,6 +7,7 @@ import pytest
 from app.new_subs.process import process_new_submission
 from app.new_subs.submission import NewSubmission
 from app.new_subs.submitter import SubmitterData
+from app.shared.proposals import Proposals
 from app.shared.submission import SubmissionCat
 
 
@@ -47,3 +48,10 @@ def test_the_subject_is_the_legacy_subject():
          patch("app.new_subs.process.send_email", return_value=True) as send:
         process_new_submission(_sub())
     assert send.call_args.kwargs["subject"] == "arXiv submission submit/8242408 to cs.CL by Pippin Otter"
+
+
+@pytest.mark.usefixtures("db_session")
+def test_the_unresolved_proposals_are_read_from_the_db():
+    sub = _sub()
+    _process(sub)
+    assert sub.unresolved_proposals == Proposals(primary=["cs.CL"], secondary=[])

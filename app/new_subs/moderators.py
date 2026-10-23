@@ -13,7 +13,7 @@ from app.shared.moderators import (
     get_mod_emails,
     get_recipient_ids_for_categories,
 )
-from app.shared.submission import SubmissionBase
+from app.new_subs.submission import NewSubmission
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ def get_moderators() -> tuple[dict[str, ToEmail], dict[str, ToEmail]]:
     return all_archives, all_cats
 
 
-def get_recipients(sub: SubmissionBase) -> tuple[list[str], list[str]]:
+def get_recipients(sub: NewSubmission) -> tuple[list[str], list[str]]:
     """the addresses for one submission's email, as (to, reply_to)"""
 
     # only new categories emailed for crosses
@@ -61,8 +61,9 @@ def get_recipients(sub: SubmissionBase) -> tuple[list[str], list[str]]:
     else:
         notified = {cat.category for cat in sub.categories}
 
+    notified = notified | sub.unresolved_proposals.categories #also notify proposed categories
+
     categories: set[Category] = set()
-    #TODO also notify the moderators of any unresolved proposal
     for cat_id in notified:
         try:
             categories.add(CATEGORIES_ACTIVE[cat_id])

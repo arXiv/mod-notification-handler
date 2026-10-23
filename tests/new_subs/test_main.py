@@ -14,7 +14,7 @@ from pydantic import ValidationError
 
 from app.new_subs.email_content import render_email
 from app.new_subs.main import NewSubParams, _build_submission, handle_new_submission
-from app.new_subs.submission import NewSubmission, fetch_auto_proposed_primary
+from app.new_subs.submission import NewSubmission, fill_proposal_fields
 from app.new_subs.submitter import SubmitterData
 from app.shared.submission import SubmissionCat
 
@@ -84,7 +84,7 @@ def test_a_full_message_becomes_the_whole_email():
     with open(Path(__file__).parent / "example_message.json") as f:
         message = json.load(f)
     sub = _build_submission(NewSubParams.model_validate(message))
-    sub.system_proposed_primary = fetch_auto_proposed_primary(sub.submission_id)
+    fill_proposal_fields(sub)
     text, html = render_email(sub)
     assert text == (
         "** Note: First submission from this submitter **\n"
