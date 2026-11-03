@@ -25,8 +25,8 @@ redirect_emails = false
 # diff rather than a silent console change.
 redirect_recipient_secret = "test-email-group-address"
 
-db_secret_name    = "arxiv-production-rep11-db-readonly_URI"
-cloudsql_instance = "arxiv-production:us-central1:arxiv-production-rep11"
+db_secret_name    = "rep14-readonly-uri"
+cloudsql_instance = "arxiv-production:us-central1:arxiv-production-rep14"
 
 # new_subs_topic is deliberately unset: the service runs in development only 
 
