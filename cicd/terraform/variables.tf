@@ -48,6 +48,12 @@ variable "cloudsql_instance" {
   type        = string
 }
 
+variable "new_subs_topic" {
+  description = "Existing topic the new_subs service listens to, as projects/<project>/topics/<name>. Null leaves the service and its trigger uncreated."
+  type        = string
+  default     = null
+}
+
 # ---------------------------------------------------------------------------
 # Jobs
 # ---------------------------------------------------------------------------
