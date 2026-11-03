@@ -10,6 +10,7 @@ _REJECTION_LABELS = {
 
 
 def render_category_rejection_block(change: SimplifiedNotification, user_name: str) -> Rendered:
+    assert isinstance(change.data, CategoryRejectionData) # mypy
     data: CategoryRejectionData = change.data
     when = fmt_time(change.time)
     label = _REJECTION_LABELS.get(data.rejection_type, data.rejection_type)
