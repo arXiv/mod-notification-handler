@@ -7,8 +7,12 @@ from sqlalchemy import select
 
 from arxiv.db import Session
 from arxiv.db.models import Submission, SubmissionCategory
+from arxiv.taxonomy.definitions import CATEGORIES
 
 from app.shared.utils.taxonomy import ALIAS_BY_CANONICAL
+
+#the test archive isn't real content; test.* categories are not in the active taxonomy
+TEST_ARCHIVE = "test"
 
 def as_utc(dt: Optional[datetime]) -> Optional[datetime]:
     """attach the zone a submission timestamp is stored in
@@ -75,6 +79,8 @@ class SubmissionBase:
     submitter_name: str
     submitter_id: int
     submit_time: Optional[datetime] = None
+    sub_type: str = "" #new/rep/cross/wdr/jref
+    auto_hold: bool = False #the arXiv_submissions column, not a hold reason row
     categories: list[SubmissionCat] = field(default_factory=list)
 
     @property
@@ -92,6 +98,19 @@ class SubmissionBase:
         return split_categories(self.categories)
 
     @property
+    def category_ids(self) -> set[str]:
+        """every category on the submission, primary and secondary together"""
+        ids = set(self.secondary_categories)
+        if self.primary_category:
+            ids.add(self.primary_category)
+        return ids
+
+    @property
+    def new_cross_categories(self) -> set[str]:
+        #rows not yet announced. On a cross these are the categories being requested
+        return {cat.category for cat in self.categories if not cat.is_published}
+
+    @property
     def submission_categories(self) -> str:
         """primary then secondaries as one string, 'no primary' standing in for a missing one"""
         return " ".join([self.primary_category or "no primary"] + self.secondary_categories)
@@ -100,6 +119,16 @@ class SubmissionBase:
     def subject_categories(self) -> str:
         """same list with '-' for a missing primary. subject lines have always read this way"""
         return " ".join([self.primary_category or "-"] + self.secondary_categories)
+
+
+def has_test_category(sub: SubmissionBase) -> bool:
+    """any category, primary or secondary, is in the test archive"""
+    for cat_id in sub.category_ids:
+        category = CATEGORIES.get(cat_id)
+        #categories missing from the taxonomy just never match a moderator, so they pass here
+        if category is not None and category.in_archive == TEST_ARCHIVE:
+            return True
+    return False
 
 
 @dataclass
@@ -122,6 +151,8 @@ def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
                 Submission.submitter_name,
                 Submission.submitter_id,
                 Submission.submit_time,
+                Submission.type,
+                Submission.auto_hold,
             ).where(Submission.submission_id.in_(submission_ids))
         ).all()
 
@@ -136,6 +167,8 @@ def get_submission_info(submission_ids: set[int]) -> dict[int, SubEmailData]:
                 submitter_name=row.submitter_name or "",
                 submitter_id=row.submitter_id or 0,
                 submit_time=as_utc(row.submit_time),
+                sub_type=row.type or "",
+                auto_hold=bool(row.auto_hold),
                 categories=cats_by_sub.get(row.submission_id, []),
             )
 

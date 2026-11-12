@@ -12,6 +12,24 @@ files = [
 ]
 
 [[package]]
+name = "anyio"
+version = "4.15.1"
+description = "High-level concurrency and networking framework on top of asyncio or Trio"
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "anyio-4.15.1-py3-none-any.whl", hash = "sha256:6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101"},
+    {file = "anyio-4.15.1.tar.gz", hash = "sha256:9f28306018cbd6d329e64a36d58256edff76dd996fe423bc957326e578b82a94"},
+]
+
+[package.dependencies]
+idna = ">=2.8"
+typing_extensions = {version = ">=4.16.0", markers = "python_version < \"3.15\""}
+
+[package.extras]
+trio = ["trio (>=0.32.0)"]
+
+[[package]]
 name = "arxiv-base"
 version = "1.0.1"
 description = "Common code for arXiv Cloud"
@@ -441,6 +459,23 @@ files = [
 ]
 
 [[package]]
+name = "cloudevents"
+version = "1.12.0"
+description = "CloudEvents Python SDK"
+optional = false
+python-versions = "*"
+files = [
+    {file = "cloudevents-1.12.0-py3-none-any.whl", hash = "sha256:49196267f5f963d87ae156f93fc0fa32f4af69485f2c8e62e0db8b0b4b8b8921"},
+    {file = "cloudevents-1.12.0.tar.gz", hash = "sha256:ebd5544ceb58c8378a0787b657a2ae895e929b80a82d6675cba63f0e8c5539e0"},
+]
+
+[package.dependencies]
+deprecation = ">=2.0,<3.0"
+
+[package.extras]
+pydantic = ["pydantic (>=1.0.0,<3.0)"]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -657,6 +692,20 @@ files = [
 ]
 
 [[package]]
+name = "deprecation"
+version = "2.1.0"
+description = "A library to handle automated deprecations"
+optional = false
+python-versions = "*"
+files = [
+    {file = "deprecation-2.1.0-py2.py3-none-any.whl", hash = "sha256:a10811591210e1fb0e768a8c25517cabeabcba6f0bf96564f8ff45189f90b14a"},
+    {file = "deprecation-2.1.0.tar.gz", hash = "sha256:72b3bde64e5d778694b0cf68178aed03d15e15477116add3fb773e581f9518ff"},
+]
+
+[package.dependencies]
+packaging = "*"
+
+[[package]]
 name = "fastly"
 version = "14.1.0"
 description = "A Python Fastly API client library"
@@ -724,6 +773,28 @@ Flask = "*"
 six = "*"
 
 [[package]]
+name = "functions-framework"
+version = "3.10.2"
+description = "An open source FaaS (Function as a service) framework for writing portable Python functions -- brought to you by the Google Cloud Functions team."
+optional = false
+python-versions = "<4,>=3.5"
+files = [
+    {file = "functions_framework-3.10.2-py3-none-any.whl", hash = "sha256:f091017aff17acb21033f3934d74aff2531a32d3aa1d15d1eb41e57570f60c9a"},
+    {file = "functions_framework-3.10.2.tar.gz", hash = "sha256:a92f72fc35ead71753090787181ab96a869e609baab0ac3f1ef3a0fddfd20d48"},
+]
+
+[package.dependencies]
+click = ">=7.0,<9.0"
+cloudevents = ">=1.11.0,<=1.12.0"
+flask = ">=2.0,<4.0"
+gunicorn = {version = ">=22.0.0", markers = "platform_system != \"Windows\""}
+starlette = {version = ">=1.0.1,<2.0.0", markers = "python_version >= \"3.10\""}
+uvicorn = {version = ">=0.18.0,<1.0.0", markers = "python_version >= \"3.8\""}
+uvicorn-worker = {version = ">=0.2.0,<1.0.0", markers = "python_version >= \"3.8\""}
+watchdog = ">=1.0.0"
+Werkzeug = ">=0.14,<4.0.0"
+
+[[package]]
 name = "google-api-core"
 version = "2.34.0"
 description = "Google API client core library"
@@ -738,12 +809,12 @@ files = [
 google-auth = ">=2.14.1,<3.0.0"
 googleapis-common-protos = ">=1.69.2,<2.0.0"
 grpcio = [
-    {version = ">=1.59.0,<2.0.0", optional = true, markers = "python_version < \"3.14\" and extra == \"grpc\""},
     {version = ">=1.75.1,<2.0.0", optional = true, markers = "python_version >= \"3.14\" and extra == \"grpc\""},
+    {version = ">=1.59.0,<2.0.0", optional = true, markers = "python_version < \"3.14\" and extra == \"grpc\""},
 ]
 grpcio-status = [
-    {version = ">=1.59.0,<2.0.0", optional = true, markers = "python_version < \"3.14\" and extra == \"grpc\""},
     {version = ">=1.75.1,<2.0.0", optional = true, markers = "python_version >= \"3.14\" and extra == \"grpc\""},
+    {version = ">=1.59.0,<2.0.0", optional = true, markers = "python_version < \"3.14\" and extra == \"grpc\""},
 ]
 proto-plus = ">=1.26.1,<2.0.0"
 protobuf = ">=6.33.5,<8.0.0"
@@ -766,8 +837,8 @@ files = [
 
 [package.dependencies]
 cryptography = [
-    {version = ">=38.0.3", markers = "python_version < \"3.14\""},
     {version = ">=41.0.5", markers = "python_version >= \"3.14\""},
+    {version = ">=38.0.3", markers = "python_version < \"3.14\""},
 ]
 pyasn1-modules = ">=0.2.1"
 
@@ -799,8 +870,8 @@ files = [
 google-api-core = {version = ">=2.17.1,<3.0.0", extras = ["grpc"]}
 google-auth = ">=2.14.1,<2.24.0 || >2.24.0,<2.25.0 || >2.25.0,<3.0.0"
 grpcio = [
-    {version = ">=1.59.0,<2.0.0", markers = "python_version < \"3.14\""},
     {version = ">=1.75.1,<2.0.0", markers = "python_version >= \"3.14\""},
+    {version = ">=1.59.0,<2.0.0", markers = "python_version < \"3.14\""},
 ]
 proto-plus = [
     {version = ">=1.25.0,<2.0.0", markers = "python_version >= \"3.13\""},
@@ -860,8 +931,8 @@ google-cloud-audit-log = ">=0.3.2,<1.0.0"
 google-cloud-core = ">=2.0.0,<3.0.0"
 grpc-google-iam-v1 = ">=0.14.2,<1.0.0"
 grpcio = [
-    {version = ">=1.59.0,<2.0.0", markers = "python_version < \"3.14\""},
     {version = ">=1.75.1,<2.0.0", markers = "python_version >= \"3.14\""},
+    {version = ">=1.59.0,<2.0.0", markers = "python_version < \"3.14\""},
 ]
 opentelemetry-api = ">=1.16.0"
 proto-plus = ">=1.26.1,<2.0.0"
@@ -882,8 +953,8 @@ files = [
 google-api-core = {version = ">=2.17.1,<3.0.0", extras = ["grpc"]}
 google-auth = ">=2.14.1,<2.24.0 || >2.24.0,<2.25.0 || >2.25.0,<3.0.0"
 grpcio = [
-    {version = ">=1.59.0,<2.0.0", markers = "python_version < \"3.14\""},
     {version = ">=1.75.1,<2.0.0", markers = "python_version >= \"3.14\""},
+    {version = ">=1.59.0,<2.0.0", markers = "python_version < \"3.14\""},
 ]
 proto-plus = [
     {version = ">=1.25.0,<2.0.0", markers = "python_version >= \"3.13\""},
@@ -910,12 +981,12 @@ google-api-core = {version = ">=2.25.0,<3.0.0", extras = ["grpc"]}
 google-auth = ">=2.14.1,<2.24.0 || >2.24.0,<2.25.0 || >2.25.0,<3.0.0"
 grpc-google-iam-v1 = ">=0.14.2,<1.0.0"
 grpcio = [
-    {version = ">=1.59.0,<2.0.0", markers = "python_version < \"3.14\""},
     {version = ">=1.75.1,<2.0.0", markers = "python_version >= \"3.14\""},
+    {version = ">=1.59.0,<2.0.0", markers = "python_version < \"3.14\""},
 ]
 grpcio-status = [
-    {version = ">=1.59.0,<2.0.0", markers = "python_version < \"3.14\""},
     {version = ">=1.75.1,<2.0.0", markers = "python_version >= \"3.14\""},
+    {version = ">=1.59.0,<2.0.0", markers = "python_version < \"3.14\""},
 ]
 opentelemetry-api = ">=1.27.0"
 opentelemetry-sdk = ">=1.27.0"
@@ -1217,6 +1288,36 @@ files = [
 googleapis-common-protos = ">=1.5.5"
 grpcio = ">=1.83.1"
 protobuf = ">=6.33.5,<8.0.0"
+
+[[package]]
+name = "gunicorn"
+version = "26.2.0"
+description = "WSGI HTTP Server for UNIX"
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "gunicorn-26.2.0-py3-none-any.whl", hash = "sha256:bd249d0b3f7972f7432f0a6b6ff3b3ee2d129f70cd1ff6c09a9dd9e29a2b88e3"},
+    {file = "gunicorn-26.2.0.tar.gz", hash = "sha256:62b864895d9ebff0b2f9867ba04fe811c93121596540830c9c916d0769668447"},
+]
+
+[package.extras]
+fast = ["gunicorn_h1c (>=0.6.9)"]
+gevent = ["gevent (>=24.10.1)", "packaging"]
+http2 = ["h2 (>=4.4.1)"]
+setproctitle = ["setproctitle"]
+testing = ["coverage", "gevent (>=24.10.1)", "h2 (>=4.4.1)", "httpx[http2] (>=0.23.0)", "inotify (>=0.2.10)", "packaging", "pytest (>=9.0.3)", "pytest-asyncio", "pytest-cov", "uvloop (>=0.19.0)"]
+tornado = ["tornado (>=6.5.7)"]
+
+[[package]]
+name = "h11"
+version = "0.16.0"
+description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "h11-0.16.0-py3-none-any.whl", hash = "sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86"},
+    {file = "h11-0.16.0.tar.gz", hash = "sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1"},
+]
 
 [[package]]
 name = "idna"
@@ -2117,6 +2218,24 @@ pymysql = ["pymysql"]
 sqlcipher = ["sqlcipher3_binary"]
 
 [[package]]
+name = "starlette"
+version = "1.6.0"
+description = "The little ASGI library that shines."
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "starlette-1.6.0-py3-none-any.whl", hash = "sha256:a86dd39d14bb45f85a3d18525215a9ef0cfd1f192ac793220e72598c90335f0c"},
+    {file = "starlette-1.6.0.tar.gz", hash = "sha256:d4e3ac5e546444960c710297a3c9fc3f7ebae1b7e963f3d36173b49da535be9b"},
+]
+
+[package.dependencies]
+anyio = ">=3.6.2,<5"
+typing-extensions = {version = ">=4.10.0", markers = "python_version < \"3.13\""}
+
+[package.extras]
+full = ["httpx (>=0.27.0,<0.29.0)", "httpx2 (>=2.0.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.18)", "pyyaml"]
+
+[[package]]
 name = "termcolor"
 version = "3.3.0"
 description = "ANSI color formatting for output in terminal"
@@ -2173,6 +2292,39 @@ socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["backports-zstd (>=1.0.0)"]
 
 [[package]]
+name = "uvicorn"
+version = "0.53.0"
+description = "The lightning-fast ASGI server."
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "uvicorn-0.53.0-py3-none-any.whl", hash = "sha256:e8dca71ec86dce5f04e333f0d56cdedf942446e6643b9cea1af0d6d3a02cb03e"},
+    {file = "uvicorn-0.53.0.tar.gz", hash = "sha256:a9356f0cb89b3b8621529c5d5eebd69bfe154f4c3f68b4cf2de47e45fa855c2e"},
+]
+
+[package.dependencies]
+click = ">=7.0"
+h11 = ">=0.8"
+
+[package.extras]
+standard = ["httptools (>=0.8.0)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "uvloop (>=0.15.1)", "watchfiles (>=0.20)", "websockets (>=13.0)"]
+
+[[package]]
+name = "uvicorn-worker"
+version = "0.4.0"
+description = "Uvicorn worker for Gunicorn! ✨"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "uvicorn_worker-0.4.0-py3-none-any.whl", hash = "sha256:e2ed952cef976f5e9e429d7269640bbcafbd36c80aa80f1003c8c77a6797abde"},
+    {file = "uvicorn_worker-0.4.0.tar.gz", hash = "sha256:8ee5306070d8f38dce124adce488c3c0b50f20cf0c0222b12c66188da7214493"},
+]
+
+[package.dependencies]
+gunicorn = ">=21.0.0"
+uvicorn = ">=0.36.0"
+
+[[package]]
 name = "validators"
 version = "0.35.0"
 description = "Python Data Validation for Humans™"
@@ -2185,6 +2337,48 @@ files = [
 
 [package.extras]
 crypto-eth-addresses = ["eth-hash[pycryptodome] (>=0.7.0)"]
+
+[[package]]
+name = "watchdog"
+version = "6.0.0"
+description = "Filesystem events monitoring"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "watchdog-6.0.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d1cdb490583ebd691c012b3d6dae011000fe42edb7a82ece80965b42abd61f26"},
+    {file = "watchdog-6.0.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:bc64ab3bdb6a04d69d4023b29422170b74681784ffb9463ed4870cf2f3e66112"},
+    {file = "watchdog-6.0.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c897ac1b55c5a1461e16dae288d22bb2e412ba9807df8397a635d88f671d36c3"},
+    {file = "watchdog-6.0.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:6eb11feb5a0d452ee41f824e271ca311a09e250441c262ca2fd7ebcf2461a06c"},
+    {file = "watchdog-6.0.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:ef810fbf7b781a5a593894e4f439773830bdecb885e6880d957d5b9382a960d2"},
+    {file = "watchdog-6.0.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:afd0fe1b2270917c5e23c2a65ce50c2a4abb63daafb0d419fde368e272a76b7c"},
+    {file = "watchdog-6.0.0-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:bdd4e6f14b8b18c334febb9c4425a878a2ac20efd1e0b231978e7b150f92a948"},
+    {file = "watchdog-6.0.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:c7c15dda13c4eb00d6fb6fc508b3c0ed88b9d5d374056b239c4ad1611125c860"},
+    {file = "watchdog-6.0.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:6f10cb2d5902447c7d0da897e2c6768bca89174d0c6e1e30abec5421af97a5b0"},
+    {file = "watchdog-6.0.0-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:490ab2ef84f11129844c23fb14ecf30ef3d8a6abafd3754a6f75ca1e6654136c"},
+    {file = "watchdog-6.0.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:76aae96b00ae814b181bb25b1b98076d5fc84e8a53cd8885a318b42b6d3a5134"},
+    {file = "watchdog-6.0.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:a175f755fc2279e0b7312c0035d52e27211a5bc39719dd529625b1930917345b"},
+    {file = "watchdog-6.0.0-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:e6f0e77c9417e7cd62af82529b10563db3423625c5fce018430b249bf977f9e8"},
+    {file = "watchdog-6.0.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:90c8e78f3b94014f7aaae121e6b909674df5b46ec24d6bebc45c44c56729af2a"},
+    {file = "watchdog-6.0.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:e7631a77ffb1f7d2eefa4445ebbee491c720a5661ddf6df3498ebecae5ed375c"},
+    {file = "watchdog-6.0.0-pp310-pypy310_pp73-macosx_10_15_x86_64.whl", hash = "sha256:c7ac31a19f4545dd92fc25d200694098f42c9a8e391bc00bdd362c5736dbf881"},
+    {file = "watchdog-6.0.0-pp310-pypy310_pp73-macosx_11_0_arm64.whl", hash = "sha256:9513f27a1a582d9808cf21a07dae516f0fab1cf2d7683a742c498b93eedabb11"},
+    {file = "watchdog-6.0.0-pp39-pypy39_pp73-macosx_10_15_x86_64.whl", hash = "sha256:7a0e56874cfbc4b9b05c60c8a1926fedf56324bb08cfbc188969777940aef3aa"},
+    {file = "watchdog-6.0.0-pp39-pypy39_pp73-macosx_11_0_arm64.whl", hash = "sha256:e6439e374fc012255b4ec786ae3c4bc838cd7309a540e5fe0952d03687d8804e"},
+    {file = "watchdog-6.0.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:7607498efa04a3542ae3e05e64da8202e58159aa1fa4acddf7678d34a35d4f13"},
+    {file = "watchdog-6.0.0-py3-none-manylinux2014_armv7l.whl", hash = "sha256:9041567ee8953024c83343288ccc458fd0a2d811d6a0fd68c4c22609e3490379"},
+    {file = "watchdog-6.0.0-py3-none-manylinux2014_i686.whl", hash = "sha256:82dc3e3143c7e38ec49d61af98d6558288c415eac98486a5c581726e0737c00e"},
+    {file = "watchdog-6.0.0-py3-none-manylinux2014_ppc64.whl", hash = "sha256:212ac9b8bf1161dc91bd09c048048a95ca3a4c4f5e5d4a7d1b1a7d5752a7f96f"},
+    {file = "watchdog-6.0.0-py3-none-manylinux2014_ppc64le.whl", hash = "sha256:e3df4cbb9a450c6d49318f6d14f4bbc80d763fa587ba46ec86f99f9e6876bb26"},
+    {file = "watchdog-6.0.0-py3-none-manylinux2014_s390x.whl", hash = "sha256:2cce7cfc2008eb51feb6aab51251fd79b85d9894e98ba847408f662b3395ca3c"},
+    {file = "watchdog-6.0.0-py3-none-manylinux2014_x86_64.whl", hash = "sha256:20ffe5b202af80ab4266dcd3e91aae72bf2da48c0d33bdb15c66658e685e94e2"},
+    {file = "watchdog-6.0.0-py3-none-win32.whl", hash = "sha256:07df1fdd701c5d4c8e55ef6cf55b8f0120fe1aef7ef39a1c6fc6bc2e606d517a"},
+    {file = "watchdog-6.0.0-py3-none-win_amd64.whl", hash = "sha256:cbafb470cf848d93b5d013e2ecb245d4aa1c8fd0504e863ccefa32445359d680"},
+    {file = "watchdog-6.0.0-py3-none-win_ia64.whl", hash = "sha256:a1914259fa9e1454315171103c6a30961236f508b9b623eae470268bbcc6a22f"},
+    {file = "watchdog-6.0.0.tar.gz", hash = "sha256:9ddf7c82fda3ae8e24decda1338ede66e1c99883db93711d8fb941eaa2d8c282"},
+]
+
+[package.extras]
+watchmedo = ["PyYAML (>=3.10)"]
 
 [[package]]
 name = "webencodings"
@@ -2238,4 +2432,4 @@ email = ["email-validator (>=2.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "3004ab21d5fa23f0102ee29051f7a8ca3485df0a14d614863a60f5a99aad3030"
+content-hash = "921bcaf2eb4293e8bc91a1f1c1ecb6bbfe9d70766264b0d1accdf4a425a5bd59"
