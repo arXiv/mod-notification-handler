@@ -33,6 +33,11 @@ def fmt_time(dt: datetime) -> str:
     return dt.astimezone(ET).strftime("%m-%d %H:%M %Z")
 
 
+def one_line(value: str) -> str:
+    """value with every run of whitespace, newlines included, collapsed to one space"""
+    return " ".join(value.split())
+
+
 def truncate_authors(authors_str: str) -> str:
     """cut long author lists down"""
     parts = [a.strip() for a in authors_str.split(",")]

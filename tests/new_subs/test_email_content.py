@@ -139,6 +139,23 @@ def test_a_submission_with_no_categories_says_no_primary():
     assert "  Categories: no primary\n" in render_submission(_bare(categories=[])).text
 
 
+# ── line breaks in submitter text ───────────────────────────────────────────
+
+def test_line_breaks_in_submitter_text_become_spaces():
+    """comments and journal ref are free text. the same goes for title and authors"""
+    sub = _sub(
+        comments="Accepted at NeurIPS 2026\n12 pages,\r\n 4 figures",
+        journal_ref="Phys. Rev. D 110\n(2026) 012345",
+        title="a great\npaper", authors="Pippin Otter,\nNami Cat",
+    )
+    text, html = render_submission(sub)
+    assert "  Comments: Accepted at NeurIPS 2026 12 pages, 4 figures\n" in text
+    assert "  Journal ref: Phys. Rev. D 110 (2026) 012345\n" in text
+    assert "  a great paper\n  Pippin Otter, Nami Cat\n" in text
+    assert "<b>Comments:</b> Accepted at NeurIPS 2026 12 pages, 4 figures<br>\n" in html
+    assert "<b>Journal ref:</b> Phys. Rev. D 110 (2026) 012345<br>\n" in html
+
+
 # ── submitter text is escaped ───────────────────────────────────────────────
 
 def test_everything_the_submitter_typed_is_escaped_in_html():

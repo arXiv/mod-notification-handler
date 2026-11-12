@@ -19,7 +19,7 @@ from arxiv.submission.statuses import STATUS_NAMES
 
 from app.new_subs.submission import NewSubmission
 from app.shared.templates import Rendered, check_submission_url
-from app.shared.utils.formatting import fmt_time, truncate_authors
+from app.shared.utils.formatting import fmt_time, one_line, truncate_authors
 
 
 def format_warnings(sub: NewSubmission) -> Rendered:
@@ -55,6 +55,7 @@ def _line(label: str, value: Optional[str]) -> Rendered:
     """one labelled line, empty when the submission has no value for it"""
     if not value:
         return Rendered("", "")
+    value = one_line(value) #a line break would break the indented layout
     return Rendered(f"  {label}: {value}\n", f"<b>{label}:</b> {html.escape(value)}")
 
 
@@ -75,8 +76,8 @@ def render_submission(sub: NewSubmission) -> Rendered:
     #collect needed data
     warn_text, warn_html = format_warnings(sub)
     header_text, header_html = format_header(sub)
-    title = sub.title or "(no title)"
-    authors = truncate_authors(sub.authors) if sub.authors else "(no authors)"
+    title = one_line(sub.title or "(no title)")
+    authors = truncate_authors(one_line(sub.authors)) if sub.authors else "(no authors)"
     check_url = check_submission_url(sub.submission_id)
 
     system_text, system_html = _block([
