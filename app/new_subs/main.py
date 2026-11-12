@@ -57,6 +57,13 @@ class NewSubParams(BaseModel):
 def _build_submission(params: NewSubParams) -> NewSubmission:
     """the message as the object the rest of the job works on"""
     sub = params.arXiv_submissions
+    #nullable columns that should always have a value. filled in below if missing
+    missing = []
+    for name in ("title", "authors", "submitter_name", "submitter_id", "submit_time", "type"):
+        if not getattr(sub, name):
+            missing.append(name)
+    if missing:
+        logger.error(f"submission {sub.submission_id}: message is missing {missing}, using fallbacks")
     return NewSubmission(
         submission_id=sub.submission_id,
         title=sub.title or "",
