@@ -3,6 +3,7 @@ Job-specific flag rules: `no_email` blocks a send, and `no_reply_to` keeps a mod
 Reply-To.
 """
 import logging
+import threading
 import time
 from dataclasses import dataclass
 from typing import Optional
@@ -33,15 +34,17 @@ class ModeratorData:
 
 #new_subs is a long-lived service, so this survives between messages
 _moderators_cache: Optional[ModeratorData] = None
+_cache_lock = threading.Lock() #the service handles messages on several threads
 
 
 def get_moderators() -> ModeratorData:
     """the moderator data, refetched from the db after an hour"""
     global _moderators_cache
-    now = time.monotonic()
-    if _moderators_cache is None or now - _moderators_cache.fetched_at > 3600:
-        _moderators_cache = _fetch_moderators(now)
-    return _moderators_cache
+    with _cache_lock: #one thread refreshes, the others wait for it
+        now = time.monotonic()
+        if _moderators_cache is None or now - _moderators_cache.fetched_at > 3600:
+            _moderators_cache = _fetch_moderators(now)
+        return _moderators_cache
 
 
 def _fetch_moderators(fetched_at: float) -> ModeratorData:

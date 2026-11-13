@@ -1,5 +1,7 @@
 """tests for who gets a new_subs email
 """
+import threading
+import time
 from typing import Optional
 from unittest.mock import patch
 
@@ -191,6 +193,21 @@ def test_the_moderators_are_fetched_again_after_an_hour():
         get_moderators()
         get_moderators()
     assert fetch.call_count == 2
+
+
+def test_threads_arriving_on_an_empty_cache_fetch_once():
+    def slow_fetch():
+        time.sleep(0.2)
+        return []
+
+    with patch.object(moderators, "_moderators_cache", None), \
+         patch("app.new_subs.moderators.fetch_moderators", side_effect=slow_fetch) as fetch:
+        threads = [threading.Thread(target=get_moderators) for _ in range(8)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+    assert fetch.call_count == 1
 
 
 @pytest.mark.usefixtures("db_session")
