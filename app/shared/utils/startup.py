@@ -1,5 +1,6 @@
 """startup checks shared by all jobs"""
 import logging
+from urllib.parse import urlparse
 
 from app.shared.config import settings
 
@@ -14,6 +15,15 @@ def email_config_ok() -> bool:
             return False
         if not settings.REDIRECT_EMAILS and settings.ENV != "PRODUCTION":
             logger.error("SEND_EMAILS=True and REDIRECT_EMAILS=False but ENV is not PRODUCTION — exiting")
+            return False
+        try:
+            creds = urlparse(settings.HALON_CREDS)
+            creds.port #raises ValueError when the port isn't a number
+        except ValueError:
+            logger.error("SEND_EMAILS=True but HALON_CREDS is malformed or its port is not a number — exiting")
+            return False
+        if not (creds.hostname and creds.username and creds.password):
+            logger.error("SEND_EMAILS=True but HALON_CREDS must look like smtps://user:pass@host[:port] — exiting")
             return False
         if settings.REDIRECT_EMAILS:
             logger.info(f"REDIRECT_EMAILS active — all emails → {settings.REDIRECT_RECIPIENT}")

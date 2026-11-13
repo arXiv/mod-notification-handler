@@ -31,6 +31,7 @@ def send_email(
         return False
 
     if settings.REDIRECT_EMAILS:
+        assert settings.REDIRECT_RECIPIENT is not None #for the type checker. email_config_ok guarantees it
         redirect_header = f"[TEST REDIRECT]\nOriginal To: {', '.join(to_emails)}"
         if reply_to_emails:
             redirect_header += f"\nOriginal Reply-To: {', '.join(reply_to_emails)}"
@@ -60,7 +61,8 @@ def send_email(
 
     all_recipients = to_emails + bcc_emails
     creds = urlparse(settings.HALON_CREDS)
-    with smtplib.SMTP_SSL(host=creds.hostname, port=creds.port, timeout=60) as sess:
+    assert creds.hostname and creds.username and creds.password #for the type checker. email_config_ok guarantees it
+    with smtplib.SMTP_SSL(host=creds.hostname, port=creds.port or smtplib.SMTP_SSL_PORT, timeout=60) as sess:
         sess.login(creds.username, creds.password)
         refused = {}
         try:

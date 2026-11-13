@@ -1,13 +1,23 @@
 """tests for who gets a new_subs email
 """
+import threading
+import time
+from typing import Optional
+from unittest.mock import patch
+
 import pytest
 
-from app.new_subs.moderators import get_recipients
-from app.shared.submission import SubmissionBase, SubmissionCat
+from app.new_subs import moderators
+from app.new_subs.moderators import get_moderators, get_recipients
+from app.new_subs.submission import NewSubmission
+from app.shared.proposals import Proposals
+from app.shared.submission import SubmissionCat
 
 
-def _sub(*categories: str, sub_type: str = "new", announced: tuple[str, ...] = ()) -> SubmissionBase:
-    return SubmissionBase(
+def _sub(
+    *categories: str, sub_type: str = "new", announced: tuple[str, ...] = (), unresolved_proposals: Optional[Proposals] = None
+) -> NewSubmission:
+    return NewSubmission(
         submission_id=1,
         title="A Title",
         authors="An Author",
@@ -19,6 +29,7 @@ def _sub(*categories: str, sub_type: str = "new", announced: tuple[str, ...] = (
             SubmissionCat(category=cat, is_published=cat in announced, is_primary=(i == 0))
             for i, cat in enumerate(categories)
         ],
+        unresolved_proposals=unresolved_proposals or Proposals(),
     )
 
 
@@ -143,4 +154,66 @@ def test_a_non_cross_reaches_every_category_it_carries():
     assert "normal@example.com" in to_emails
 
 
+# ── unresolved proposals ────────────────────────────────────────────────────
 
+@pytest.mark.usefixtures("db_session")
+def test_the_moderators_of_a_proposed_category_are_added():
+    """55005 moderates gr-qc, which is only proposed. A primary or a secondary proposal both count"""
+    for proposals in (Proposals(primary=["gr-qc"]), Proposals(secondary=["gr-qc"])):
+        to_emails, reply_to = _recipients("cs.AI", unresolved_proposals=proposals)
+        assert "digest-empty@example.com" in to_emails
+        assert "digest-empty@example.com" in reply_to
+        assert "normal@example.com" in to_emails
+
+
+@pytest.mark.usefixtures("db_session")
+def test_a_proposal_reaches_its_moderators_on_a_cross_too():
+    """the cross only narrows the submission's own categories, not the proposed ones"""
+    to_emails, _ = _recipients(
+        "cs.AI", "cs.LG", sub_type="cross", announced=("cs.AI",), unresolved_proposals=Proposals(primary=["gr-qc"])
+    )
+    assert "digest-empty@example.com" in to_emails
+
+
+# ── the moderators cache ────────────────────────────────────────────────────
+
+def test_the_moderators_are_fetched_once_within_an_hour():
+    with patch.object(moderators, "_moderators_cache", None), \
+         patch("app.new_subs.moderators.fetch_moderators", return_value=[]) as fetch, \
+         patch("app.new_subs.moderators.time.monotonic", side_effect=[1000.0, 4600.0]):
+        get_moderators()
+        get_moderators()
+    assert fetch.call_count == 1
+
+
+def test_the_moderators_are_fetched_again_after_an_hour():
+    with patch.object(moderators, "_moderators_cache", None), \
+         patch("app.new_subs.moderators.fetch_moderators", return_value=[]) as fetch, \
+         patch("app.new_subs.moderators.time.monotonic", side_effect=[1000.0, 4601.0]):
+        get_moderators()
+        get_moderators()
+    assert fetch.call_count == 2
+
+
+def test_threads_arriving_on_an_empty_cache_fetch_once():
+    def slow_fetch():
+        time.sleep(0.2)
+        return []
+
+    with patch.object(moderators, "_moderators_cache", None), \
+         patch("app.new_subs.moderators.fetch_moderators", side_effect=slow_fetch) as fetch:
+        threads = [threading.Thread(target=get_moderators) for _ in range(8)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+    assert fetch.call_count == 1
+
+
+@pytest.mark.usefixtures("db_session")
+def test_the_moderators_contacts_are_fetched_once_for_many_submissions():
+    with patch.object(moderators, "_moderators_cache", None), \
+         patch("app.new_subs.moderators.get_mod_emails", wraps=moderators.get_mod_emails) as fetch_contacts:
+        _recipients("cs.AI")
+        _recipients("astro-ph.HE")
+    assert fetch_contacts.call_count == 1

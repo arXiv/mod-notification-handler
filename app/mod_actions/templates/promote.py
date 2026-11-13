@@ -4,6 +4,7 @@ from app.shared.templates import Rendered
 
 
 def render_promote_block(change: SimplifiedNotification, user_name: str) -> Rendered:
+    assert isinstance(change.data, PromoteData) # mypy
     data: PromoteData = change.data
     when = fmt_time(change.time)
     text = (

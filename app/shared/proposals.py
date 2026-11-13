@@ -16,6 +16,11 @@ class Proposals:
     def __bool__(self) -> bool:
         return bool(self.primary or self.secondary)
 
+    @property
+    def categories(self) -> set[str]:
+        """every proposed category, primary or secondary"""
+        return set(self.primary) | set(self.secondary)
+
 
 def get_unresolved_proposals(session, submission_ids: set[int]) -> dict[int, Proposals]:
     """get unresolved proposals for submissions on the list"""

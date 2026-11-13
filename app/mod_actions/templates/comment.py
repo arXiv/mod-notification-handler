@@ -6,6 +6,7 @@ from app.shared.templates import Rendered
 
 
 def render_comment_block(change: SimplifiedNotification, user_name: str) -> Rendered:
+    assert isinstance(change.data, CommentData) # mypy
     data: CommentData = change.data  
     when = fmt_time(change.time)
     text = (
