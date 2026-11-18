@@ -296,10 +296,10 @@ resource "google_cloud_run_v2_service" "new_subs" {
       # PYTHONPATH is required, not decoration: --source loads main.py by path and does
       # not put the working directory on sys.path, so `import app.shared...` fails without it.
       #
-      # SEND_EMAILS is forced off in every environment, overriding var.send_emails, and only
-      # this job. Nothing here is ready to mail moderators. Delete that key to go live.
+      # var.new_subs_env_vars overrides the shared values for this service only, as a job's
+      # env_vars does for that job.
       dynamic "env" {
-        for_each = merge(local.shared_env_vars, { PYTHONPATH = "/app", SEND_EMAILS = "False" })
+        for_each = merge(local.shared_env_vars, { PYTHONPATH = "/app" }, var.new_subs_env_vars)
         content {
           name  = env.key
           value = env.value

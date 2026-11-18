@@ -29,6 +29,15 @@ db_secret_name    = "rep14-readonly-uri"
 cloudsql_instance = "arxiv-production:us-central1:arxiv-production-rep14"
 
 # new_subs_topic is deliberately unset: the service runs in development only 
+#
+# To build new_subs in production, uncomment this whole block. It sends nothing real:
+# sending is off and redirect is on, until both are changed here on purpose.
+#
+# new_subs_topic = "projects/arxiv-production/topics/submit-info"
+# new_subs_env_vars = {
+#   SEND_EMAILS     = "False"
+#   REDIRECT_EMAILS = "True"
+# }
 
 # ---------------------------------------------------------------------------
 # Jobs

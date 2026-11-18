@@ -3,9 +3,6 @@
 Emails moderators about new submissions. One Pub/Sub message per submission, one email per
 submission.
 
-**Built, not sending.** `SCOUT_ONLY` in `main.py` is on: every message is logged and acked, and
-no email goes out.
-
 ## Push, not pull
 
 **This job is a Cloud Run service, not a Cloud Run job.** A message is delivered as each

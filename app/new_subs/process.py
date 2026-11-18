@@ -58,3 +58,9 @@ def process_new_submission(sub: NewSubmission) -> None:
     if not accepted and settings.SEND_EMAILS:
         logger.error(f"submission {sub.submission_id}: relay accepted no recipients")
         return # cant retry recipients refusing
+
+    #log result
+    if accepted:
+        logger.info(f"submission {sub.submission_id}: sent to {len(to_emails)} moderators")
+    else:
+        logger.info(f"submission {sub.submission_id}: SEND_EMAILS is off, not sent to {len(to_emails)} moderators")
