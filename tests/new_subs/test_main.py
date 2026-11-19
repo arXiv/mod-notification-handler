@@ -231,8 +231,7 @@ def test_a_message_without_a_status_is_rejected():
 # ── the handler ─────────────────────────────────────────────────────────────
 
 def test_a_good_message_is_processed():
-    with patch("app.new_subs.main.SCOUT_ONLY", False), \
-         patch("app.new_subs.main.process_new_submission") as process:
+    with patch("app.new_subs.main.process_new_submission") as process:
         handle_new_submission(_cloud_event(_message()))
     process.assert_called_once()
     assert process.call_args.args[0].submission_id == SUB_ID
@@ -257,9 +256,9 @@ def test_a_payload_of_the_wrong_shape_is_acked_not_processed():
 
 def test_a_processing_failure_is_left_for_redelivery():
     """anything raised out of the handler leaves the message unacked"""
-    with patch("app.new_subs.main.SCOUT_ONLY", False), \
-         patch("app.new_subs.main.process_new_submission", side_effect=RuntimeError("boom")):
+    with patch("app.new_subs.main.process_new_submission", side_effect=RuntimeError("boom")):
         with pytest.raises(RuntimeError):
             handle_new_submission(_cloud_event(_message()))
+
 
 

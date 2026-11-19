@@ -17,10 +17,6 @@ from app.new_subs.process import process_new_submission
 from app.new_subs.submission import NewSubmission
 from app.new_subs.submitter import SubmitterData
 
-#SCOUTING: log every message in full, ack it, and send nothing. 
-SCOUT_ONLY = True
-SCOUT_CHUNK_CHARS = 90_000
-
 # do onetime setup for the container before start serving
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -84,15 +80,6 @@ def _build_submission(params: NewSubParams) -> NewSubmission:
     )
 
 
-def _log_whole_payload(payload) -> None:
-    """the entire message, split to stay under the Cloud Logging entry size cap"""
-    text = json.dumps(payload, indent=2, sort_keys=True, default=str)
-    parts = [text[i:i + SCOUT_CHUNK_CHARS] for i in range(0, len(text), SCOUT_CHUNK_CHARS)]
-    logger.info(f"[SCOUT] payload is {len(text)} chars, top-level keys {sorted(payload)}")
-    for number, part in enumerate(parts, start=1):
-        logger.info(f"[SCOUT] payload part {number}/{len(parts)}\n{part}")
-
-
 #handle individual submissions
 @functions_framework.cloud_event
 def handle_new_submission(cloud_event: CloudEvent) -> None:
@@ -105,18 +92,11 @@ def handle_new_submission(cloud_event: CloudEvent) -> None:
         logger.exception(f"Could not decode message, envelope: {cloud_event.data}")
         return
 
-    if SCOUT_ONLY:
-        _log_whole_payload(payload)
-
     try:
         params = NewSubParams.model_validate(payload)
     except Exception:
         logger.exception(f"Payload did not match NewSubParams. top-level keys: {list(payload)}")
         logger.error(f"Full payload: {json.dumps(payload, default=str)}")
         return
-
-    if SCOUT_ONLY:
-        logger.info(f"[SCOUT] parses cleanly: {_build_submission(params)}")
-        return #ack without sending anything
 
     process_new_submission(_build_submission(params))

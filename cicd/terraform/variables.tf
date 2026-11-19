@@ -28,6 +28,12 @@ variable "redirect_emails" {
   type        = bool
 }
 
+variable "new_subs_env_vars" {
+  description = "Overrides merged over the shared env vars for the new_subs service only. A key here wins."
+  type        = map(string)
+  default     = {}
+}
+
 variable "redirect_recipient_secret" {
   description = "Secret Manager secret holding the address redirected mail goes to. Null in any environment that should not have one — the variable is then omitted from the job entirely rather than set empty."
   type        = string
